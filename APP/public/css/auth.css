@@ -1,0 +1,32 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    
+
+   
+} 
+
+.container {
+    max-width: 400px;
+    margin: auto;
+    background-color: rgba(255, 255, 255, 0.9); 
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* 3D shadow effect */
+    transform: translateZ(0); /* Force hardware acceleration for smoother transitions on some browsers */
+}
+
+.form {
+    text-align: center;
+    
+}
+.custom-form-control {
+    width: 100%; 
+}
+
+
+
