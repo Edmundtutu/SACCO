@@ -15,12 +15,9 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table-> string('transaction_type'); // deposit/savings, withdraw, loan payment
-            $table-> integer('amount');
-            $table->dateTime('Date_of_transaction');
-            $table->foreignId('member_id')->constrained();
+            $table->string('transaction_number')->unique();
+            $table->foreignId('member_id')->constrained('users');
             $table->foreignId('account_id')->constrained();
-            $table->foreignId('loan_id')->constrained()->nullable();
             $table->timestamps();
         });
     }
