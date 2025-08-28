@@ -1,0 +1,780 @@
+openapi: 3.0.3
+info:
+  title: SACCO REST API
+  description: |
+    Comprehensive REST API for managing Savings and Credit Cooperative Organizations (SACCOs).
+    
+    ## Features
+    - Member registration and management
+    - Savings account operations
+    - Loan management (planned)
+    - Share management (planned)
+    - Financial reporting
+    - Double-entry bookkeeping
+    - Role-based access control
+    
+    ## Authentication
+    The API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer {your-jwt-token}
+    ```
+    
+    ## Sample Accounts
+    - **Admin**: admin@sacco.com / password123
+    - **Member**: jane@example.com / password123
+    
+  version: 1.0.0
+  contact:
+    name: SACCO API Support
+    email: support@sacco-api.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.sacco.example.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new member
+      description: Register a new SACCO member with KYC information
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberRegistration'
+            example:
+              name: "John Doe"
+              email: "john@example.com"
+              password: "password123"
+              password_confirmation: "password123"
+              phone: "+1234567890"
+              national_id: "ID123456789"
+              date_of_birth: "1990-01-15"
+              gender: "male"
+              address: "123 Main Street, City"
+              occupation: "Teacher"
+              monthly_income: 25000
+              next_of_kin_name: "Jane Doe"
+              next_of_kin_relationship: "Spouse"
+              next_of_kin_phone: "+1234567891"
+              next_of_kin_address: "123 Main Street, City"
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "admin@sacco.com"
+              password: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      description: Get authenticated user's profile and summary
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Authentication
+      summary: Update user profile
+      description: Update user profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/change-password:
+    post:
+      tags:
+        - Authentication
+      summary: Change password
+      description: Change user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Logout user and invalidate token
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh token
+      description: Refresh JWT token before expiration
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+
+  /savings/products:
+    get:
+      tags:
+        - Savings
+      summary: Get savings products
+      description: Get all available savings products
+      responses:
+        '200':
+          description: Savings products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavingsProduct'
+
+  /savings/accounts:
+    get:
+      tags:
+        - Savings
+      summary: Get member accounts
+      description: Get all accounts for authenticated member
+      responses:
+        '200':
+          description: Accounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+
+  /savings/deposit:
+    post:
+      tags:
+        - Savings
+      summary: Make deposit
+      description: Make a deposit to a savings account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+            example:
+              account_id: 1
+              amount: 5000
+              payment_method: "cash"
+              description: "Monthly savings deposit"
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+
+  /savings/withdraw:
+    post:
+      tags:
+        - Savings
+      summary: Make withdrawal
+      description: Make a withdrawal from a savings account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+            example:
+              account_id: 1
+              amount: 2000
+              description: "Emergency withdrawal"
+      responses:
+        '200':
+          description: Withdrawal successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+
+  /savings/accounts/{accountId}/transactions:
+    get:
+      tags:
+        - Savings
+      summary: Get account transactions
+      description: Get transaction history for a specific account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter from date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter to date
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [deposit, withdrawal, transfer]
+          description: Filter by transaction type
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MemberRegistration:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+        - phone
+        - national_id
+        - date_of_birth
+        - gender
+        - address
+        - occupation
+        - monthly_income
+        - next_of_kin_name
+        - next_of_kin_relationship
+        - next_of_kin_phone
+        - next_of_kin_address
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+        phone:
+          type: string
+          maxLength: 20
+        national_id:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, other]
+        address:
+          type: string
+        occupation:
+          type: string
+        monthly_income:
+          type: number
+          minimum: 0
+        next_of_kin_name:
+          type: string
+        next_of_kin_relationship:
+          type: string
+        next_of_kin_phone:
+          type: string
+        next_of_kin_address:
+          type: string
+        employer_name:
+          type: string
+        employer_address:
+          type: string
+        employer_phone:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        member_number:
+          type: string
+        role:
+          type: string
+          enum: [member, admin, staff, loan_officer, accountant]
+        status:
+          type: string
+          enum: [active, inactive, suspended, pending_approval]
+        phone:
+          type: string
+        national_id:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+        address:
+          type: string
+        occupation:
+          type: string
+        monthly_income:
+          type: string
+        membership_date:
+          type: string
+          format: date
+
+    SavingsProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [compulsory, voluntary, fixed_deposit, special]
+        minimum_balance:
+          type: string
+        maximum_balance:
+          type: string
+          nullable: true
+        interest_rate:
+          type: string
+        interest_calculation:
+          type: string
+          enum: [simple, compound]
+        withdrawal_fee:
+          type: string
+        allow_partial_withdrawals:
+          type: boolean
+        is_active:
+          type: boolean
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        account_number:
+          type: string
+        balance:
+          type: string
+        available_balance:
+          type: string
+        minimum_balance:
+          type: string
+        interest_earned:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, dormant, closed]
+        last_transaction_date:
+          type: string
+          format: date-time
+        savings_product:
+          $ref: '#/components/schemas/SavingsProduct'
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        transaction_number:
+          type: string
+        type:
+          type: string
+          enum: [deposit, withdrawal, transfer, loan_disbursement, loan_repayment]
+        amount:
+          type: string
+        fee_amount:
+          type: string
+        net_amount:
+          type: string
+        balance_before:
+          type: string
+        balance_after:
+          type: string
+        description:
+          type: string
+        payment_method:
+          type: string
+          enum: [cash, bank_transfer, mobile_money, check]
+        status:
+          type: string
+          enum: [pending, completed, failed, reversed]
+        transaction_date:
+          type: string
+          format: date-time
+
+    DepositRequest:
+      type: object
+      required:
+        - account_id
+        - amount
+        - payment_method
+      properties:
+        account_id:
+          type: integer
+        amount:
+          type: number
+          minimum: 0.01
+        payment_method:
+          type: string
+          enum: [cash, bank_transfer, mobile_money, check]
+        payment_reference:
+          type: string
+        description:
+          type: string
+
+    WithdrawalRequest:
+      type: object
+      required:
+        - account_id
+        - amount
+      properties:
+        account_id:
+          type: integer
+        amount:
+          type: number
+          minimum: 0.01
+        description:
+          type: string
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        occupation:
+          type: string
+        monthly_income:
+          type: number
+
+    PasswordChange:
+      type: object
+      required:
+        - current_password
+        - new_password
+        - new_password_confirmation
+      properties:
+        current_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+        new_password_confirmation:
+          type: string
+
+    RegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Registration successful. Your membership is pending approval."
+        data:
+          type: object
+          properties:
+            member_number:
+              type: string
+              example: "M000001"
+            status:
+              type: string
+              example: "pending_approval"
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+            token_type:
+              type: string
+              example: "bearer"
+            expires_in:
+              type: integer
+              example: 3600
+
+    ProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            summary:
+              type: object
+              properties:
+                total_savings:
+                  type: string
+                  example: "45000.00"
+                total_shares:
+                  type: integer
+                  example: 150
+                active_loan_balance:
+                  type: string
+                  example: "0.00"
+
+    TokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            token_type:
+              type: string
+              example: "bearer"
+            expires_in:
+              type: integer
+              example: 3600
+
+    TransactionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            transaction:
+              $ref: '#/components/schemas/Transaction'
+            new_balance:
+              type: string
+            withdrawal_fee:
+              type: string
+
+    TransactionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            from:
+              type: integer
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation errors"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+tags:
+  - name: Authentication
+    description: User authentication and profile management
+  - name: Savings
+    description: Savings account operations and transactions
+  - name: Loans
+    description: Loan management (planned)
+  - name: Shares
+    description: Share management (planned)
+  - name: Reports
+    description: Financial reporting (planned)

@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -22,6 +25,19 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'member_number',
+        'role',
+        'status',
+        'phone',
+        'national_id',
+        'date_of_birth',
+        'gender',
+        'address',
+        'occupation',
+        'monthly_income',
+        'membership_date',
+        'approved_at',
+        'approved_by',
     ];
 
     /**
@@ -41,11 +57,131 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'date_of_birth' => 'date',
+        'membership_date' => 'date',
+        'approved_at' => 'datetime',
+        'monthly_income' => 'decimal:2',
     ];
 
-    use Notifiable;
+    /**
+     * Member profile relationship
+     */
+    public function memberProfile(): HasOne
+    {
+        return $this->hasOne(MemberProfile::class);
+    }
 
-    // Rest omitted for brevity
+    /**
+     * Member accounts relationship
+     */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class, 'member_id');
+    }
+
+    /**
+     * Member loans relationship
+     */
+    public function loans(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'member_id');
+    }
+
+    /**
+     * Member shares relationship
+     */
+    public function shares(): HasMany
+    {
+        return $this->hasMany(Share::class, 'member_id');
+    }
+
+    /**
+     * Member transactions relationship
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'member_id');
+    }
+
+    /**
+     * Loan guarantees given by this member
+     */
+    public function guaranteesGiven(): HasMany
+    {
+        return $this->hasMany(LoanGuarantor::class, 'guarantor_id');
+    }
+
+    /**
+     * User who approved this member
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Members approved by this user
+     */
+    public function approvedMembers(): HasMany
+    {
+        return $this->hasMany(User::class, 'approved_by');
+    }
+
+    /**
+     * Dividend payments for this member
+     */
+    public function dividendPayments(): HasMany
+    {
+        return $this->hasMany(DividendPayment::class, 'member_id');
+    }
+
+    /**
+     * Check if user has a specific role
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * Check if user is admin or staff
+     */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, ['admin', 'staff', 'loan_officer', 'accountant']);
+    }
+
+    /**
+     * Check if user is active member
+     */
+    public function isActiveMember(): bool
+    {
+        return $this->role === 'member' && $this->status === 'active';
+    }
+
+    /**
+     * Get total shares owned
+     */
+    public function getTotalShares(): int
+    {
+        return $this->shares()->where('status', 'active')->sum('shares_count');
+    }
+
+    /**
+     * Get total savings balance
+     */
+    public function getTotalSavingsBalance(): float
+    {
+        return $this->accounts()->sum('balance');
+    }
+
+    /**
+     * Get active loan balance
+     */
+    public function getActiveLoanBalance(): float
+    {
+        return $this->loans()->whereIn('status', ['disbursed', 'active'])->sum('outstanding_balance');
+    }
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
@@ -64,6 +200,10 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role' => $this->role,
+            'member_number' => $this->member_number,
+            'status' => $this->status,
+        ];
     }
 }

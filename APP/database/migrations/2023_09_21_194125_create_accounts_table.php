@@ -15,12 +15,8 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
-            $table ->bigInteger('accountno');
-            $table ->string('type'); // can be a Savings account or Checkings account
-            $table ->string('status'); // active, inactive
-            $table -> integer('amount');
-            $table ->integer('netamount')->nullable();
-            $table ->foreignId('member_id')->constrained();
+            $table->string('account_number')->unique();
+            $table->foreignId('member_id')->constrained('users');
             $table->timestamps();
         });
     }
