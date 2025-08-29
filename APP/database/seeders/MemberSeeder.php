@@ -21,7 +21,7 @@ class MemberSeeder extends Seeder
             ->hasTransactions(20)
             ->hasLoans(3)
             ->create();
-        
+
         Member::factory()
             ->count(25)
             ->hasAccounts(1)

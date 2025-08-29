@@ -43,7 +43,7 @@ A comprehensive Laravel REST API for managing Savings and Credit Cooperative Org
 
 3. **Set up environment**
    ```bash
-   cp .env.example .env
+   cp .env .env
    php artisan key:generate
    ```
 

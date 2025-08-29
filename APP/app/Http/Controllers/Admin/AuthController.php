@@ -17,7 +17,7 @@ class AuthController extends Controller
         if (Auth::check() && $this->isAdminUser(Auth::user())) {
             return redirect()->route('admin.dashboard');
         }
-        
+
         return view('admin.auth.login');
     }
 
@@ -42,7 +42,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
-            
+
             // Check if user has admin privileges
             if ($this->isAdminUser($user)) {
                 $request->session()->regenerate();
@@ -67,7 +67,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('admin.login')
             ->with('success', 'You have been logged out successfully.');
     }

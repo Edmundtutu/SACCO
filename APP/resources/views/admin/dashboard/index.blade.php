@@ -25,12 +25,12 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #28a745, #20c997);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_savings'], 2) }}</div>
+                    <div class="stats-number">UGX{{ number_format($stats['total_savings'], 2) }}</div>
                     <div class="stats-label">Total Savings</div>
                 </div>
                 <div class="stats-icon">
@@ -39,12 +39,12 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #fd7e14, #e83e8c);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_loans'], 2) }}</div>
+                    <div class="stats-number">UGX{{ number_format($stats['total_loans'], 2) }}</div>
                     <div class="stats-label">Total Loans</div>
                 </div>
                 <div class="stats-icon">
@@ -53,12 +53,12 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #6f42c1, #e83e8c);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_shares'], 2) }}</div>
+                    <div class="stats-number">UGX{{ number_format($stats['total_shares'], 2) }}</div>
                     <div class="stats-label">Total Shares</div>
                 </div>
                 <div class="stats-icon">
@@ -148,7 +148,7 @@
                                         {{ ucfirst($transaction->transaction_type) }}
                                     </span>
                                 </td>
-                                <td>KSh {{ number_format($transaction->amount, 2) }}</td>
+                                <td>UGX{{ number_format($transaction->amount, 2) }}</td>
                                 <td>
                                     <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : 'warning' }}">
                                         {{ ucfirst($transaction->status) }}
@@ -165,7 +165,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header">
@@ -179,7 +179,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <h6 class="mb-1">{{ $loan->user->name }}</h6>
-                                <p class="mb-1 text-muted small">KSh {{ number_format($loan->principal_amount, 2) }}</p>
+                                <p class="mb-1 text-muted small">UGX{{ number_format($loan->principal_amount, 2) }}</p>
                                 <small class="text-muted">{{ $loan->created_at->format('M d, Y') }}</small>
                             </div>
                             <span class="badge bg-{{ $loan->status == 'pending' ? 'warning' : ($loan->status == 'approved' ? 'success' : 'danger') }}">
@@ -211,7 +211,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
@@ -251,7 +251,7 @@ new Chart(savingsCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return 'KSh ' + value.toLocaleString();
+                        return 'UGX' + value.toLocaleString();
                     }
                 }
             }

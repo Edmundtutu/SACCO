@@ -14,16 +14,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        \App\Models\User::factory(10)->create();
-
-        \App\Models\User::factory()->create([
-            'name' => 'Edmund',
-            'email' => 'eddymust.com',
-            'password' => 'eddypass',
-        ]);
-
-        // $this->call([
-        //     MemberSeeder::class
-        // ]);
+         $this->call([
+             // MemberSeeder::class
+             SaccoDataSeeder::class
+         ]);
     }
 }
