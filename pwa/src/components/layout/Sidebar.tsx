@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, PiggyBank, CreditCard, TrendingUp, User, LogOut, Settings } from 'lucide-react';
+import { Home, PiggyBank, CreditCard, TrendingUp, User, LogOut, Settings, FileText } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { logoutUser } from '@/store/authSlice';
@@ -12,6 +12,7 @@ const navigationItems = [
   { icon: PiggyBank, label: 'Savings', path: '/savings' },
   { icon: CreditCard, label: 'Loans', path: '/loans' },
   { icon: TrendingUp, label: 'Shares', path: '/shares' },
+  { icon: FileText, label: 'Reports', path: '/reports' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 

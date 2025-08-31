@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Eye, EyeOff } from 'lucide-react';
+import { RootState } from '@/store';
+import { changePassword } from '@/store/authSlice';
 
 export function PasswordChange() {
+  const dispatch = useDispatch();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { loading } = useSelector((state: RootState) => state.auth);
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -57,31 +61,31 @@ export function PasswordChange() {
       return;
     }
 
-    setLoading(true);
-    
     try {
-      // TODO: Implement password change API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      const result = await dispatch(changePassword({
+        currentPassword: formData.current_password,
+        newPassword: formData.new_password,
+      }) as any);
       
-      toast({
-        title: "Success",
-        description: "Password changed successfully",
-      });
-      
-      // Reset form
-      setFormData({
-        current_password: '',
-        new_password: '',
-        confirm_password: '',
-      });
-    } catch (error) {
+      if (changePassword.fulfilled.match(result)) {
+        toast({
+          title: "Success",
+          description: "Password changed successfully",
+        });
+        
+        // Reset form
+        setFormData({
+          current_password: '',
+          new_password: '',
+          confirm_password: '',
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to change password",
+        description: error.message || "Failed to change password",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 

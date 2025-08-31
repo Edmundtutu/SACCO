@@ -2,21 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Award, Printer } from 'lucide-react';
-
-interface SharesAccount {
-  id: number;
-  total_shares: number;
-  share_value: number;
-  total_value: number;
-  dividends_earned: number;
-  last_dividend_date?: string;
-}
+import type { SharesAccount, ShareCertificate } from '@/types/api';
 
 interface SharesCertificateProps {
   account: SharesAccount | null;
+  certificates: ShareCertificate[];
 }
 
-export function SharesCertificate({ account }: SharesCertificateProps) {
+export function SharesCertificate({ account, certificates }: SharesCertificateProps) {
   const handleDownloadCertificate = () => {
     // This would generate and download a PDF certificate
     console.log('Downloading certificate...');
@@ -150,6 +143,37 @@ export function SharesCertificate({ account }: SharesCertificateProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Individual Certificates */}
+      {certificates.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Certificate History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {certificates.map((cert) => (
+                <div key={cert.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{cert.certificate_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {cert.shares_count} shares @ KES {cert.purchase_price.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(cert.purchase_date).toLocaleDateString()}
+                    </p>
+                    <Button variant="ghost" size="sm">
+                      <Download className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Certificate Information */}
       <Card>

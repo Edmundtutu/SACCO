@@ -11,7 +11,9 @@ import { Dashboard } from './pages/Dashboard';
 import Savings from './pages/Savings';
 import Loans from './pages/Loans';
 import Shares from './pages/Shares';
+import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from "./pages/NotFound";
@@ -49,9 +51,19 @@ const App = () => (
                   <Shares />
                 </ProtectedRoute>
               } />
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              } />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />

@@ -1,20 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingDown, Calendar, DollarSign } from 'lucide-react';
-
-interface Loan {
-  id: number;
-  product_name: string;
-  principal_amount: number;
-  outstanding_balance: number;
-  interest_rate: number;
-  monthly_payment: number;
-  next_payment_date: string;
-  status: 'active' | 'paid' | 'overdue' | 'pending';
-  created_at: string;
-}
+import { TrendingDown, Calendar, DollarSign, CreditCard } from 'lucide-react';
+import { LoanRepaymentForm } from './LoanRepaymentForm';
+import type { Loan } from '@/types/api';
 
 interface LoanTrackerProps {
   loan: Loan;
@@ -22,6 +13,7 @@ interface LoanTrackerProps {
 }
 
 export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
+  const [showRepaymentForm, setShowRepaymentForm] = useState(false);
   const amountPaid = loan.principal_amount - loan.outstanding_balance;
   const isOverdue = new Date(loan.next_payment_date) < new Date() && loan.status === 'active';
   
@@ -83,7 +75,13 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
         </div>
 
         <div className="flex gap-3">
-          <Button className="flex-1" variant={isOverdue ? 'destructive' : 'default'}>
+          <Button 
+            className="flex-1" 
+            variant={isOverdue ? 'destructive' : 'default'}
+            onClick={() => setShowRepaymentForm(true)}
+            disabled={loan.status !== 'active'}
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
             {isOverdue ? 'Pay Overdue Amount' : 'Make Payment'}
           </Button>
           <Button variant="outline" className="flex-1">
@@ -98,6 +96,12 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
             </p>
           </div>
         )}
+
+        <LoanRepaymentForm 
+          isOpen={showRepaymentForm}
+          onClose={() => setShowRepaymentForm(false)}
+          loan={loan}
+        />
       </CardContent>
     </Card>
   );

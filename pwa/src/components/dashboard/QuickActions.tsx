@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Minus, TrendingUp, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,13 +11,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { makeDeposit, makeWithdrawal } from '@/store/savingsSlice';
 import { useToast } from '@/hooks/use-toast';
+import { reportsAPI } from '@/api/reports';
 
 export function QuickActions() {
+  const navigate = useNavigate();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [downloadingStatement, setDownloadingStatement] = useState(false);
 
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -34,9 +38,11 @@ export function QuickActions() {
     }
 
     try {
-      await dispatch(makeDeposit({ 
-        accountId: parseInt(selectedAccount), 
-        amount: parseFloat(depositAmount) 
+      const result = await dispatch(makeDeposit({ 
+        account_id: parseInt(selectedAccount), 
+        amount: parseFloat(depositAmount),
+        payment_method: 'cash',
+        description: 'Quick deposit from dashboard'
       }) as any);
       
       toast({
@@ -67,25 +73,65 @@ export function QuickActions() {
     }
 
     try {
-      await dispatch(makeWithdrawal({ 
-        accountId: parseInt(selectedAccount), 
-        amount: parseFloat(withdrawAmount) 
+      const result = await dispatch(makeWithdrawal({ 
+        account_id: parseInt(selectedAccount), 
+        amount: parseFloat(withdrawAmount),
+        description: 'Quick withdrawal from dashboard'
       }) as any);
+      
+      if (makeWithdrawal.fulfilled.match(result)) {
+        toast({
+          title: "Success",
+          description: "Withdrawal completed successfully",
+        });
+        
+        setWithdrawAmount('');
+        setSelectedAccount('');
+        setIsWithdrawOpen(false);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process withdrawal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBuyShares = () => {
+    navigate('/shares');
+  };
+
+  const handleDownloadStatement = async () => {
+    setDownloadingStatement(true);
+    try {
+      const blob = await reportsAPI.downloadStatement({
+        from_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 30 days
+        to_date: new Date().toISOString().split('T')[0],
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `statement-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast({
         title: "Success",
-        description: "Withdrawal completed successfully",
+        description: "Statement downloaded successfully",
       });
-      
-      setWithdrawAmount('');
-      setSelectedAccount('');
-      setIsWithdrawOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to process withdrawal",
+        description: error.message || "Failed to download statement",
         variant: "destructive",
       });
+    } finally {
+      setDownloadingStatement(false);
     }
   };
 
@@ -112,7 +158,7 @@ export function QuickActions() {
       description: 'Invest in shares',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 hover:bg-blue-100',
-      onClick: () => {}, // TODO: Implement shares purchase
+      onClick: handleBuyShares
     },
     {
       icon: FileText,
@@ -120,7 +166,7 @@ export function QuickActions() {
       description: 'View account statement',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 hover:bg-purple-100',
-      onClick: () => {}, // TODO: Implement statement generation
+      onClick: handleDownloadStatement
     },
   ];
 
