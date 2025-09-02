@@ -77,7 +77,7 @@ export function AccountsList({ accounts, loading, onAccountSelect }: AccountsLis
             <div>
               <p className="text-sm text-muted-foreground">Current Balance</p>
               <p className="text-2xl font-bold text-primary">
-                KES {account.balance.toLocaleString()}
+                UGX {account.balance.toLocaleString()}
               </p>
             </div>
 

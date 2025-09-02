@@ -34,7 +34,7 @@
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #28a745, #20c997);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_balance'], 2) }}</div>
+                    <div class="stats-number">UGX {{ number_format($stats['total_balance'], 2) }}</div>
                     <div class="stats-label">Total Balance</div>
                 </div>
                 <div class="stats-icon">
@@ -145,8 +145,8 @@
                                         {{ ucfirst($transaction->transaction_type) }}
                                     </span>
                                 </td>
-                                <td>KSh {{ number_format($transaction->amount, 2) }}</td>
-                                <td>KSh {{ number_format($transaction->account->balance, 2) }}</td>
+                                <td>UGX {{ number_format($transaction->amount, 2) }}</td>
+                                <td>UGX {{ number_format($transaction->account->balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : ($transaction->status == 'pending' ? 'warning' : 'danger') }}">
                                         {{ ucfirst($transaction->status) }}
@@ -210,7 +210,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="amount" class="form-label">Amount (KSh)</label>
+                        <label for="amount" class="form-label">Amount (UGX)</label>
                         <input type="number" class="form-control" id="amount" name="amount" 
                                min="0.01" step="0.01" required>
                     </div>

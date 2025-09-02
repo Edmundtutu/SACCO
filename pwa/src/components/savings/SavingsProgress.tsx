@@ -26,10 +26,10 @@ export function SavingsProgress({ currentAmount, targetAmount, progressPercentag
         <div className="flex justify-between items-end">
           <div>
             <p className="text-2xl font-bold text-primary">
-              KES {currentAmount.toLocaleString()}
+              UGX {currentAmount.toLocaleString()}
             </p>
             <p className="text-sm text-muted-foreground">
-              of KES {targetAmount.toLocaleString()} target
+              of UGX {targetAmount.toLocaleString()} target
             </p>
           </div>
           <div className="text-right">
@@ -53,7 +53,7 @@ export function SavingsProgress({ currentAmount, targetAmount, progressPercentag
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-accent" />
               <p className="text-sm">
-                <span className="font-medium">KES {remaining.toLocaleString()}</span> more to reach your goal
+                <span className="font-medium">UGX {remaining.toLocaleString()}</span> more to reach your goal
               </p>
             </div>
           </div>

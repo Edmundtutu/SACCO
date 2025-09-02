@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { fetchLoans, fetchLoanProducts } from '@/store/loansSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,15 +14,15 @@ import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
 import { Calculator, FileText, CreditCard } from 'lucide-react';
 
 export default function Loans() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { loans, products, loading } = useSelector((state: RootState) => state.loans);
   const [selectedLoanId, setSelectedLoanId] = useState<number | null>(null);
   const [showApplication, setShowApplication] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   useEffect(() => {
-    dispatch(fetchLoans() as any);
-    dispatch(fetchLoanProducts() as any);
+    dispatch(fetchLoans());
+    dispatch(fetchLoanProducts());
   }, [dispatch]);
 
   const activeLoan = loans.find(loan => loan.status === 'active');
@@ -91,15 +91,15 @@ export default function Loans() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Principal</p>
-                          <p className="font-medium">KES {loan.principal_amount.toLocaleString()}</p>
+                          <p className="font-medium">UGX {loan.principal_amount.toLocaleString()}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Outstanding</p>
-                          <p className="font-medium">KES {loan.outstanding_balance.toLocaleString()}</p>
+                          <p className="font-medium">UGX {loan.outstanding_balance.toLocaleString()}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Monthly Payment</p>
-                          <p className="font-medium">KES {loan.monthly_payment.toLocaleString()}</p>
+                          <p className="font-medium">UGX {loan.monthly_payment.toLocaleString()}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Next Payment</p>
@@ -136,7 +136,7 @@ export default function Loans() {
                   </div>
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-2xl font-bold text-success">
-                      KES {totalOutstanding.toLocaleString()}
+                      UGX {totalOutstanding.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Outstanding</p>
                   </div>

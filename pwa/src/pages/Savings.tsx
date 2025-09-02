@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { fetchSavingsAccounts, fetchSavingsProducts, fetchTransactions } from '@/store/savingsSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,18 +13,18 @@ import { AccountsList } from '@/components/savings/AccountsList';
 import { TransactionHistory } from '@/components/savings/TransactionHistory';
 
 export default function Savings() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { accounts, products, transactions, loading } = useSelector((state: RootState) => state.savings);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
 
   useEffect(() => {
-    dispatch(fetchSavingsAccounts() as any);
-    dispatch(fetchSavingsProducts() as any);
+    dispatch(fetchSavingsAccounts());
+    dispatch(fetchSavingsProducts());
   }, [dispatch]);
 
   useEffect(() => {
     if (selectedAccountId) {
-      dispatch(fetchTransactions(selectedAccountId) as any);
+      dispatch(fetchTransactions(selectedAccountId));
     }
   }, [dispatch, selectedAccountId]);
 
@@ -96,7 +96,7 @@ export default function Savings() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Min. Balance:</span>
-                      <span className="font-medium">KES {product.minimum_balance.toLocaleString()}</span>
+                      <span className="font-medium">UGX {product.minimum_balance.toLocaleString()}</span>
                     </div>
                   </div>
 

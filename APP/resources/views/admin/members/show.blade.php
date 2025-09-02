@@ -126,7 +126,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Monthly Income:</strong></td>
-                                <td>{{ $member->monthly_income ? 'KSh ' . number_format($member->monthly_income, 2) : 'N/A' }}</td>
+                                <td>{{ $member->monthly_income ? 'UGX ' . number_format($member->monthly_income, 2) : 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -165,7 +165,7 @@
                             <tr>
                                 <td>{{ $account->account_number }}</td>
                                 <td>{{ ucfirst($account->account_type) }}</td>
-                                <td>KSh {{ number_format($account->balance, 2) }}</td>
+                                <td>UGX {{ number_format($account->balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-{{ $account->status == 'active' ? 'success' : 'secondary' }}">
                                         {{ ucfirst($account->status) }}
@@ -205,8 +205,8 @@
                             @foreach($member->loans as $loan)
                             <tr>
                                 <td>{{ $loan->loan_number }}</td>
-                                <td>KSh {{ number_format($loan->principal_amount, 2) }}</td>
-                                <td>KSh {{ number_format($loan->outstanding_balance ?? $loan->principal_amount, 2) }}</td>
+                                <td>UGX {{ number_format($loan->principal_amount, 2) }}</td>
+                                <td>UGX {{ number_format($loan->outstanding_balance ?? $loan->principal_amount, 2) }}</td>
                                 <td>
                                     <span class="badge bg-{{ $loan->status == 'active' ? 'success' : ($loan->status == 'pending' ? 'warning' : 'secondary') }}">
                                         {{ ucfirst($loan->status) }}
@@ -234,7 +234,7 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-12 mb-3">
-                        <h4 class="text-primary">KSh {{ number_format($member->accounts->sum('balance'), 2) }}</h4>
+                        <h4 class="text-primary">UGX {{ number_format($member->accounts->sum('balance'), 2) }}</h4>
                         <small class="text-muted">Total Savings</small>
                     </div>
                     <div class="col-6">
@@ -262,7 +262,7 @@
                         <small class="text-muted">Total Shares</small>
                     </div>
                     <div class="col-12">
-                        <h5>KSh {{ number_format($member->shares->sum('amount'), 2) }}</h5>
+                        <h5>UGX {{ number_format($member->shares->sum('amount'), 2) }}</h5>
                         <small class="text-muted">Share Value</small>
                     </div>
                 </div>
@@ -295,7 +295,7 @@
                             </div>
                             <div class="text-end">
                                 <small class="fw-bold text-{{ $transaction->transaction_type == 'deposit' ? 'success' : 'warning' }}">
-                                    {{ $transaction->transaction_type == 'deposit' ? '+' : '-' }}KSh {{ number_format($transaction->amount, 2) }}
+                                    {{ $transaction->transaction_type == 'deposit' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 2) }}
                                 </small>
                             </div>
                         </div>

@@ -36,7 +36,7 @@ export const authAPI = {
     return response.data;
   },
 
-  async updateProfile(profileData: any) {
+  async updateProfile(profileData: Record<string, unknown>) {
     const response = await apiClient.put('/auth/profile', profileData);
     return response.data;
   },

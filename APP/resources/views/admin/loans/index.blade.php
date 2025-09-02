@@ -62,7 +62,7 @@
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #6f42c1, #e83e8c);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_disbursed'], 0) }}</div>
+                    <div class="stats-number">UGX {{ number_format($stats['total_disbursed'], 0) }}</div>
                     <div class="stats-label">Total Disbursed</div>
                 </div>
                 <div class="stats-icon">
@@ -186,8 +186,8 @@
                                     </div>
                                 </td>
                                 <td>{{ $loan->loanProduct->name ?? 'N/A' }}</td>
-                                <td>KSh {{ number_format($loan->principal_amount, 2) }}</td>
-                                <td>KSh {{ number_format($loan->outstanding_balance ?? $loan->principal_amount, 2) }}</td>
+                                <td>UGX {{ number_format($loan->principal_amount, 2) }}</td>
+                                <td>UGX {{ number_format($loan->outstanding_balance ?? $loan->principal_amount, 2) }}</td>
                                 <td>
                                     @switch($loan->status)
                                         @case('pending')

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
 import { fetchLoans } from '@/store/loansSlice';
 import { fetchShares } from '@/store/sharesSlice';
@@ -12,15 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock } from 'lucide-react';
 
 export function Dashboard() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { accounts } = useSelector((state: RootState) => state.savings);
   const { loans } = useSelector((state: RootState) => state.loans);
 
   useEffect(() => {
-    dispatch(fetchSavingsAccounts() as any);
-    dispatch(fetchLoans() as any);
-    dispatch(fetchShares() as any);
+    dispatch(fetchSavingsAccounts());
+    dispatch(fetchLoans());
+    dispatch(fetchShares());
   }, [dispatch]);
 
   const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
@@ -28,9 +28,9 @@ export function Dashboard() {
   const nextPayment = loans.find(loan => loan.status === 'active')?.next_payment_date;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-UG', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'UGX',
       minimumFractionDigits: 0,
     }).format(amount);
   };
