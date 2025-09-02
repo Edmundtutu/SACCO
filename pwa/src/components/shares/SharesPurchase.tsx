@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { purchaseShares } from '@/store/sharesSlice';
 import { useToast } from '@/hooks/use-toast';
+import { RootState } from '@/store';
 import { ShoppingCart, Calculator, TrendingUp } from 'lucide-react';
 
 interface SharesPurchaseProps {
@@ -17,11 +19,12 @@ interface SharesPurchaseProps {
 export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
+  const { loading } = useSelector((state: RootState) => state.shares);
   
   const [amount, setAmount] = useState('');
   const [shares, setShares] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [calculationMode, setCalculationMode] = useState<'amount' | 'shares'>('amount');
-  const [loading, setLoading] = useState(false);
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
@@ -55,29 +58,28 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
       return;
     }
 
-    setLoading(true);
-    
     try {
-      await dispatch(purchaseShares({
+      const result = await dispatch(purchaseShares({
         amount: parseFloat(amount),
         shares: parseInt(shares),
-      }));
+        payment_method: paymentMethod,
+      }) as any);
       
-      toast({
-        title: "Success",
-        description: `Successfully purchased ${shares} shares`,
-      });
-      
-      setAmount('');
-      setShares('');
-    } catch (error) {
+      if (purchaseShares.fulfilled.match(result)) {
+        toast({
+          title: "Success",
+          description: `Successfully purchased ${shares} shares`,
+        });
+        
+        setAmount('');
+        setShares('');
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to purchase shares",
+        description: error.message || "Failed to purchase shares",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -131,7 +133,28 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
                 value={shares}
                 onChange={(e) => handleSharesChange(e.target.value)}
                 className={calculationMode === 'shares' ? 'border-primary' : ''}
+                disabled={loading}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="payment_method">Payment Method</Label>
+              <Select 
+                value={paymentMethod} 
+                onValueChange={setPaymentMethod}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="deduction">Salary Deduction</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

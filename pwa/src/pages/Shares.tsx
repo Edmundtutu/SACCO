@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/store';
-import { fetchShares, fetchDividends } from '@/store/sharesSlice';
+import { RootState } from '@/store';
+import { fetchShares, fetchDividends, fetchCertificates } from '@/store/sharesSlice';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,12 +13,15 @@ import { SharesCertificate } from '@/components/shares/SharesCertificate';
 import { TrendingUp, DollarSign, Award, FileText } from 'lucide-react';
 
 export default function Shares() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { account, dividends, loading } = useSelector((state: RootState) => state.shares);
+
+  const dispatch = useDispatch();
+  const { account, dividends, certificates, loading } = useSelector((state: RootState) => state.shares);
 
   useEffect(() => {
-    dispatch(fetchShares());
-    dispatch(fetchDividends());
+    dispatch(fetchShares() as any);
+    dispatch(fetchDividends() as any);
+    dispatch(fetchCertificates() as any);
+
   }, [dispatch]);
 
   const currentValue = account?.total_value || 0;
@@ -183,7 +187,7 @@ export default function Shares() {
         </TabsContent>
 
         <TabsContent value="certificates">
-          <SharesCertificate account={account} />
+          <SharesCertificate account={account} certificates={certificates} />
         </TabsContent>
       </Tabs>
     </div>

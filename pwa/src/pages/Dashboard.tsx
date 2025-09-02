@@ -9,13 +9,14 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock, PieChart } from 'lucide-react';
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { accounts } = useSelector((state: RootState) => state.savings);
   const { loans } = useSelector((state: RootState) => state.loans);
+  const { account: sharesAccount } = useSelector((state: RootState) => state.shares);
 
   useEffect(() => {
     dispatch(fetchSavingsAccounts());
@@ -25,7 +26,9 @@ export function Dashboard() {
 
   const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
   const totalLoans = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
+  const totalShares = sharesAccount?.total_value || 0;
   const nextPayment = loans.find(loan => loan.status === 'active')?.next_payment_date;
+  const nextPaymentAmount = loans.find(loan => loan.status === 'active')?.next_payment_amount || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
@@ -94,7 +97,7 @@ export function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -128,7 +131,28 @@ export function Dashboard() {
             {nextPayment && (
               <div className="mt-4">
                 <p className="text-xs text-muted-foreground">
-                  Next payment: {new Date(nextPayment).toLocaleDateString()}
+                  Next payment: {new Date(nextPayment).toLocaleDateString()} - {formatCurrency(nextPaymentAmount)}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Share Capital</p>
+                <p className="text-2xl font-bold font-heading">{formatCurrency(totalShares)}</p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                <PieChart className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+            {sharesAccount && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">
+                  {sharesAccount.total_shares} shares @ {formatCurrency(sharesAccount.share_value)} each
                 </p>
               </div>
             )}

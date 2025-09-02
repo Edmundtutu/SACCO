@@ -1,33 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { savingsAPI } from '../api/savings';
-
-interface SavingsAccount {
-  id: number;
-  account_number: string;
-  product_name: string;
-  balance: number;
-  interest_rate: number;
-  status: 'active' | 'dormant' | 'closed';
-  created_at: string;
-}
-
-interface SavingsProduct {
-  id: number;
-  name: string;
-  description: string;
-  minimum_balance: number;
-  interest_rate: number;
-  features: string[];
-}
-
-interface Transaction {
-  id: number;
-  type: 'deposit' | 'withdrawal' | 'interest' | 'fee';
-  amount: number;
-  balance_after: number;
-  description: string;
-  created_at: string;
-}
+import { savingsAPI, DepositData, WithdrawalData } from '../api/savings';
+import type { SavingsAccount, SavingsProduct, Transaction } from '@/types/api';
 
 interface SavingsState {
   accounts: SavingsAccount[];
@@ -49,7 +22,10 @@ export const fetchSavingsAccounts = createAsyncThunk(
   'savings/fetchAccounts',
   async () => {
     const response = await savingsAPI.getAccounts();
-    return response;
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to fetch savings accounts');
   }
 );
 
@@ -57,7 +33,10 @@ export const fetchSavingsProducts = createAsyncThunk(
   'savings/fetchProducts',
   async () => {
     const response = await savingsAPI.getProducts();
-    return response;
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to fetch savings products');
   }
 );
 
@@ -65,23 +44,43 @@ export const fetchTransactions = createAsyncThunk(
   'savings/fetchTransactions',
   async (accountId: number) => {
     const response = await savingsAPI.getTransactions(accountId);
-    return response;
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to fetch transactions');
   }
 );
 
 export const makeDeposit = createAsyncThunk(
   'savings/deposit',
-  async ({ accountId, amount }: { accountId: number; amount: number }) => {
-    const response = await savingsAPI.deposit(accountId, amount);
-    return response;
+  async (depositData: DepositData) => {
+    const response = await savingsAPI.deposit(depositData);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to make deposit');
   }
 );
 
 export const makeWithdrawal = createAsyncThunk(
   'savings/withdraw',
-  async ({ accountId, amount }: { accountId: number; amount: number }) => {
-    const response = await savingsAPI.withdraw(accountId, amount);
-    return response;
+  async (withdrawalData: WithdrawalData) => {
+    const response = await savingsAPI.withdraw(withdrawalData);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to make withdrawal');
+  }
+);
+
+export const openSavingsAccount = createAsyncThunk(
+  'savings/openAccount',
+  async (productId: number) => {
+    const response = await savingsAPI.openAccount(productId);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to open savings account');
   }
 );
 
@@ -113,21 +112,57 @@ const savingsSlice = createSlice({
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.transactions = action.payload;
       })
+      .addCase(makeDeposit.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(makeDeposit.fulfilled, (state, action) => {
-        // Update account balance and add transaction
-        const account = state.accounts.find(acc => acc.id === action.payload.account_id);
+        state.loading = false;
+        // Update account balance
+        const transaction = action.payload;
+        const account = state.accounts.find(acc => acc.id === transaction.account_id);
         if (account) {
-          account.balance = action.payload.balance_after;
+          account.balance = transaction.balance_after;
+          account.available_balance = transaction.balance_after;
         }
-        state.transactions.unshift(action.payload);
+        // Add transaction to the beginning of the list
+        state.transactions.unshift(transaction);
+      })
+      .addCase(makeDeposit.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to make deposit';
+      })
+      .addCase(makeWithdrawal.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(makeWithdrawal.fulfilled, (state, action) => {
-        // Update account balance and add transaction
-        const account = state.accounts.find(acc => acc.id === action.payload.account_id);
+        state.loading = false;
+        // Update account balance
+        const transaction = action.payload;
+        const account = state.accounts.find(acc => acc.id === transaction.account_id);
         if (account) {
-          account.balance = action.payload.balance_after;
+          account.balance = transaction.balance_after;
+          account.available_balance = transaction.balance_after;
         }
-        state.transactions.unshift(action.payload);
+        // Add transaction to the beginning of the list
+        state.transactions.unshift(transaction);
+      })
+      .addCase(makeWithdrawal.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to make withdrawal';
+      })
+      .addCase(openSavingsAccount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(openSavingsAccount.fulfilled, (state, action) => {
+        state.loading = false;
+        state.accounts.push(action.payload);
+      })
+      .addCase(openSavingsAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to open account';
       });
   },
 });

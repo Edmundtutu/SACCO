@@ -1,15 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authAPI } from '../api/auth';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  member_number?: string;
-  status: 'active' | 'pending' | 'suspended';
-  created_at: string;
-}
+import type { User, ProfileUpdateData } from '@/types/api';
 
 interface AuthState {
   user: User | null;
@@ -31,8 +22,11 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, password }: { email: string; password: string }) => {
     const response = await authAPI.login(email, password);
-    localStorage.setItem('token', response.token);
-    return response;
+    if (response.success && response.data) {
+      localStorage.setItem('token', response.data.token);
+      return response.data;
+    }
+    throw new Error(response.message || 'Login failed');
   }
 );
 
@@ -40,20 +34,29 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: { name: string; email: string; password: string; phone: string }) => {
     const response = await authAPI.register(userData);
-    return response;
+    if (response.success) {
+      return response;
+    }
+    throw new Error(response.message || 'Registration failed');
   }
 );
 
 export const fetchProfile = createAsyncThunk('auth/profile', async () => {
   const response = await authAPI.getProfile();
-  return response;
+  if (response.success && response.data) {
+    return response.data.user;
+  }
+  throw new Error(response.message || 'Failed to fetch profile');
 });
 
 export const updateProfile = createAsyncThunk(
   'auth/updateProfile',
-  async (profileData: Partial<User>) => {
+  async (profileData: ProfileUpdateData) => {
     const response = await authAPI.updateProfile(profileData);
-    return response;
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to update profile');
   }
 );
 
@@ -61,12 +64,20 @@ export const changePassword = createAsyncThunk(
   'auth/changePassword',
   async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
     const response = await authAPI.changePassword(currentPassword, newPassword);
-    return response;
+    if (response.success) {
+      return response;
+    }
+    throw new Error(response.message || 'Failed to change password');
   }
 );
 
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
-  await authAPI.logout();
+  try {
+    await authAPI.logout();
+  } catch (error) {
+    // Even if logout fails on server, we should clear local storage
+    console.warn('Logout API call failed, but continuing with local cleanup');
+  }
   localStorage.removeItem('token');
 });
 

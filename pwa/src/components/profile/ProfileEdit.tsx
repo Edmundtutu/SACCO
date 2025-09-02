@@ -1,64 +1,57 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { User, Save } from 'lucide-react';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  id_number?: string;
-  created_at: string;
-}
+import { RootState } from '@/store';
+import { updateProfile } from '@/store/authSlice';
+import type { User as UserType } from '@/types/api';
 
 interface ProfileEditProps {
-  user: User | null;
+  user: UserType | null;
 }
 
 export function ProfileEdit({ user }: ProfileEditProps) {
+  const dispatch = useDispatch();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { loading } = useSelector((state: RootState) => state.auth);
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    email: user?.email || '',
     phone: user?.phone || '',
-    id_number: user?.id_number || '',
+    address: user?.address || '',
+    occupation: user?.occupation || '',
+    monthly_income: user?.monthly_income ? parseFloat(user.monthly_income) : 0,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email) {
+    if (!formData.name) {
       toast({
         title: "Error",
-        description: "Name and email are required",
+        description: "Name is required",
         variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
-    
     try {
-      // TODO: Implement profile update API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
+      const result = await dispatch(updateProfile(formData) as any);
+      if (updateProfile.fulfilled.match(result)) {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -82,18 +75,7 @@ export function ProfileEdit({ user }: ProfileEditProps) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter your full name"
                 required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter your email"
-                required
+                disabled={loading}
               />
             </div>
             
@@ -105,17 +87,43 @@ export function ProfileEdit({ user }: ProfileEditProps) {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="Enter your phone number"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Enter your address"
+                disabled={loading}
               />
             </div>
             
             <div>
-              <Label htmlFor="id_number">ID Number</Label>
+              <Label htmlFor="occupation">Occupation</Label>
               <Input
-                id="id_number"
+                id="occupation"
                 type="text"
-                value={formData.id_number}
-                onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
-                placeholder="Enter your ID number"
+                value={formData.occupation}
+                onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                placeholder="Enter your occupation"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="monthly_income">Monthly Income (KES)</Label>
+              <Input
+                id="monthly_income"
+                type="number"
+                value={formData.monthly_income || ''}
+                onChange={(e) => setFormData({ ...formData, monthly_income: parseFloat(e.target.value) || 0 })}
+                placeholder="Enter your monthly income"
+                disabled={loading}
               />
             </div>
           </div>
@@ -129,11 +137,13 @@ export function ProfileEdit({ user }: ProfileEditProps) {
               type="button" 
               variant="outline" 
               className="flex-1"
+              disabled={loading}
               onClick={() => setFormData({
                 name: user?.name || '',
-                email: user?.email || '',
                 phone: user?.phone || '',
-                id_number: user?.id_number || '',
+                address: user?.address || '',
+                occupation: user?.occupation || '',
+                monthly_income: user?.monthly_income ? parseFloat(user.monthly_income) : 0,
               })}
             >
               Reset

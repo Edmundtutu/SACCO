@@ -1,31 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { loansAPI } from '../api/loans';
-
-interface Loan {
-  id: number;
-  product_name: string;
-  principal_amount: number;
-  outstanding_balance: number;
-  interest_rate: number;
-  monthly_payment: number;
-  next_payment_date: string;
-  status: 'active' | 'paid' | 'overdue' | 'pending';
-  created_at: string;
-}
-
-interface LoanProduct {
-  id: number;
-  name: string;
-  description: string;
-  max_amount: number;
-  interest_rate: number;
-  max_term_months: number;
-  requirements: string[];
-}
+import { loansAPI, RepaymentData } from '../api/loans';
+import type { Loan, LoanProduct, LoanApplication, RepaymentSchedule } from '@/types/api';
 
 interface LoansState {
   loans: Loan[];
   products: LoanProduct[];
+  selectedLoan: Loan | null;
+  repaymentSchedule: RepaymentSchedule[];
   loading: boolean;
   error: string | null;
 }
@@ -33,33 +14,66 @@ interface LoansState {
 const initialState: LoansState = {
   loans: [],
   products: [],
+  selectedLoan: null,
+  repaymentSchedule: [],
   loading: false,
   error: null,
 };
 
 export const fetchLoans = createAsyncThunk('loans/fetchLoans', async () => {
   const response = await loansAPI.getLoans();
-  return response;
+  if (response.success && response.data) {
+    return response.data;
+  }
+  throw new Error(response.message || 'Failed to fetch loans');
 });
 
 export const fetchLoanProducts = createAsyncThunk('loans/fetchProducts', async () => {
   const response = await loansAPI.getProducts();
-  return response;
+  if (response.success && response.data) {
+    return response.data;
+  }
+  throw new Error(response.message || 'Failed to fetch loan products');
 });
+
+export const fetchLoan = createAsyncThunk('loans/fetchLoan', async (loanId: number) => {
+  const response = await loansAPI.getLoan(loanId);
+  if (response.success && response.data) {
+    return response.data;
+  }
+  throw new Error(response.message || 'Failed to fetch loan details');
+});
+
+export const fetchRepaymentSchedule = createAsyncThunk(
+  'loans/fetchSchedule',
+  async (loanId: number) => {
+    const response = await loansAPI.getRepaymentSchedule(loanId);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to fetch repayment schedule');
+  }
+);
 
 export const applyForLoan = createAsyncThunk(
   'loans/apply',
-  async (loanData: { product_id: number; amount: number; term_months: number; purpose: string }) => {
+  async (loanData: LoanApplication) => {
     const response = await loansAPI.apply(loanData);
-    return response;
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to apply for loan');
   }
 );
 
 export const repayLoan = createAsyncThunk(
   'loans/repay',
-  async ({ loanId, amount }: { loanId: number; amount: number }) => {
-    const response = await loansAPI.repay(loanId, amount);
-    return response;
+  async ({ loanId, repaymentData }: { loanId: number; repaymentData: RepaymentData }) => {
+    const response = await loansAPI.repay(loanId, repaymentData);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response.message || 'Failed to make loan repayment');
   }
 );
 

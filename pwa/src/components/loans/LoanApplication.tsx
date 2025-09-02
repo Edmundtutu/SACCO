@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,17 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { applyForLoan } from '@/store/loansSlice';
 import { useToast } from '@/hooks/use-toast';
+import { RootState } from '@/store';
 import { Calculator } from 'lucide-react';
-
-interface LoanProduct {
-  id: number;
-  name: string;
-  description: string;
-  max_amount: number;
-  interest_rate: number;
-  max_term_months: number;
-  requirements: string[];
-}
+import type { LoanProduct } from '@/types/api';
 
 interface LoanApplicationProps {
   products: LoanProduct[];
@@ -31,6 +23,7 @@ interface LoanApplicationProps {
 export function LoanApplication({ products, selectedProductId, onClose }: LoanApplicationProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
+  const { loading } = useSelector((state: RootState) => state.loans);
   
   const [formData, setFormData] = useState({
     product_id: selectedProductId || '',
@@ -38,8 +31,6 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
     term_months: '',
     purpose: '',
   });
-  
-  const [loading, setLoading] = useState(false);
 
   const selectedProduct = products.find(p => p.id === Number(formData.product_id));
   
@@ -71,30 +62,27 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
       return;
     }
 
-    setLoading(true);
-    
     try {
-      await dispatch(applyForLoan({
+      const result = await dispatch(applyForLoan({
         product_id: parseInt(formData.product_id),
         amount: parseFloat(formData.amount),
         term_months: parseInt(formData.term_months),
         purpose: formData.purpose,
       }));
       
-      toast({
-        title: "Success",
-        description: "Loan application submitted successfully",
-      });
-      
-      onClose();
-    } catch (error) {
+      if (applyForLoan.fulfilled.match(result)) {
+        toast({
+          title: "Success",
+          description: "Loan application submitted successfully. You will be notified once reviewed.",
+        });
+        onClose();
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to submit loan application",
+        description: error.message || "Failed to submit loan application",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
