@@ -111,10 +111,10 @@ export function TransactionHistory({ transactions, loading, accountId }: Transac
 
                 <div className="text-right">
                   <p className={`font-bold ${getTransactionColor(transaction.type)}`}>
-                    {getAmountPrefix(transaction.type)}KES {transaction.amount.toLocaleString()}
+                    {getAmountPrefix(transaction.type)}UGX {transaction.amount.toLocaleString()}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Bal: KES {transaction.balance_after.toLocaleString()}
+                    Bal: UGX {transaction.balance_after.toLocaleString()}
                   </p>
                 </div>
               </div>

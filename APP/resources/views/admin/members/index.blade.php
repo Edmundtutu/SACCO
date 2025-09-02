@@ -121,7 +121,7 @@
                                 <td>
                                     <small class="text-muted">
                                         {{ $member->accounts->count() }} account(s)<br>
-                                        Balance: KSh {{ number_format($member->accounts->sum('balance'), 2) }}
+                                        Balance: UGX {{ number_format($member->accounts->sum('balance'), 2) }}
                                     </small>
                                 </td>
                                 <td>

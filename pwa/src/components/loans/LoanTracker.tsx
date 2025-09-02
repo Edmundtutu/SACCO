@@ -42,7 +42,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
             <DollarSign className="w-6 h-6 text-success mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Amount Paid</p>
             <p className="text-xl font-bold text-success">
-              KES {amountPaid.toLocaleString()}
+              UGX {amountPaid.toLocaleString()}
             </p>
           </div>
           
@@ -50,7 +50,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
             <TrendingDown className="w-6 h-6 text-destructive mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Outstanding</p>
             <p className="text-xl font-bold text-destructive">
-              KES {loan.outstanding_balance.toLocaleString()}
+              UGX {loan.outstanding_balance.toLocaleString()}
             </p>
           </div>
           
@@ -61,7 +61,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
               {new Date(loan.next_payment_date).toLocaleDateString()}
             </p>
             <p className="text-sm font-medium">
-              KES {loan.monthly_payment.toLocaleString()}
+              UGX {loan.monthly_payment.toLocaleString()}
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
           <Progress value={repaymentProgress} className="h-3" />
           
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Principal: KES {loan.principal_amount.toLocaleString()}</span>
+            <span>Principal: UGX {loan.principal_amount.toLocaleString()}</span>
             <span>Interest: {loan.interest_rate}% p.a.</span>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { makeDeposit, makeWithdrawal } from '@/store/savingsSlice';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,7 +18,7 @@ export function QuickActions() {
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
   const { accounts } = useSelector((state: RootState) => state.savings);
   const { loading } = useSelector((state: RootState) => state.savings);
@@ -37,7 +37,7 @@ export function QuickActions() {
       await dispatch(makeDeposit({ 
         accountId: parseInt(selectedAccount), 
         amount: parseFloat(depositAmount) 
-      }) as any);
+      }));
       
       toast({
         title: "Success",
@@ -70,7 +70,7 @@ export function QuickActions() {
       await dispatch(makeWithdrawal({ 
         accountId: parseInt(selectedAccount), 
         amount: parseFloat(withdrawAmount) 
-      }) as any);
+      }));
       
       toast({
         title: "Success",
@@ -171,7 +171,7 @@ export function QuickActions() {
               </div>
               
               <div>
-                <Label htmlFor="deposit-amount">Amount (KES)</Label>
+                <Label htmlFor="deposit-amount">Amount (UGX)</Label>
                 <Input
                   id="deposit-amount"
                   type="number"
@@ -216,7 +216,7 @@ export function QuickActions() {
               </div>
               
               <div>
-                <Label htmlFor="withdraw-amount">Amount (KES)</Label>
+                <Label htmlFor="withdraw-amount">Amount (UGX)</Label>
                 <Input
                   id="withdraw-amount"
                   type="number"

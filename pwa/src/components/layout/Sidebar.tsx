@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, PiggyBank, CreditCard, TrendingUp, User, LogOut, Settings } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { logoutUser } from '@/store/authSlice';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,11 +17,11 @@ const navigationItems = [
 
 export function Sidebar() {
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = () => {
-    dispatch(logoutUser() as any);
+    dispatch(logoutUser());
   };
 
   return (
