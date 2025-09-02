@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,7 @@ interface LoanApplicationProps {
 }
 
 export function LoanApplication({ products, selectedProductId, onClose }: LoanApplicationProps) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
   const { loading } = useSelector((state: RootState) => state.loans);
   
@@ -67,7 +68,7 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
         amount: parseFloat(formData.amount),
         term_months: parseInt(formData.term_months),
         purpose: formData.purpose,
-      }) as any);
+      }));
       
       if (applyForLoan.fulfilled.match(result)) {
         toast({
@@ -114,7 +115,7 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="amount">Loan Amount (KES) *</Label>
+              <Label htmlFor="amount">Loan Amount (UGX) *</Label>
               <Input
                 id="amount"
                 type="number"
@@ -125,7 +126,7 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
               />
               {selectedProduct && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Max: KES {selectedProduct.max_amount.toLocaleString()}
+                  Max: UGX {selectedProduct.max_amount.toLocaleString()}
                 </p>
               )}
             </div>
@@ -171,7 +172,7 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Loan Amount:</p>
-                    <p className="font-medium">KES {parseFloat(formData.amount).toLocaleString()}</p>
+                    <p className="font-medium">UGX {parseFloat(formData.amount).toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Interest Rate:</p>
@@ -184,7 +185,7 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
                   <div>
                     <p className="text-muted-foreground">Monthly Payment:</p>
                     <p className="font-bold text-primary">
-                      KES {calculateMonthlyPayment().toLocaleString()}
+                      UGX {calculateMonthlyPayment().toLocaleString()}
                     </p>
                   </div>
                 </div>

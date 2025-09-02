@@ -173,7 +173,7 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="monthly_income" class="form-label">Monthly Income (KSh) <span class="text-danger">*</span></label>
+                                <label for="monthly_income" class="form-label">Monthly Income (UGX) <span class="text-danger">*</span></label>
                                 <input type="number" 
                                        class="form-control @error('monthly_income') is-invalid @enderror" 
                                        id="monthly_income" 
@@ -269,7 +269,7 @@
                     </tr>
                     <tr>
                         <td><strong>Total Balance:</strong></td>
-                        <td>KSh {{ number_format($member->accounts->sum('balance'), 2) }}</td>
+                        <td>UGX {{ number_format($member->accounts->sum('balance'), 2) }}</td>
                     </tr>
                     <tr>
                         <td><strong>Active Loans:</strong></td>

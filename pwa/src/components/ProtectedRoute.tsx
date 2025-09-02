@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useLocation } from 'react-router-dom';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { fetchProfile, setAuthenticated } from '@/store/authSlice';
 
 interface ProtectedRouteProps {
@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const { isAuthenticated, user, token } = useSelector((state: RootState) => state.auth);
 
@@ -17,7 +17,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const checkAuth = async () => {
       if (token && !user) {
         try {
-          await dispatch(fetchProfile() as any);
+          await dispatch(fetchProfile());
           dispatch(setAuthenticated(true));
         } catch (error) {
           localStorage.removeItem('token');

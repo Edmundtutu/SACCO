@@ -87,14 +87,14 @@ export function SharesCertificate({ account, certificates }: SharesCertificatePr
                 <div>
                   <p className="text-muted-foreground">Share Value</p>
                   <p className="font-bold">
-                    KES {account.share_value.toLocaleString()} per share
+                    UGX {account.share_value.toLocaleString()} per share
                   </p>
                 </div>
                 
                 <div>
                   <p className="text-muted-foreground">Total Value</p>
                   <p className="text-xl font-bold text-success">
-                    KES {account.total_value.toLocaleString()}
+                    UGX {account.total_value.toLocaleString()}
                   </p>
                 </div>
               </div>

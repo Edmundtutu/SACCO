@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { fetchShares, fetchDividends, fetchCertificates } from '@/store/sharesSlice';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ import { SharesCertificate } from '@/components/shares/SharesCertificate';
 import { TrendingUp, DollarSign, Award, FileText } from 'lucide-react';
 
 export default function Shares() {
+
   const dispatch = useDispatch();
   const { account, dividends, certificates, loading } = useSelector((state: RootState) => state.shares);
 
@@ -19,6 +21,7 @@ export default function Shares() {
     dispatch(fetchShares() as any);
     dispatch(fetchDividends() as any);
     dispatch(fetchCertificates() as any);
+
   }, [dispatch]);
 
   const currentValue = account?.total_value || 0;
@@ -45,7 +48,7 @@ export default function Shares() {
           <CardContent>
             <div className="text-2xl font-bold text-primary">{shareCount.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              @ KES {shareValue.toLocaleString()} per share
+              @ UGX {shareValue.toLocaleString()} per share
             </p>
           </CardContent>
         </Card>
@@ -56,7 +59,7 @@ export default function Shares() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">KES {currentValue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-success">UGX {currentValue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Current market value
             </p>
@@ -69,7 +72,7 @@ export default function Shares() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">KES {totalDividends.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-accent">UGX {totalDividends.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {account?.last_dividend_date ? 
                 `Last: ${new Date(account.last_dividend_date).toLocaleDateString()}` : 
@@ -105,7 +108,7 @@ export default function Shares() {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Share Value</p>
-                          <p className="text-xl font-bold">KES {account.share_value.toLocaleString()}</p>
+                          <p className="text-xl font-bold">UGX {account.share_value.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
@@ -115,16 +118,16 @@ export default function Shares() {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span>Current Value:</span>
-                          <span className="font-medium">KES {account.total_value.toLocaleString()}</span>
+                          <span className="font-medium">UGX {account.total_value.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Dividends Earned:</span>
-                          <span className="font-medium text-success">KES {account.dividends_earned.toLocaleString()}</span>
+                          <span className="font-medium text-success">UGX {account.dividends_earned.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between border-t pt-2">
                           <span className="font-medium">Total Return:</span>
                           <span className="font-bold text-primary">
-                            KES {(account.total_value + account.dividends_earned).toLocaleString()}
+                            UGX {(account.total_value + account.dividends_earned).toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -153,7 +156,7 @@ export default function Shares() {
                           <p className="text-sm text-muted-foreground">{dividend.rate}% rate</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-success">KES {dividend.amount.toLocaleString()}</p>
+                          <p className="font-bold text-success">UGX {dividend.amount.toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(dividend.paid_date).toLocaleDateString()}
                           </p>

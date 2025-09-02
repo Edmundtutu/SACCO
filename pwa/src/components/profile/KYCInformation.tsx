@@ -214,7 +214,7 @@ export function KYCInformation({ user }: KYCInformationProps) {
   );
 }
 
-function Label({ className, children, ...props }: any) {
+function Label({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label className={`text-sm font-medium text-muted-foreground ${className}`} {...props}>
       {children}

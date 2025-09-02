@@ -55,7 +55,7 @@ export function DividendHistory({ dividends, loading }: DividendHistoryProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">
-              KES {totalDividends.toLocaleString()}
+              UGX {totalDividends.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               All time earnings
@@ -139,7 +139,7 @@ export function DividendHistory({ dividends, loading }: DividendHistoryProps) {
 
                     <div className="text-right">
                       <p className="text-xl font-bold text-success">
-                        KES {dividend.amount.toLocaleString()}
+                        UGX {dividend.amount.toLocaleString()}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Amount received

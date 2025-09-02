@@ -39,7 +39,7 @@ export function LoanProducts({ products, onApply }: LoanProductsProps) {
                 <TrendingUp className="w-4 h-4 text-success mx-auto mb-1" />
                 <p className="text-xs text-muted-foreground">Max Amount</p>
                 <p className="font-bold text-success">
-                  KES {product.max_amount.toLocaleString()}
+                  UGX {product.max_amount.toLocaleString()}
                 </p>
               </div>
               

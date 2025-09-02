@@ -98,6 +98,7 @@ export function AccountsList({ accounts, loading, onAccountSelect }: AccountsLis
                 )}
               </div>
 
+
               <div className="flex justify-between text-sm">
                 <div>
                   <p className="text-muted-foreground">Interest Rate</p>

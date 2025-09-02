@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ interface SharesPurchaseProps {
 }
 
 export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProps) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
   const { loading } = useSelector((state: RootState) => state.shares);
   
@@ -100,7 +101,7 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Current Share Price</p>
               <p className="text-2xl font-bold text-primary">
-                KES {shareValue.toLocaleString()}
+                UGX {shareValue.toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground">per share</p>
             </div>
@@ -108,7 +109,7 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="amount">Investment Amount (KES)</Label>
+              <Label htmlFor="amount">Investment Amount (UGX)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -197,7 +198,7 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Investment Amount</p>
               <p className="text-xl font-bold text-primary">
-                KES {totalValue.toLocaleString()}
+                UGX {totalValue.toLocaleString()}
               </p>
             </div>
           </div>

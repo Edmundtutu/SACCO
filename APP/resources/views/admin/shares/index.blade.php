@@ -34,7 +34,7 @@
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #28a745, #20c997);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">KSh {{ number_format($stats['total_value'], 2) }}</div>
+                    <div class="stats-number">UGX {{ number_format($stats['total_value'], 2) }}</div>
                     <div class="stats-label">Total Value</div>
                 </div>
                 <div class="stats-icon">
@@ -139,8 +139,8 @@
                                     <small class="text-muted">{{ $purchase->user->member_number ?? $purchase->user->email }}</small>
                                 </td>
                                 <td>{{ number_format($purchase->shares_count) }}</td>
-                                <td>KSh {{ number_format($purchase->amount, 2) }}</td>
-                                <td>KSh {{ number_format($purchase->shares_count > 0 ? $purchase->amount / $purchase->shares_count : 0, 2) }}</td>
+                                <td>UGX {{ number_format($purchase->amount, 2) }}</td>
+                                <td>UGX {{ number_format($purchase->shares_count > 0 ? $purchase->amount / $purchase->shares_count : 0, 2) }}</td>
                                 <td>
                                     @switch($purchase->status)
                                         @case('approved')
@@ -223,7 +223,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="total_amount" class="form-label">Total Dividend Amount (KSh)</label>
+                        <label for="total_amount" class="form-label">Total Dividend Amount (UGX)</label>
                         <input type="number" class="form-control" id="total_amount" name="total_amount" 
                                min="0" step="0.01" required 
                                placeholder="Total amount to be distributed">

@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, type TooltipProps } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -31,20 +31,20 @@ export function OverviewChart() {
   ].filter(item => item.value > 0);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-KE', {
+    return new Intl.NumberFormat('en-UG', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'UGX',
       minimumFractionDigits: 0,
     }).format(value);
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{data.name}</p>
-          <p className="text-primary font-bold">{formatCurrency(data.value)}</p>
+          <p className="font-medium">{String(data.name)}</p>
+          <p className="text-primary font-bold">{formatCurrency(Number(data.value))}</p>
         </div>
       );
     }
@@ -92,8 +92,8 @@ export function OverviewChart() {
               <Legend 
                 verticalAlign="bottom" 
                 height={36}
-                formatter={(value: string, entry: any) => (
-                  <span style={{ color: entry.color }} className="font-medium">
+                formatter={(value: string, entry: { color?: string }) => (
+                  <span style={{ color: entry.color || undefined }} className="font-medium">
                     {value}
                   </span>
                 )}

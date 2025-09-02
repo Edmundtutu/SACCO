@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { loginUser, clearError } from '@/store/authSlice';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,7 +16,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { loading, error } = useSelector((state: RootState) => state.auth);
@@ -34,7 +34,7 @@ export function LoginForm() {
     }
 
     try {
-      const result = await dispatch(loginUser({ email, password }) as any);
+      const result = await dispatch(loginUser({ email, password }));
       if (loginUser.fulfilled.match(result)) {
         toast({
           title: "Welcome back!",

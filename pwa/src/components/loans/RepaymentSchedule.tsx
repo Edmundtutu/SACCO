@@ -74,19 +74,19 @@ export function RepaymentSchedule({ loan }: RepaymentScheduleProps) {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Amount</p>
                 <p className="text-lg font-bold">
-                  KES {nextPayment.payment.toLocaleString()}
+                  UGX {nextPayment.payment.toLocaleString()}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Principal</p>
                 <p className="text-lg font-bold text-success">
-                  KES {nextPayment.principal.toLocaleString()}
+                  UGX {nextPayment.principal.toLocaleString()}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Interest</p>
                 <p className="text-lg font-bold text-muted-foreground">
-                  KES {nextPayment.interest.toLocaleString()}
+                  UGX {nextPayment.interest.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -142,21 +142,21 @@ export function RepaymentSchedule({ loan }: RepaymentScheduleProps) {
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Total Payment</p>
-                    <p className="font-bold">KES {payment.payment.toLocaleString()}</p>
+                    <p className="font-bold">UGX {payment.payment.toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Principal</p>
                     <p className="font-medium text-success">
-                      KES {payment.principal.toLocaleString()}
+                      UGX {payment.principal.toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Interest</p>
-                    <p className="font-medium">KES {payment.interest.toLocaleString()}</p>
+                    <p className="font-medium">UGX {payment.interest.toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Remaining Balance</p>
-                    <p className="font-medium">KES {payment.balance.toLocaleString()}</p>
+                    <p className="font-medium">UGX {payment.balance.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
