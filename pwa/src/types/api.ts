@@ -48,13 +48,21 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
+  password_confirmation: string;
   phone: string;
-  national_id?: string;
-  date_of_birth?: string;
-  gender?: string;
-  address?: string;
-  occupation?: string;
-  monthly_income?: number;
+  national_id: string;
+  date_of_birth: string;
+  gender: string;
+  address: string;
+  occupation: string;
+  monthly_income: number;
+  next_of_kin_name: string;
+  next_of_kin_relationship: string;
+  next_of_kin_phone: string;
+  next_of_kin_address: string;
+  employer_name?: string;
+  employer_address?: string;
+  employer_phone?: string;
 }
 
 export interface ProfileUpdateData {

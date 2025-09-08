@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 
 
 class ApiFilter {
-   
+
     protected $allowedparams =[];
 
     protected $column_Map = [];
@@ -16,15 +16,19 @@ class ApiFilter {
         'lte' => '<=',
         'gt' => '>',
         'gte'=> '>',
-        'ne'=> '!='
+        'ne'=> '!=',
+        'btw'=> 'between',
+        'like'=> 'like',
+        'in'=> 'in',
+
     ];
-   
+
     public function transform(Request $request){
         $eloQuery = [];
 
         foreach($this->allowedparams as $param => $operators){
             $query = $request->query($param);
-            
+
             if(!isset($query)){
                 continue;
             }
@@ -33,7 +37,7 @@ class ApiFilter {
 
             foreach($operators as $operator){
                 if(isset($query[$operator])){
-                    $eloQuery[] = [$column, $this->operator_Map[$operator], $query[$operator]]; 
+                    $eloQuery[] = [$column, $this->operator_Map[$operator], $query[$operator]];
                 }
             }
         }

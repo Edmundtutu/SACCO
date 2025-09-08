@@ -18,7 +18,7 @@ class SavingsController extends Controller
             'total_accounts' => Account::where('account_type', 'savings')->count(),
             'total_balance' => Account::where('account_type', 'savings')->sum('balance'),
             'active_accounts' => Account::where('account_type', 'savings')->where('status', 'active')->count(),
-            'recent_transactions' => Transaction::with(['account.user'])
+            'recent_transactions' => Transaction::with(['account.member'])
                 ->whereHas('account', function($q) {
                     $q->where('account_type', 'savings');
                 })
@@ -37,8 +37,8 @@ class SavingsController extends Controller
 
     public function accounts(Request $request)
     {
-        $query = Account::where('account_type', 'savings')->with(['user', 'savingsProduct']);
-        
+        $query = Account::where('account_type', 'savings')->with(['member', 'savingsProduct']);
+
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -48,14 +48,14 @@ class SavingsController extends Controller
                   ->orWhere('member_number', 'like', "%{$search}%");
             })->orWhere('account_number', 'like', "%{$search}%");
         }
-        
+
         // Status filter
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
-        
+
         $accounts = $query->orderBy('created_at', 'desc')->paginate(20);
-        
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Savings', 'url' => route('admin.savings.index')],
@@ -85,32 +85,32 @@ class SavingsController extends Controller
 
     public function transactions(Request $request)
     {
-        $query = Transaction::with(['account.user'])
+        $query = Transaction::with(['account.member'])
             ->whereHas('account', function($q) {
                 $q->where('account_type', 'savings');
             });
-        
+
         // Date filter
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        
+
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
-        
+
         // Transaction type filter
         if ($request->has('type') && $request->type) {
             $query->where('transaction_type', $request->type);
         }
-        
+
         // Status filter
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
-        
+
         $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
-        
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Savings', 'url' => route('admin.savings.index')],
@@ -123,7 +123,7 @@ class SavingsController extends Controller
     public function products()
     {
         $products = SavingsProduct::orderBy('name')->get();
-        
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Savings', 'url' => route('admin.savings.index')],
@@ -149,7 +149,7 @@ class SavingsController extends Controller
         }
 
         $account = Account::findOrFail($request->account_id);
-        
+
         // Check if withdrawal amount is available
         if ($request->transaction_type == 'withdrawal' && $account->balance < $request->amount) {
             return redirect()->back()
@@ -178,7 +178,7 @@ class SavingsController extends Controller
             }
 
             DB::commit();
-            
+
             return redirect()->back()
                 ->with('success', 'Manual transaction completed successfully.');
 

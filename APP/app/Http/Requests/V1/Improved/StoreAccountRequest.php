@@ -26,7 +26,7 @@ class StoreAccountRequest extends FormRequest
     {
         return [
             'accountno' => ['required'],
-            'type' =>['required', Rule::in(['checkings','Savings'])],
+            'type' =>['required', Rule::in(['checkings','savings'])],
             'status'=> ['required', Rule::in(['Active', 'Inactive'])],
             'amount' => ['required'],
             'balance'=> ['required'],

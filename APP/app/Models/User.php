@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Membership\IndividualProfile;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,6 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Membership\Membership;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -25,19 +27,10 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'member_number',
         'role',
         'status',
-        'phone',
-        'national_id',
-        'date_of_birth',
-        'gender',
-        'address',
-        'occupation',
-        'monthly_income',
         'membership_date',
-        'approved_at',
-        'approved_by',
+        'account_verified_at'
     ];
 
     /**
@@ -56,19 +49,16 @@ class User extends Authenticatable implements JWTSubject
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
         'membership_date' => 'date',
-        'approved_at' => 'datetime',
-        'monthly_income' => 'decimal:2',
+        'account_verified_at' => 'date',
     ];
 
     /**
      * Member profile relationship
      */
-    public function memberProfile(): HasOne
+    public function membership(): HasOne
     {
-        return $this->hasOne(MemberProfile::class);
+        return $this->hasOne(Membership::class);
     }
 
     /**
@@ -112,19 +102,28 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * User who approved this member
+     * User who refereed another
      */
-    public function approvedBy(): BelongsTo
+    public function referred():HasMany
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->hasMany(IndividualProfile::class);
     }
 
     /**
-     * Members approved by this user
+     * Memberships approved by this user
      */
-    public function approvedMembers(): HasMany
+    public function levelOneApprovedMembers(): HasMany
     {
-        return $this->hasMany(User::class, 'approved_by');
+        return $this->hasMany(User::class);
+    }
+
+    public function levelTwoApprovedMembers(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+    public function levelThreeApprovedMembers(): HasMany
+    {
+        return $this->hasMany(User::class);
     }
 
     /**
@@ -148,7 +147,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isStaff(): bool
     {
-        return in_array($this->role, ['admin', 'staff', 'loan_officer', 'accountant']);
+        return in_array($this->role, ['admin', 'staff_level_1', 'staff_level_2', 'staff_level_3']);
     }
 
     /**

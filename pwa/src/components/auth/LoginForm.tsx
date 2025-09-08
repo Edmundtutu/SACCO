@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import logo from '/public/logo.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,10 +56,9 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-            <span className="text-primary-foreground font-heading font-bold text-2xl">S</span>
+          <div className='mx-auto w-20 h-20 flex items-center justify-center mb-4'>
+            <img  src={logo} alt='logo'/>
           </div>
-          <CardTitle className="font-heading text-2xl">Welcome Back</CardTitle>
           <CardDescription>
             Sign in to your SACCO account to continue
           </CardDescription>

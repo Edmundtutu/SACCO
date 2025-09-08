@@ -1,17 +1,24 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Membership;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
-class MemberProfile extends Model
+class IndividualProfile extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'phone',
+        'national_id',
+        'date_of_birth',
+        'gender',
+        'occupation',
+        'monthly_income',
+        'referee',
         'next_of_kin_name',
         'next_of_kin_relationship',
         'next_of_kin_phone',
@@ -19,22 +26,21 @@ class MemberProfile extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'employer_name',
-        'employer_address',
-        'employer_phone',
         'bank_name',
         'bank_account_number',
-        'bank_branch',
-        'additional_notes',
         'profile_photo_path',
         'id_copy_path',
         'signature_path',
+        'additional_notes'
     ];
 
-    /**
-     * Get the user that owns the profile
-     */
-    public function user(): BelongsTo
+    public function memberShip():MorphOne
     {
-        return $this->belongsTo(User::class);
+        return $this->morphOne(Membership::class, 'profile');
+    }
+
+    public function refereedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id', 'referee_id');
     }
 }

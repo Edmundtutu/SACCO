@@ -13,10 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('member_profiles', function (Blueprint $table) {
+        Schema::create('individual_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('next_of_kin_name')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('national_id')->unique()->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            $table->text('address')->nullable();
+            $table->string('occupation')->nullable();
+            $table->decimal('monthly_income', 15, 2)->nullable();$table->string('next_of_kin_name')->nullable();
             $table->string('next_of_kin_relationship')->nullable();
             $table->string('next_of_kin_phone')->nullable();
             $table->text('next_of_kin_address')->nullable();
@@ -32,10 +37,11 @@ return new class extends Migration
             $table->string('profile_photo_path')->nullable();
             $table->string('id_copy_path')->nullable();
             $table->string('signature_path')->nullable();
+            $table->foreignId('referee')->constrained('user');
             $table->timestamps();
 
-            $table->index('user_id');
         });
+
     }
 
     /**
@@ -45,6 +51,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('member_profiles');
+        Schema::dropIfExists('individual_profiles');
     }
 };

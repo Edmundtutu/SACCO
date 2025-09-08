@@ -6,6 +6,7 @@ import { logoutUser } from '@/store/authSlice';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import logo from '/public/logo.png';
 
 const navigationItems = [
   { icon: Home, label: 'Dashboard', path: '/' },
@@ -28,17 +29,17 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-card border-r border-border flex flex-col h-screen sticky top-0">
       {/* Header */}
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-heading font-bold text-lg">S</span>
-          </div>
-          <div>
-            <h2 className="font-heading font-bold text-lg">SACCO</h2>
-            <p className="text-sm text-muted-foreground">Member Portal</p>
-          </div>
+      <div className="p-4 border-b border-border flex justify-left">
+        <div className="flex items-center">
+          <img
+              className="w-10 h-10 object-contain"
+              src={logo}
+              alt="logo"
+          />
+          <h2 className='font-heading font-bold text-lg text-cyan-600'> Member Portal</h2>
         </div>
       </div>
+
 
       {/* User Info */}
       <div className="p-4 border-b border-border">

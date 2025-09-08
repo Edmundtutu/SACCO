@@ -20,14 +20,13 @@ class DashboardController extends Controller
             'pending_members' => User::where('role', 'member')->where('status', 'pending')->count(),
             'active_members' => User::where('role', 'member')->where('status', 'active')->count(),
             // TODO: Connect with ChartOfAccountModel for savings calculation
-            // total_savings' => Account::where('account_type', 'savings')->sum('balance'),
-            'total_savings' => null,
+            'total_savings' => Account::where('account_type', 'savings')->sum('balance'),
             'total_loans' => Loan::sum('principal_amount'),
             'active_loans' => Loan::where('status', 'active')->count(),
             'pending_loans' => Loan::where('status', 'pending')->count(),
-            //'total_shares' => Share::sum('amount'),
+//            'total_shares' => Share::sum('amount'),
             'total_shares' => null,
-            'recent_transactions' => Transaction::with(['account.user'])
+            'recent_transactions' => Transaction::with(['account.member'])
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get(),

@@ -17,7 +17,20 @@ export default function Register() {
     email: '',
     phone: '',
     password: '',
-    confirmPassword: '',
+    password_confirmation: '',
+    national_id: '',
+    date_of_birth: '',
+    gender: '',
+    address: '',
+    occupation: '',
+    monthly_income: 0,
+    next_of_kin_name: '',
+    next_of_kin_relationship: '',
+    next_of_kin_phone: '',
+    next_of_kin_address: '',
+    employer_name: '',
+    employer_address: '',
+    employer_phone: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -29,18 +42,26 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+
+    // Validation for all required fields
+    const requiredFields = [
+      'name', 'email', 'phone', 'password', 'password_confirmation',
+      'national_id', 'date_of_birth', 'gender', 'address', 'occupation', 'monthly_income',
+      'next_of_kin_name', 'next_of_kin_relationship', 'next_of_kin_phone', 'next_of_kin_address'
+    ];
+
+    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+
+    if (missingFields.length > 0) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: `Please fill in all required fields: ${missingFields.join(', ')}`,
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.password_confirmation) {
       toast({
         title: "Error",
         description: "Passwords do not match",
@@ -58,12 +79,44 @@ export default function Register() {
       return;
     }
 
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(formData.date_of_birth)) {
+      toast({
+        title: "Error",
+        description: "Date of birth must be in YYYY-MM-DD format",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate gender
+    if (!['male', 'female', 'other'].includes(formData.gender.toLowerCase())) {
+      toast({
+        title: "Error",
+        description: "Gender must be 'male', 'female', or 'other'",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate monthly income is a number
+    if (isNaN(Number(formData.monthly_income)) || Number(formData.monthly_income) < 0) {
+      toast({
+        title: "Error",
+        description: "Monthly income must be a positive number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Convert monthly_income to number
+      const monthlyIncome = Number(formData.monthly_income);
+
       const result = await dispatch(registerUser({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
+        ...formData,
+        monthly_income: monthlyIncome,
       }));
 
       if (registerUser.fulfilled.match(result)) {
@@ -88,7 +141,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 px-4 py-8">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
             <span className="text-primary-foreground font-heading font-bold text-2xl">S</span>
@@ -117,6 +170,7 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <h3 className="text-lg font-medium">Personal Information</h3>
             <div>
               <Label htmlFor="name">Full Name *</Label>
               <Input
@@ -157,6 +211,180 @@ export default function Register() {
             </div>
 
             <div>
+              <Label htmlFor="national_id">National ID *</Label>
+              <Input
+                id="national_id"
+                type="text"
+                placeholder="12345678"
+                value={formData.national_id}
+                onChange={(e) => handleInputChange('national_id', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="date_of_birth">Date of Birth *</Label>
+              <Input
+                id="date_of_birth"
+                type="date"
+                value={formData.date_of_birth}
+                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="gender">Gender *</Label>
+              <select
+                id="gender"
+                value={formData.gender}
+                onChange={(e) => handleInputChange('gender', e.target.value)}
+                disabled={loading}
+                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="address">Address *</Label>
+              <Input
+                id="address"
+                type="text"
+                placeholder="123 Main St, City"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="occupation">Occupation *</Label>
+              <Input
+                id="occupation"
+                type="text"
+                placeholder="Software Developer"
+                value={formData.occupation}
+                onChange={(e) => handleInputChange('occupation', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="monthly_income">Monthly Income (KES) *</Label>
+              <Input
+                id="monthly_income"
+                type="number"
+                placeholder="50000"
+                value={formData.monthly_income || ''}
+                onChange={(e) => handleInputChange('monthly_income', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <h3 className="text-lg font-medium mt-6">Next of Kin Information</h3>
+            <div>
+              <Label htmlFor="next_of_kin_name">Next of Kin Name *</Label>
+              <Input
+                id="next_of_kin_name"
+                type="text"
+                placeholder="Jane Doe"
+                value={formData.next_of_kin_name}
+                onChange={(e) => handleInputChange('next_of_kin_name', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="next_of_kin_relationship">Relationship *</Label>
+              <Input
+                id="next_of_kin_relationship"
+                type="text"
+                placeholder="Spouse"
+                value={formData.next_of_kin_relationship}
+                onChange={(e) => handleInputChange('next_of_kin_relationship', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="next_of_kin_phone">Next of Kin Phone *</Label>
+              <Input
+                id="next_of_kin_phone"
+                type="tel"
+                placeholder="+254 700 123 456"
+                value={formData.next_of_kin_phone}
+                onChange={(e) => handleInputChange('next_of_kin_phone', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="next_of_kin_address">Next of Kin Address *</Label>
+              <Input
+                id="next_of_kin_address"
+                type="text"
+                placeholder="123 Main St, City"
+                value={formData.next_of_kin_address}
+                onChange={(e) => handleInputChange('next_of_kin_address', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <h3 className="text-lg font-medium mt-6">Employment Information (Optional)</h3>
+            <div>
+              <Label htmlFor="employer_name">Employer Name</Label>
+              <Input
+                id="employer_name"
+                type="text"
+                placeholder="ABC Company"
+                value={formData.employer_name}
+                onChange={(e) => handleInputChange('employer_name', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="employer_address">Employer Address</Label>
+              <Input
+                id="employer_address"
+                type="text"
+                placeholder="456 Business Ave, City"
+                value={formData.employer_address}
+                onChange={(e) => handleInputChange('employer_address', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="employer_phone">Employer Phone</Label>
+              <Input
+                id="employer_phone"
+                type="tel"
+                placeholder="+254 700 987 654"
+                value={formData.employer_phone}
+                onChange={(e) => handleInputChange('employer_phone', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <h3 className="text-lg font-medium mt-6">Security</h3>
+            <div>
               <Label htmlFor="password">Password *</Label>
               <div className="relative mt-1">
                 <Input
@@ -182,14 +410,14 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Label htmlFor="password_confirmation">Confirm Password *</Label>
               <div className="relative mt-1">
                 <Input
-                  id="confirmPassword"
+                  id="password_confirmation"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Re-enter your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  value={formData.password_confirmation}
+                  onChange={(e) => handleInputChange('password_confirmation', e.target.value)}
                   disabled={loading}
                   className="pr-10"
                 />
@@ -206,7 +434,7 @@ export default function Register() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full mt-6" disabled={loading}>
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
@@ -229,7 +457,7 @@ export default function Register() {
               Sign in here
             </Link>
           </div>
-          
+
           <div className="text-xs text-muted-foreground text-center">
             By creating an account, you agree to our Terms of Service and Privacy Policy.
             Your account will be reviewed by our admin team.

@@ -23,14 +23,14 @@ class UpdateAccountRequest extends FormRequest
      * @return array<string, mixed>
      */
     public function rules()
-    {  
-        // get the method from the request 
+    {
+        // get the method from the request
         $method = $this->method();
 
         if($method=='PUT'){  // if the method isset to put or PATCH
             return [
                 'accountno' => ['required'],
-                'type' =>['required', Rule::in(['checkings','Savings'])],
+                'type' =>['required', Rule::in(['checkings','savings'])],
                 'status'=> ['required', Rule::in(['Active', 'Inactive'])],
                 'amount' => ['required'],
                 'balance'=> ['required'],
@@ -40,14 +40,14 @@ class UpdateAccountRequest extends FormRequest
         }elseif($method=='PATCH') {
             return [
                 'accountno' => ['sometimes','required'],
-                'type' =>['sometimes','required', Rule::in(['checkings','Savings'])],
+                'type' =>['sometimes','required', Rule::in(['checkings','savings'])],
                 'status'=> ['sometimes','required', Rule::in(['Active', 'Inactive'])],
                 'amount' => ['sometimes','required'],
                 'balance'=> ['sometimes','required'],
                 'acountHolder' => ['sometimes','required']
             ];
         }
-       
+
     }
 
     public function prepareForValidation(){
