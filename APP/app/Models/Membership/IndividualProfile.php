@@ -2,6 +2,7 @@
 
 namespace App\Models\Membership;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,6 @@ class IndividualProfile extends Model
 
     public function refereedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id', 'referee_id');
+        return $this->belongsTo(User::class, 'referee');
     }
 }

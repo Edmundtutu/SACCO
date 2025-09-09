@@ -21,7 +21,8 @@ return new class extends Migration
             $table->enum('gender', ['male', 'female', 'other'])->nullable();
             $table->text('address')->nullable();
             $table->string('occupation')->nullable();
-            $table->decimal('monthly_income', 15, 2)->nullable();$table->string('next_of_kin_name')->nullable();
+            $table->decimal('monthly_income', 15, 2)->nullable();
+            $table->string('next_of_kin_name')->nullable();
             $table->string('next_of_kin_relationship')->nullable();
             $table->string('next_of_kin_phone')->nullable();
             $table->text('next_of_kin_address')->nullable();
@@ -37,7 +38,7 @@ return new class extends Migration
             $table->string('profile_photo_path')->nullable();
             $table->string('id_copy_path')->nullable();
             $table->string('signature_path')->nullable();
-            $table->foreignId('referee')->constrained('user');
+            $table->foreignId('referee')->nullable()->constrained('users');
             $table->timestamps();
 
         });

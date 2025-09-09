@@ -11,9 +11,35 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  member_number?: string;
-  role: 'member' | 'admin' | 'staff' | 'loan_officer' | 'accountant';
-  status: 'active' | 'pending' | 'suspended' | 'inactive';
+  role: 'member' | 'admin' | 'staff_level_1' | 'staff_level_2' | 'staff_level_3';
+  status: 'active' | 'pending_approval' | 'suspended' | 'inactive';
+  membership_date?: string;
+  account_verified_at?: string;
+  created_at: string;
+  updated_at?: string;
+  membership?: Membership;
+  profile?: IndividualProfile | VslaProfile | MfiProfile;
+}
+
+export interface Membership {
+  id: string;
+  user_id: number;
+  profile_type: string;
+  profile_id: number;
+  approval_status: 'pending' | 'approved' | 'rejected';
+  approved_by_level_1?: number;
+  approved_at_level_1?: string;
+  approved_by_level_2?: number;
+  approved_at_level_2?: string;
+  approved_by_level_3?: number;
+  approved_at_level_3?: string;
+  created_at: string;
+  updated_at?: string;
+  profile?: IndividualProfile | VslaProfile | MfiProfile;
+}
+
+export interface IndividualProfile {
+  id: number;
   phone?: string;
   national_id?: string;
   date_of_birth?: string;
@@ -21,20 +47,61 @@ export interface User {
   address?: string;
   occupation?: string;
   monthly_income?: string;
-  membership_date?: string;
-  created_at: string;
-  updated_at?: string;
-  member_profile?: MemberProfile;
-}
-
-export interface MemberProfile {
+  referee?: number;
   next_of_kin_name?: string;
   next_of_kin_relationship?: string;
   next_of_kin_phone?: string;
-  employer_name?: string;
-  employer_address?: string;
+  next_of_kin_address?: string;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  employer_name?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  additional_notes?: string;
+  profile_photo_path?: string;
+  id_copy_path?: string;
+  signature_path?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface VslaProfile {
+  id: number;
+  village: string;
+  sub_county: string;
+  district: string;
+  membership_count: number;
+  registration_certificate: string;
+  constitution_copy: string;
+  resolution_minutes: string;
+  executive_contacts: Array<{
+    name: string;
+    position: string;
+    phone: string;
+  }>;
+  recommendation_lc1: string;
+  recommendation_cdo: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface MfiProfile {
+  id: number;
+  contact_person?: string;
+  contact_number?: string;
+  address?: string;
+  membership_count?: number;
+  registration_certificate?: string;
+  board_members?: Array<{
+    name: string;
+    position: string;
+    phone: string;
+  }>;
+  bylaws_copy?: string;
+  resolution_minutes?: string;
+  operating_license?: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface LoginResponse {
@@ -60,9 +127,12 @@ export interface RegisterData {
   next_of_kin_relationship: string;
   next_of_kin_phone: string;
   next_of_kin_address: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
   employer_name?: string;
-  employer_address?: string;
-  employer_phone?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  referee?: string;
 }
 
 export interface ProfileUpdateData {
@@ -74,8 +144,12 @@ export interface ProfileUpdateData {
   next_of_kin_name?: string;
   next_of_kin_relationship?: string;
   next_of_kin_phone?: string;
+  next_of_kin_address?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
   employer_name?: string;
-  employer_address?: string;
+  bank_name?: string;
+  bank_account_number?: string;
 }
 
 // Savings Types

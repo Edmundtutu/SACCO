@@ -76,7 +76,14 @@ export default function Profile() {
                 <Badge variant={user?.email_verified_at ? 'default' : 'secondary'}>
                   {user?.email_verified_at ? 'Verified' : 'Unverified'}
                 </Badge>
-                <Badge variant="outline">Member</Badge>
+                {user?.membership && (
+                  <Badge variant={user.membership.approval_status === 'approved' ? 'default' : 'secondary'}>
+                    {user.membership.approval_status === 'approved' ? 'Approved Member' : 'Pending Approval'}
+                  </Badge>
+                )}
+                {user?.membership?.id && (
+                  <Badge variant="outline">#{user.membership.id}</Badge>
+                )}
               </div>
             </div>
 
@@ -119,13 +126,37 @@ export default function Profile() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                    <p className="mt-1">{user?.phone || 'Not provided'}</p>
+                    <p className="mt-1">{user?.profile?.phone || 'Not provided'}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">ID Number</Label>
-                    <p className="mt-1">{user?.id_number || 'Not provided'}</p>
+                    <Label className="text-sm font-medium text-muted-foreground">National ID</Label>
+                    <p className="mt-1">{user?.profile?.national_id || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Occupation</Label>
+                    <p className="mt-1">{user?.profile?.occupation || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Monthly Income</Label>
+                    <p className="mt-1">{user?.profile?.monthly_income ? `UGX ${Number(user.profile.monthly_income).toLocaleString()}` : 'Not provided'}</p>
                   </div>
                 </div>
+                
+                {user?.profile?.address && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Address</Label>
+                    <p className="mt-1">{user.profile.address}</p>
+                  </div>
+                )}
+
+                {user?.membership && user.membership.approval_status === 'pending' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <h4 className="text-sm font-medium text-yellow-800">Membership Status</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Your membership application is pending approval. You'll be notified once it's been reviewed.
+                    </p>
+                  </div>
+                )}
                 
                 <Separator />
                 

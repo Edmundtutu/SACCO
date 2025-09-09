@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\MemberProfile;
+use App\Models\Membership\IndividualProfile;
+use App\Models\Membership\Membership;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +26,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'required|string|max:20',
-            'national_id' => 'required|string|unique:users',
+            'national_id' => 'required|string|unique:individual_profiles,national_id',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
             'address' => 'required|string',
@@ -37,9 +38,12 @@ class AuthController extends Controller
             'next_of_kin_relationship' => 'required|string',
             'next_of_kin_phone' => 'required|string',
             'next_of_kin_address' => 'required|string',
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
             'employer_name' => 'nullable|string',
-            'employer_address' => 'nullable|string',
-            'employer_phone' => 'nullable|string',
+            'bank_name' => 'nullable|string',
+            'bank_account_number' => 'nullable|string',
+            'referee' => 'nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -53,18 +57,18 @@ class AuthController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate member number
-            $lastMember = User::where('role', 'member')->orderBy('id', 'desc')->first();
-            $memberNumber = 'M' . str_pad(($lastMember->id ?? 0) + 1, 6, '0', STR_PAD_LEFT);
-
             // Create user
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'member_number' => $memberNumber,
                 'role' => 'member',
                 'status' => 'pending_approval',
+                'membership_date' => now(),
+            ]);
+
+            // Create individual profile
+            $profile = IndividualProfile::create([
                 'phone' => $request->phone,
                 'national_id' => $request->national_id,
                 'date_of_birth' => $request->date_of_birth,
@@ -72,18 +76,24 @@ class AuthController extends Controller
                 'address' => $request->address,
                 'occupation' => $request->occupation,
                 'monthly_income' => $request->monthly_income,
-                'membership_date' => now(),
-            ]);
-
-            // Create member profile
-            $user->memberProfile()->create([
+                'referee' => $request->referee,
                 'next_of_kin_name' => $request->next_of_kin_name,
                 'next_of_kin_relationship' => $request->next_of_kin_relationship,
                 'next_of_kin_phone' => $request->next_of_kin_phone,
                 'next_of_kin_address' => $request->next_of_kin_address,
+                'emergency_contact_name' => $request->emergency_contact_name,
+                'emergency_contact_phone' => $request->emergency_contact_phone,
                 'employer_name' => $request->employer_name,
-                'employer_address' => $request->employer_address,
-                'employer_phone' => $request->employer_phone,
+                'bank_name' => $request->bank_name,
+                'bank_account_number' => $request->bank_account_number,
+            ]);
+
+            // Create membership record
+            $membership = Membership::create([
+                'profile_id' => $profile->id,
+                'profile_type' => IndividualProfile::class,
+                'user_id' => $user->id,
+                'approval_status' => 'pending',
             ]);
 
             DB::commit();
@@ -92,7 +102,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Registration successful. Your membership is pending approval.',
                 'data' => [
-                    'member_number' => $user->member_number,
+                    'membership_id' => $membership->id,
                     'status' => $user->status,
                 ]
             ], 201);
@@ -179,12 +189,14 @@ class AuthController extends Controller
     {
         try {
             $user = auth()->user();
-            $user->load('memberProfile', 'accounts', 'loans', 'shares');
+            $user->load('membership.profile', 'accounts', 'loans', 'shares');
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'user' => $user,
+                    'membership' => $user->membership,
+                    'profile' => $user->membership ? $user->membership->profile : null,
                     'summary' => [
                         'total_savings' => $user->getTotalSavingsBalance(),
                         'total_shares' => $user->getTotalShares(),
@@ -212,6 +224,15 @@ class AuthController extends Controller
             'address' => 'sometimes|string',
             'occupation' => 'sometimes|string',
             'monthly_income' => 'sometimes|numeric|min:0',
+            'next_of_kin_name' => 'sometimes|string',
+            'next_of_kin_relationship' => 'sometimes|string',
+            'next_of_kin_phone' => 'sometimes|string',
+            'next_of_kin_address' => 'sometimes|string',
+            'emergency_contact_name' => 'sometimes|string',
+            'emergency_contact_phone' => 'sometimes|string',
+            'employer_name' => 'sometimes|string',
+            'bank_name' => 'sometimes|string',
+            'bank_account_number' => 'sometimes|string',
         ]);
 
         if ($validator->fails()) {
@@ -224,14 +245,38 @@ class AuthController extends Controller
 
         try {
             $user = auth()->user();
-            $user->update($request->only([
-                'name', 'phone', 'address', 'occupation', 'monthly_income'
-            ]));
+            $user->load('membership.profile');
+
+            // Update user basic info
+            $user->update($request->only(['name']));
+
+            // Update profile if exists and is Individual Profile
+            if ($user->membership && $user->membership->profile instanceof IndividualProfile) {
+                $profile = $user->membership->profile;
+                $profileData = $request->only([
+                    'phone', 'address', 'occupation', 'monthly_income',
+                    'next_of_kin_name', 'next_of_kin_relationship', 
+                    'next_of_kin_phone', 'next_of_kin_address',
+                    'emergency_contact_name', 'emergency_contact_phone',
+                    'employer_name', 'bank_name', 'bank_account_number'
+                ]);
+
+                $profile->update(array_filter($profileData, function($value) {
+                    return $value !== null;
+                }));
+            }
+
+            // Reload the user with updated relationships
+            $user->load('membership.profile');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Profile updated successfully',
-                'data' => $user
+                'data' => [
+                    'user' => $user,
+                    'membership' => $user->membership,
+                    'profile' => $user->membership ? $user->membership->profile : null,
+                ]
             ]);
 
         } catch (\Exception $e) {

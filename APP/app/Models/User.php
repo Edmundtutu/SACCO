@@ -102,28 +102,29 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * User who refereed another
+     * Individual profiles referred by this user
      */
-    public function referred():HasMany
+    public function referredProfiles(): HasMany
     {
-        return $this->hasMany(IndividualProfile::class);
+        return $this->hasMany(IndividualProfile::class, 'referee');
     }
 
     /**
-     * Memberships approved by this user
+     * Memberships approved by this user at different levels
      */
-    public function levelOneApprovedMembers(): HasMany
+    public function levelOneApprovedMemberships(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Membership::class, 'approved_by_level_1');
     }
 
-    public function levelTwoApprovedMembers(): HasMany
+    public function levelTwoApprovedMemberships(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Membership::class, 'approved_by_level_2');
     }
-    public function levelThreeApprovedMembers(): HasMany
+    
+    public function levelThreeApprovedMemberships(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Membership::class, 'approved_by_level_3');
     }
 
     /**
@@ -201,7 +202,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'role' => $this->role,
-            'member_number' => $this->member_number,
+            'member_number' => $this->membership ? $this->membership->id : null,
             'status' => $this->status,
         ];
     }

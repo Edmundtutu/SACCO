@@ -8,7 +8,13 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="page-title">{{ $member->name }}</h1>
-                <p class="text-muted">Member #{{ $member->member_number ?? 'N/A' }} • Joined {{ $member->created_at->format('M d, Y') }}</p>
+                <p class="text-muted">
+                    Member #{{ $member->membership->id ?? 'N/A' }} • 
+                    @if($member->membership && $member->membership->profile)
+                        {{ class_basename($member->membership->profile_type) }} • 
+                    @endif
+                    Joined {{ $member->created_at->format('M d, Y') }}
+                </p>
             </div>
             <div>
                 <a href="{{ route('admin.members.edit', $member->id) }}" class="btn btn-primary">
@@ -30,12 +36,12 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h5>
-                            Status: 
+                            User Status: 
                             @switch($member->status)
                                 @case('active')
                                     <span class="badge bg-success">Active</span>
                                     @break
-                                @case('pending')
+                                @case('pending_approval')
                                     <span class="badge bg-warning">Pending Approval</span>
                                     @break
                                 @case('suspended')
@@ -46,26 +52,89 @@
                                     @break
                             @endswitch
                         </h5>
-                        @if($member->approved_at)
-                        <small class="text-muted">Approved on {{ $member->approved_at->format('M d, Y') }}</small>
+                        @if($member->membership)
+                            <h6 class="mt-2">
+                                Membership Approval: 
+                                @switch($member->membership->approval_status)
+                                    @case('approved')
+                                        <span class="badge bg-success">Approved</span>
+                                        @break
+                                    @case('pending')
+                                        <span class="badge bg-warning">Pending</span>
+                                        @break
+                                    @case('rejected')
+                                        <span class="badge bg-danger">Rejected</span>
+                                        @break
+                                @endswitch
+                            </h6>
+                        @endif
+                        @if($member->account_verified_at)
+                        <small class="text-muted">Account verified on {{ $member->account_verified_at->format('M d, Y') }}</small>
+                        @endif
+                        
+                        @if($member->membership && $member->membership->approval_status == 'pending')
+                            <div class="mt-3">
+                                <h6>Approval Progress:</h6>
+                                <div class="progress" style="height: 20px;">
+                                    @php
+                                        $progress = 0;
+                                        if ($member->membership->approved_by_level_1) $progress = 33;
+                                        if ($member->membership->approved_by_level_2) $progress = 66;
+                                        if ($member->membership->approved_by_level_3) $progress = 100;
+                                    @endphp
+                                    <div class="progress-bar" role="progressbar" style="width: {{ $progress }}%" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
+                                        Level {{ $progress == 0 ? '1' : ($progress == 33 ? '2' : ($progress == 66 ? '3' : 'Complete')) }}
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    @if($member->membership->approved_by_level_1)
+                                        ✓ Level 1 approved {{ $member->membership->approved_at_level_1->format('M d, Y') }}
+                                    @endif
+                                    @if($member->membership->approved_by_level_2)
+                                        <br>✓ Level 2 approved {{ $member->membership->approved_at_level_2->format('M d, Y') }}
+                                    @endif
+                                    @if($member->membership->approved_by_level_3)
+                                        <br>✓ Level 3 approved {{ $member->membership->approved_at_level_3->format('M d, Y') }}
+                                    @endif
+                                </small>
+                            </div>
                         @endif
                     </div>
                     <div class="col-md-6 text-end">
-                        @if($member->status == 'pending')
-                        <form action="{{ route('admin.members.approve', $member->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this member?')">
-                                <i class="bi bi-check-circle"></i> Approve Member
-                            </button>
-                        </form>
-                        @elseif($member->status == 'active')
+                        @if($member->membership && $member->membership->approval_status == 'pending')
+                            @php
+                                $currentUser = auth()->user();
+                                $membership = $member->membership;
+                            @endphp
+                            
+                            @if($currentUser->role == 'staff_level_1' && !$membership->approved_by_level_1)
+                                <button type="button" class="btn btn-success approve-btn" 
+                                        data-membership-id="{{ $membership->id }}" data-level="1">
+                                    <i class="bi bi-check-circle"></i> Approve Level 1
+                                </button>
+                            @elseif($currentUser->role == 'staff_level_2' && $membership->approved_by_level_1 && !$membership->approved_by_level_2)
+                                <button type="button" class="btn btn-success approve-btn" 
+                                        data-membership-id="{{ $membership->id }}" data-level="2">
+                                    <i class="bi bi-check-circle"></i> Approve Level 2
+                                </button>
+                            @elseif($currentUser->role == 'staff_level_3' && $membership->approved_by_level_2 && !$membership->approved_by_level_3)
+                                <button type="button" class="btn btn-success approve-btn" 
+                                        data-membership-id="{{ $membership->id }}" data-level="3">
+                                    <i class="bi bi-check-circle"></i> Final Approval & Activate
+                                </button>
+                            @endif
+                        @endif
+                        
+                        @if($member->status == 'active')
                         <form action="{{ route('admin.members.suspend', $member->id) }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-warning" onclick="return confirm('Suspend this member?')">
                                 <i class="bi bi-pause-circle"></i> Suspend
                             </button>
                         </form>
-                        @elseif($member->status == 'suspended')
+                        @endif
+                        
+                        @if($member->status == 'suspended')
                         <form action="{{ route('admin.members.activate', $member->id) }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-success" onclick="return confirm('Activate this member?')">
@@ -83,64 +152,224 @@
 <!-- Member Information -->
 <div class="row">
     <div class="col-lg-8">
-        <!-- Personal Information -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-person"></i> Personal Information</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Full Name:</strong></td>
-                                <td>{{ $member->name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Email:</strong></td>
-                                <td>{{ $member->email }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Phone:</strong></td>
-                                <td>{{ $member->phone ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>National ID:</strong></td>
-                                <td>{{ $member->national_id ?? 'N/A' }}</td>
-                            </tr>
-                        </table>
+        <!-- Profile Information -->
+        @if($member->membership && $member->membership->profile)
+            @php $profile = $member->membership->profile; @endphp
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        @if($profile instanceof App\Models\Membership\IndividualProfile)
+                            <i class="bi bi-person"></i> Individual Profile Information
+                        @elseif($profile instanceof App\Models\Membership\VslaProfile)
+                            <i class="bi bi-people"></i> VSLA Group Information
+                        @elseif($profile instanceof App\Models\Membership\MfiProfile)
+                            <i class="bi bi-building"></i> MFI Institution Information
+                        @endif
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ $member->name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ $member->email }}</td>
+                                </tr>
+                                
+                                @if($profile instanceof App\Models\Membership\IndividualProfile)
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td>{{ $profile->phone ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>National ID:</strong></td>
+                                        <td>{{ $profile->national_id ?? 'N/A' }}</td>
+                                    </tr>
+                                @elseif($profile instanceof App\Models\Membership\VslaProfile)
+                                    <tr>
+                                        <td><strong>Village:</strong></td>
+                                        <td>{{ $profile->village ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Sub County:</strong></td>
+                                        <td>{{ $profile->sub_county ?? 'N/A' }}</td>
+                                    </tr>
+                                @elseif($profile instanceof App\Models\Membership\MfiProfile)
+                                    <tr>
+                                        <td><strong>Contact Person:</strong></td>
+                                        <td>{{ $profile->contact_person ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Contact Number:</strong></td>
+                                        <td>{{ $profile->contact_number ?? 'N/A' }}</td>
+                                    </tr>
+                                @endif
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                @if($profile instanceof App\Models\Membership\IndividualProfile)
+                                    <tr>
+                                        <td><strong>Date of Birth:</strong></td>
+                                        <td>{{ $profile->date_of_birth ? Carbon\Carbon::parse($profile->date_of_birth)->format('M d, Y') : 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Gender:</strong></td>
+                                        <td>{{ $profile->gender ? ucfirst($profile->gender) : 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Occupation:</strong></td>
+                                        <td>{{ $profile->occupation ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Monthly Income:</strong></td>
+                                        <td>{{ $profile->monthly_income ? 'UGX ' . number_format($profile->monthly_income, 2) : 'N/A' }}</td>
+                                    </tr>
+                                @elseif($profile instanceof App\Models\Membership\VslaProfile)
+                                    <tr>
+                                        <td><strong>District:</strong></td>
+                                        <td>{{ $profile->district ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Membership Count:</strong></td>
+                                        <td>{{ $profile->membership_count ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Registration Certificate:</strong></td>
+                                        <td>{{ $profile->registration_certificate ?? 'N/A' }}</td>
+                                    </tr>
+                                @elseif($profile instanceof App\Models\Membership\MfiProfile)
+                                    <tr>
+                                        <td><strong>Membership Count:</strong></td>
+                                        <td>{{ $profile->membership_count ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Registration Certificate:</strong></td>
+                                        <td>{{ $profile->registration_certificate ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Operating License:</strong></td>
+                                        <td>{{ $profile->operating_license ?? 'N/A' }}</td>
+                                    </tr>
+                                @endif
+                            </table>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Date of Birth:</strong></td>
-                                <td>{{ $member->date_of_birth ? Carbon\Carbon::parse($member->date_of_birth)->format('M d, Y') : 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Gender:</strong></td>
-                                <td>{{ $member->gender ? ucfirst($member->gender) : 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Occupation:</strong></td>
-                                <td>{{ $member->occupation ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Monthly Income:</strong></td>
-                                <td>{{ $member->monthly_income ? 'UGX ' . number_format($member->monthly_income, 2) : 'N/A' }}</td>
-                            </tr>
-                        </table>
+                    
+                    @if($profile->address ?? false)
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Address:</strong><br>
+                            {{ $profile->address }}
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if($profile instanceof App\Models\Membership\IndividualProfile && ($profile->next_of_kin_name || $profile->emergency_contact_name))
+                        <hr>
+                        <h6>Additional Information</h6>
+                        <div class="row">
+                            @if($profile->next_of_kin_name)
+                            <div class="col-md-6">
+                                <strong>Next of Kin:</strong><br>
+                                {{ $profile->next_of_kin_name }} ({{ $profile->next_of_kin_relationship }})<br>
+                                <small class="text-muted">{{ $profile->next_of_kin_phone }}</small>
+                            </div>
+                            @endif
+                            @if($profile->emergency_contact_name)
+                            <div class="col-md-6">
+                                <strong>Emergency Contact:</strong><br>
+                                {{ $profile->emergency_contact_name }}<br>
+                                <small class="text-muted">{{ $profile->emergency_contact_phone }}</small>
+                            </div>
+                            @endif
+                        </div>
+                    @endif
+                    
+                    @if($profile instanceof App\Models\Membership\VslaProfile && $profile->executive_contacts)
+                        <hr>
+                        <h6>Executive Contacts</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th>Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($profile->executive_contacts as $contact)
+                                    <tr>
+                                        <td>{{ $contact['name'] ?? 'N/A' }}</td>
+                                        <td>{{ $contact['position'] ?? 'N/A' }}</td>
+                                        <td>{{ $contact['phone'] ?? 'N/A' }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                    
+                    @if($profile instanceof App\Models\Membership\MfiProfile && $profile->board_members)
+                        <hr>
+                        <h6>Board Members</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th>Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($profile->board_members as $member)
+                                    <tr>
+                                        <td>{{ $member['name'] ?? 'N/A' }}</td>
+                                        <td>{{ $member['position'] ?? 'N/A' }}</td>
+                                        <td>{{ $member['phone'] ?? 'N/A' }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @else
+            <!-- Basic User Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> User Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ $member->name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ $member->email }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        This member has no associated profile. Please contact system administrator.
                     </div>
                 </div>
-                @if($member->address)
-                <div class="row">
-                    <div class="col-12">
-                        <strong>Address:</strong><br>
-                        {{ $member->address }}
-                    </div>
-                </div>
-                @endif
             </div>
-        </div>
+        @endif
 
         <!-- Accounts -->
         <div class="card mb-4">
@@ -309,4 +538,37 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('.approve-btn').click(function() {
+        const membershipId = $(this).data('membership-id');
+        const level = $(this).data('level');
+        const button = $(this);
+        
+        if (confirm(`Approve this membership at level ${level}?`)) {
+            $.ajax({
+                url: `/admin/memberships/${membershipId}/approve-level-${level}`,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                beforeSend: function() {
+                    button.prop('disabled', true).html('<i class="bi bi-clock"></i> Processing...');
+                },
+                success: function(response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
+                    button.prop('disabled', false).html(`<i class="bi bi-check-circle"></i> Approve Level ${level}`);
+                }
+            });
+        }
+    });
+});
+</script>
+@endpush
 @endsection
