@@ -28,9 +28,12 @@ export default function Register() {
     next_of_kin_relationship: '',
     next_of_kin_phone: '',
     next_of_kin_address: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
     employer_name: '',
-    employer_address: '',
-    employer_phone: '',
+    bank_name: '',
+    bank_account_number: '',
+    referee: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -122,7 +125,7 @@ export default function Register() {
       if (registerUser.fulfilled.match(result)) {
         toast({
           title: "Registration Successful!",
-          description: "Your account is pending admin approval. You'll be notified once approved.",
+          description: "Your membership application has been submitted and is pending approval. You'll be notified once approved.",
         });
         navigate('/login');
       }
@@ -343,7 +346,34 @@ export default function Register() {
               />
             </div>
 
-            <h3 className="text-lg font-medium mt-6">Employment Information (Optional)</h3>
+            <h3 className="text-lg font-medium mt-6">Emergency Contact (Optional)</h3>
+            <div>
+              <Label htmlFor="emergency_contact_name">Emergency Contact Name</Label>
+              <Input
+                id="emergency_contact_name"
+                type="text"
+                placeholder="John Smith"
+                value={formData.emergency_contact_name}
+                onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="emergency_contact_phone">Emergency Contact Phone</Label>
+              <Input
+                id="emergency_contact_phone"
+                type="tel"
+                placeholder="+254 700 987 654"
+                value={formData.emergency_contact_phone}
+                onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
+                disabled={loading}
+                className="mt-1"
+              />
+            </div>
+
+            <h3 className="text-lg font-medium mt-6">Employment & Banking Information (Optional)</h3>
             <div>
               <Label htmlFor="employer_name">Employer Name</Label>
               <Input
@@ -358,26 +388,26 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="employer_address">Employer Address</Label>
+              <Label htmlFor="bank_name">Bank Name</Label>
               <Input
-                id="employer_address"
+                id="bank_name"
                 type="text"
-                placeholder="456 Business Ave, City"
-                value={formData.employer_address}
-                onChange={(e) => handleInputChange('employer_address', e.target.value)}
+                placeholder="ABC Bank"
+                value={formData.bank_name}
+                onChange={(e) => handleInputChange('bank_name', e.target.value)}
                 disabled={loading}
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="employer_phone">Employer Phone</Label>
+              <Label htmlFor="bank_account_number">Bank Account Number</Label>
               <Input
-                id="employer_phone"
-                type="tel"
-                placeholder="+254 700 987 654"
-                value={formData.employer_phone}
-                onChange={(e) => handleInputChange('employer_phone', e.target.value)}
+                id="bank_account_number"
+                type="text"
+                placeholder="1234567890"
+                value={formData.bank_account_number}
+                onChange={(e) => handleInputChange('bank_account_number', e.target.value)}
                 disabled={loading}
                 className="mt-1"
               />
