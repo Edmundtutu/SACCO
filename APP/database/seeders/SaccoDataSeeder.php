@@ -4,12 +4,13 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Member;
 use App\Models\SavingsProduct;
 use App\Models\LoanProduct;
 use App\Models\Account;
 use App\Models\ChartOfAccount;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Membership\IndividualProfile;
+use App\Models\Membership\Membership;
 
 class SaccoDataSeeder extends Seeder
 {
@@ -28,18 +29,10 @@ class SaccoDataSeeder extends Seeder
             'name' => 'System Administrator',
             'email' => 'admin@sacco.com',
             'password' => Hash::make('password123'),
-            'member_number' => 'ADMIN001',
             'role' => 'admin',
             'status' => 'active',
-            'phone' => '+1234567890',
-            'national_id' => 'ADMIN123456',
-            'date_of_birth' => '1980-01-01',
-            'gender' => 'male',
-            'address' => 'SACCO Head Office',
-            'occupation' => 'Administrator',
-            'monthly_income' => 50000,
+            'account_verified_at' => now(),
             'membership_date' => now(),
-            'approved_at' => now(),
         ]);
 
         // Create Loan Officer
@@ -47,19 +40,10 @@ class SaccoDataSeeder extends Seeder
             'name' => 'John Loan Officer',
             'email' => 'loans@sacco.com',
             'password' => Hash::make('password123'),
-            'member_number' => 'LO001',
-            'role' => 'loan_officer',
+            'role' => 'staff_level_2',
             'status' => 'active',
-            'phone' => '+1234567891',
-            'national_id' => 'LO123456',
-            'date_of_birth' => '1985-01-01',
-            'gender' => 'male',
-            'address' => 'SACCO Office',
-            'occupation' => 'Loan Officer',
-            'monthly_income' => 30000,
+            'account_verified_at' => now(),
             'membership_date' => now(),
-            'approved_at' => now(),
-            'approved_by' => $admin->id,
         ]);
 
         // Create Savings Products
@@ -69,7 +53,7 @@ class SaccoDataSeeder extends Seeder
         $this->createLoanProducts();
         
         // Create Sample Members
-        $this->createSampleMembers($admin);
+        $this->createSampleMembers($admin, $loanOfficer);
         
         echo "SACCO data seeded successfully!\n";
         echo "Admin Login: admin@sacco.com / password123\n";
@@ -260,7 +244,7 @@ class SaccoDataSeeder extends Seeder
         }
     }
 
-    private function createSampleMembers($admin)
+    private function createSampleMembers($admin, $loanOfficer)
     {
         // Create sample members
         $members = [
@@ -291,50 +275,71 @@ class SaccoDataSeeder extends Seeder
         ];
 
         foreach ($members as $index => $memberData) {
-            $memberNumber = 'M' . str_pad($index + 1, 6, '0', STR_PAD_LEFT);
-            
+            // Create user (member)
             $member = User::create([
                 'name' => $memberData['name'],
                 'email' => $memberData['email'],
                 'password' => Hash::make('password123'),
-                'member_number' => $memberNumber,
                 'role' => 'member',
                 'status' => 'active',
+                'account_verified_at' => now(),
+                'membership_date' => now()->subDays(rand(30, 365)),
+            ]);
+
+            // Create Individual Profile (KYC + extras)
+            $profile = IndividualProfile::create([
                 'phone' => $memberData['phone'],
                 'national_id' => $memberData['national_id'],
                 'date_of_birth' => '1990-01-01',
                 'gender' => 'female',
-                'address' => 'Sample Address ' . ($index + 1),
                 'occupation' => $memberData['occupation'],
                 'monthly_income' => $memberData['monthly_income'],
-                'membership_date' => now()->subDays(rand(30, 365)),
-                'approved_at' => now()->subDays(rand(1, 30)),
-                'approved_by' => $admin->id,
-            ]);
-
-            // Create member profile
-            $member->memberProfile()->create([
+                'referee' => $admin->id,
                 'next_of_kin_name' => 'Next of Kin ' . ($index + 1),
                 'next_of_kin_relationship' => 'Spouse',
                 'next_of_kin_phone' => '+1234567' . (900 + $index),
                 'next_of_kin_address' => 'Next of Kin Address ' . ($index + 1),
+                'emergency_contact_name' => 'Emergency ' . ($index + 1),
+                'emergency_contact_phone' => '+1234567' . (980 + $index),
                 'employer_name' => 'Employer ' . ($index + 1),
-                'employer_address' => 'Employer Address ' . ($index + 1),
-                'employer_phone' => '+1234567' . (950 + $index),
+                'bank_name' => 'Sacco Bank',
+                'bank_account_number' => 'BA' . str_pad((string)($index + 1), 10, '0', STR_PAD_LEFT),
+                'profile_photo_path' => null,
+                'id_copy_path' => null,
+                'signature_path' => null,
+                'additional_notes' => 'Sample profile seeded',
+            ]);
+
+            // Create Membership record linking user and profile
+            Membership::create([
+                'user_id' => $member->id,
+                'profile_type' => IndividualProfile::class,
+                'profile_id' => $profile->id,
+                'approval_status' => 'approved',
+                'approved_by_level_1' => $admin->id,
+                'approved_at_level_1' => now()->subDays(rand(1, 30)),
+                'approved_by_level_2' => $loanOfficer->id,
+                'approved_at_level_2' => now()->subDays(rand(1, 15)),
+                'approved_by_level_3' => null,
+                'approved_at_level_3' => null,
             ]);
 
             // Create compulsory savings account for each member
             $compulsorySavings = SavingsProduct::where('type', 'compulsory')->first();
             if ($compulsorySavings) {
                 $accountNumber = 'SA' . str_pad($index + 1, 8, '0', STR_PAD_LEFT);
+                $balance = rand(5000, 50000);
+                $available = max(0, $balance - rand(0, 1000));
                 
                 Account::create([
                     'account_number' => $accountNumber,
                     'member_id' => $member->id,
                     'savings_product_id' => $compulsorySavings->id,
-                    'balance' => rand(5000, 50000),
-                    'available_balance' => rand(5000, 50000),
+                    'account_type' => 'savings',
+                    'balance' => $balance,
+                    'available_balance' => $available,
                     'minimum_balance' => $compulsorySavings->minimum_balance,
+                    'interest_earned' => 0,
                     'status' => 'active',
                     'last_transaction_date' => now(),
                 ]);

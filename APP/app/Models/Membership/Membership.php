@@ -43,13 +43,15 @@ class Membership extends Model
             $profileType = $membership->profile_type;
             $prefix = $prefixMap[$profileType] ?? 'M'; // fallback
 
-            // Get the last number for this prefix and year
+            // Get the last number for this prefix and year using ID ordering (zero-padded)
             $last = self::where('id', 'like', $prefix . $year . '-%')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
                 ->first();
 
             if ($last) {
-                $lastNumber = (int) substr($last->id, 6); // adjust for prefix + year + '-'
+                // Format: <PREFIX><YEAR>-NNNN e.g., M2025-0002 → extract after '-'
+                $dashPosition = strpos($last->id, '-');
+                $lastNumber = $dashPosition !== false ? (int) substr($last->id, $dashPosition + 1) : 0;
                 $nextNumber = $lastNumber + 1;
             } else {
                 $nextNumber = 1;
