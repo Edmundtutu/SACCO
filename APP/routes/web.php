@@ -66,12 +66,20 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // Members Management
         Route::group(['prefix' => 'members', 'as' => 'members.'], function () {
             Route::get('/', [MembersController::class, 'index'])->name('index');
+            Route::get('create', [MembersController::class, 'create'])->name('create');
+            Route::post('/', [MembersController::class, 'store'])->name('store');
             Route::get('{id}', [MembersController::class, 'show'])->name('show');
             Route::get('{id}/edit', [MembersController::class, 'edit'])->name('edit');
             Route::put('{id}', [MembersController::class, 'update'])->name('update');
-            Route::post('{id}/approve', [MembersController::class, 'approve'])->name('approve');
             Route::post('{id}/suspend', [MembersController::class, 'suspend'])->name('suspend');
             Route::post('{id}/activate', [MembersController::class, 'activate'])->name('activate');
+        });
+
+        // Membership Approval Routes
+        Route::group(['prefix' => 'memberships', 'as' => 'memberships.'], function () {
+            Route::post('{membership}/approve-level-1', [MembersController::class, 'approveLevel1'])->name('approve-level-1');
+            Route::post('{membership}/approve-level-2', [MembersController::class, 'approveLevel2'])->name('approve-level-2');
+            Route::post('{membership}/approve-level-3', [MembersController::class, 'approveLevel3'])->name('approve-level-3');
         });
         
         // Savings Management
