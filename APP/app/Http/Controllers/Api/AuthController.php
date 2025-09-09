@@ -19,27 +19,12 @@ class AuthController extends Controller
      * Register a new member
      */
     public function register(Request $request): JsonResponse
+    // TODO: The entire register function should be refactored process a user record and temporary pending_approval membership registration as required in the database
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'required|string|max:20',
-            'national_id' => 'required|string|unique:users',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|in:male,female,other',
-            'address' => 'required|string',
-            'occupation' => 'required|string',
-            'monthly_income' => 'required|numeric|min:0',
-            
-            // Member profile data
-            'next_of_kin_name' => 'required|string',
-            'next_of_kin_relationship' => 'required|string',
-            'next_of_kin_phone' => 'required|string',
-            'next_of_kin_address' => 'required|string',
-            'employer_name' => 'nullable|string',
-            'employer_address' => 'nullable|string',
-            'employer_phone' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -179,7 +164,7 @@ class AuthController extends Controller
     {
         try {
             $user = auth()->user();
-            $user->load('memberProfile', 'accounts', 'loans', 'shares');
+            $user->load('membership.profile', 'accounts', 'loans', 'shares');
 
             return response()->json([
                 'success' => true,
@@ -224,7 +209,11 @@ class AuthController extends Controller
 
         try {
             $user = auth()->user();
-            $user->update($request->only([
+            // update the user's name
+            $user->update($request->only([ 'name' ]));
+            // update the user's membership profilw instead
+            $membership_profile = $user->load('membership.profile')->membership->profile;
+            $membership_profile->update($request->only([
                 'name', 'phone', 'address', 'occupation', 'monthly_income'
             ]));
 
