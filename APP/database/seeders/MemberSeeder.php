@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Member;
+use App\Models\User;
+use App\Models\Account;
+use App\Models\Loan;
+use App\Models\Transaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -15,44 +18,62 @@ class MemberSeeder extends Seeder
      */
     public function run()
     {
-        Member::factory()
+        // Create batches of users with role=member and attach related data
+        User::factory()
             ->count(35)
-            ->hasAccounts(6)
-            ->hasTransactions(20)
-            ->hasLoans(3)
-            ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(6)->create(['member_id' => $user->id]);
+                Transaction::factory()->count(20)->create(['member_id' => $user->id]);
+                Loan::factory()->count(3)->create(['member_id' => $user->id]);
+            });
 
-        Member::factory()
+        User::factory()
             ->count(25)
-            ->hasAccounts(1)
-            ->hasTransactions(15)
-            ->hasLoans(2)
-            ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(1)->create(['member_id' => $user->id]);
+                Transaction::factory()->count(15)->create(['member_id' => $user->id]);
+                Loan::factory()->count(2)->create(['member_id' => $user->id]);
+            });
 
-
-        Member::factory()
+        User::factory()
             ->count(5)
-            ->hasAccounts(1)
-            ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(1)->create(['member_id' => $user->id]);
+            });
 
-        Member::factory()
+        User::factory()
             ->count(5)
-            ->hasAccounts(2)
-            ->hasTransactions(12)
-            ->hasLoans(1)
-            ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(2)->create(['member_id' => $user->id]);
+                Transaction::factory()->count(12)->create(['member_id' => $user->id]);
+                Loan::factory()->count(1)->create(['member_id' => $user->id]);
+            });
 
-        Member::factory()
+        User::factory()
             ->count(3)
-            ->hasAccounts(1)
-            ->hasTransactions(3)
-             ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(1)->create(['member_id' => $user->id]);
+                Transaction::factory()->count(3)->create(['member_id' => $user->id]);
+            });
 
-        Member::factory()
+        User::factory()
             ->count(1)
-            ->hasAccounts(1)
-            ->hasTransactions(1)
-            ->hasLoans(1)
-            ->create();
+            ->state(fn () => ['role' => 'member', 'status' => 'active'])
+            ->create()
+            ->each(function (User $user) {
+                Account::factory()->count(1)->create(['member_id' => $user->id]);
+                Transaction::factory()->count(1)->create(['member_id' => $user->id]);
+                Loan::factory()->count(1)->create(['member_id' => $user->id]);
+            });
     }
 }
