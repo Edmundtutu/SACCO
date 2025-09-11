@@ -10,6 +10,10 @@
                 <h1 class="page-title">Membership Requests</h1>
                 <p class="text-muted">Review new membership applications and approve at your level</p>
             </div>
+            <div>
+                @php $role = auth()->user()->role ?? 'admin'; @endphp
+                <span class="badge bg-dark">Role: {{ str_replace('_', ' ', ucfirst($role)) }}</span>
+            </div>
         </div>
     </div>
 </div>
@@ -198,9 +202,9 @@
                                     <td>{{ $member->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="action-buttons">
-                                            <a href="{{ route('admin.members.show', $member->id) }}" class="btn btn-outline-primary btn-sm" title="View Details">
+                                            <button type="button" class="btn btn-outline-primary btn-sm view-request" data-member-id="{{ $member->id }}" title="View Details">
                                                 <i class="bi bi-eye"></i>
-                                            </a>
+                                            </button>
                                             <a href="{{ route('admin.members.edit', $member->id) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
@@ -318,6 +322,20 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            // Lazy modal loader
+            $(document).on('click', '.view-request', function() {
+                const memberId = $(this).data('member-id');
+                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                const modalContent = $('#detailModal .modal-content');
+                modalContent.html('<div class="p-5 text-center"><div class="spinner-border" role="status"></div><div class="mt-2">Loading...</div></div>');
+                modal.show();
+
+                $.get(`{{ route('admin.members.requests.modal', '') }}/${memberId}`, function(html) {
+                    modalContent.html(html);
+                }).fail(function(xhr){
+                    modalContent.html(`<div class="p-4"><div class="alert alert-danger mb-0">Failed to load details: ${xhr.responseJSON?.message || 'Unknown error'}</div></div>`);
+                });
+            });
             $('.approve-btn').click(function() {
                 const membershipId = $(this).data('membership-id');
                 const level = $(this).data('level');
@@ -347,7 +365,35 @@
                     });
                 }
             });
+            // Delegate approval in modal and table
+            $(document).on('click', '.approve-btn', function() {
+                const membershipId = $(this).data('membership-id');
+                const level = $(this).data('level');
+                const button = $(this);
+
+                if (confirm(`Approve this membership at level ${level}?`)) {
+                    $.ajax({
+                        url: `/admin/memberships/${membershipId}/approve-level-${level}`,
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                        beforeSend: function() { button.prop('disabled', true).html('<i class="bi bi-clock"></i> Processing...'); },
+                        success: function(response) { location.reload(); },
+                        error: function(xhr) {
+                            const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Something went wrong';
+                            alert('Error: ' + msg);
+                            button.prop('disabled', false);
+                        }
+                    });
+                }
+            });
         });
     </script>
 @endpush
+
+<!-- Modal Shell -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content"></div>
+    </div>
+</div>
 @endsection

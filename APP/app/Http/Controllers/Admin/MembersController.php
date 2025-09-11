@@ -144,6 +144,18 @@ class MembersController extends Controller
     }
 
     /**
+     * Return HTML for the membership approval modal (AJAX-loaded)
+     */
+    public function requestModal($id)
+    {
+        $member = User::where('role', 'member')
+            ->with(['membership.profile', 'accounts', 'loans'])
+            ->findOrFail($id);
+
+        return view('admin.members.partials.approval-modal', compact('member'));
+    }
+
+    /**
      * Show the form for creating a new member
      */
     public function create(Request $request)
