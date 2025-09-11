@@ -72,9 +72,21 @@
                         <small class="text-muted">Account verified on {{ $member->account_verified_at->format('M d, Y') }}</small>
                         @endif
                         
-                        @if($member->membership && $member->membership->approval_status == 'pending')
+                        @if($member->membership)
                             <div class="mt-3">
                                 <h6>Approval Progress:</h6>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge {{ $member->membership->approved_by_level_1 ? 'bg-success' : 'bg-light text-dark' }}">
+                                        <i class="bi {{ $member->membership->approved_by_level_1 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L1
+                                    </span>
+                                    <span class="badge {{ $member->membership->approved_by_level_2 ? 'bg-success' : 'bg-light text-dark' }}">
+                                        <i class="bi {{ $member->membership->approved_by_level_2 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L2
+                                    </span>
+                                    <span class="badge {{ $member->membership->approved_by_level_3 ? 'bg-success' : 'bg-light text-dark' }}">
+                                        <i class="bi {{ $member->membership->approved_by_level_3 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L3
+                                    </span>
+                                </div>
+                                @if($member->membership->approval_status == 'pending')
                                 <div class="progress" style="height: 20px;">
                                     @php
                                         $progress = 0;
@@ -86,6 +98,7 @@
                                         Level {{ $progress == 0 ? '1' : ($progress == 33 ? '2' : ($progress == 66 ? '3' : 'Complete')) }}
                                     </div>
                                 </div>
+                                @endif
                                 <small class="text-muted">
                                     @if($member->membership->approved_by_level_1)
                                         ✓ Level 1 approved {{ $member->membership->approved_at_level_1->format('M d, Y') }}
@@ -101,28 +114,46 @@
                         @endif
                     </div>
                     <div class="col-md-6 text-end">
-                        @if($member->membership && $member->membership->approval_status == 'pending')
-                            @php
-                                $currentUser = auth()->user();
-                                $membership = $member->membership;
-                            @endphp
-                            
-                            @if($currentUser->role == 'staff_level_1' && !$membership->approved_by_level_1)
-                                <button type="button" class="btn btn-success approve-btn" 
-                                        data-membership-id="{{ $membership->id }}" data-level="1">
-                                    <i class="bi bi-check-circle"></i> Approve Level 1
-                                </button>
-                            @elseif($currentUser->role == 'staff_level_2' && $membership->approved_by_level_1 && !$membership->approved_by_level_2)
-                                <button type="button" class="btn btn-success approve-btn" 
-                                        data-membership-id="{{ $membership->id }}" data-level="2">
-                                    <i class="bi bi-check-circle"></i> Approve Level 2
-                                </button>
-                            @elseif($currentUser->role == 'staff_level_3' && $membership->approved_by_level_2 && !$membership->approved_by_level_3)
-                                <button type="button" class="btn btn-success approve-btn" 
-                                        data-membership-id="{{ $membership->id }}" data-level="3">
-                                    <i class="bi bi-check-circle"></i> Final Approval & Activate
-                                </button>
-                            @endif
+                        @php $membership = $member->membership; @endphp
+                        @if($membership && $membership->approval_status == 'pending')
+                            @can('approve_level_1', $membership)
+                                @if(!$membership->approved_by_level_1)
+                                    <button type="button" class="btn btn-success approve-btn" 
+                                            data-membership-id="{{ $membership->id }}" data-level="1" title="Approve Level 1">
+                                        <i class="bi bi-check-circle"></i> Approve Level 1
+                                    </button>
+                                @endif
+                            @endcan
+
+                            @can('approve_level_2', $membership)
+                                @if(!$membership->approved_by_level_2)
+                                    @if($membership->approved_by_level_1)
+                                        <button type="button" class="btn btn-success approve-btn" 
+                                                data-membership-id="{{ $membership->id }}" data-level="2" title="Approve Level 2">
+                                            <i class="bi bi-check-circle"></i> Approve Level 2
+                                        </button>
+                                    @else
+                                        <button type="button" class="btn btn-outline-secondary" disabled title="Waiting for Level 1 approval">
+                                            <i class="bi bi-hourglass"></i> Approve Level 2
+                                        </button>
+                                    @endif
+                                @endif
+                            @endcan
+
+                            @can('approve_level_3', $membership)
+                                @if(!$membership->approved_by_level_3)
+                                    @if($membership->approved_by_level_2)
+                                        <button type="button" class="btn btn-success approve-btn" 
+                                                data-membership-id="{{ $membership->id }}" data-level="3" title="Final Approval & Activate">
+                                            <i class="bi bi-check-circle"></i> Final Approval & Activate
+                                        </button>
+                                    @else
+                                        <button type="button" class="btn btn-outline-secondary" disabled title="Waiting for Level 2 approval">
+                                            <i class="bi bi-hourglass"></i> Final Approval
+                                        </button>
+                                    @endif
+                                @endif
+                            @endcan
                         @endif
                         
                         @if($member->status == 'active')

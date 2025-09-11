@@ -22,9 +22,9 @@ class AdminMiddleware
         }
 
         $user = Auth::user();
-        
+
         // Check if user has admin privileges
-        if (!in_array($user->role, ['admin', 'staff', 'loan_officer', 'accountant'])) {
+        if (!in_array($user->role, ['admin', 'staff_level_1', 'staff_level_2', 'staff_level_3'])) {
             abort(403, 'Unauthorized access to admin panel');
         }
 

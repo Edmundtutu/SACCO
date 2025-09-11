@@ -55,17 +55,18 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AdminAuthController::class, 'login'])->name('login.submit');
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
-    
+
     // Protected Admin Routes
     Route::group(['middleware' => ['auth', 'admin']], function () {
-        
+
         // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Members Management
         Route::group(['prefix' => 'members', 'as' => 'members.'], function () {
             Route::get('/', [MembersController::class, 'index'])->name('index');
+            Route::get('requests', [MembersController::class, 'requests'])->name('requests');
             Route::get('create', [MembersController::class, 'create'])->name('create');
             Route::post('/', [MembersController::class, 'store'])->name('store');
             Route::get('{id}', [MembersController::class, 'show'])->name('show');
@@ -77,11 +78,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 
         // Membership Approval Routes
         Route::group(['prefix' => 'memberships', 'as' => 'memberships.'], function () {
-            Route::post('{membership}/approve-level-1', [MembersController::class, 'approveLevel1'])->name('approve-level-1');
-            Route::post('{membership}/approve-level-2', [MembersController::class, 'approveLevel2'])->name('approve-level-2');
-            Route::post('{membership}/approve-level-3', [MembersController::class, 'approveLevel3'])->name('approve-level-3');
+            Route::post('{membership}/approve-level-1', [MembersController::class, 'approve_level_1'])->name('approve-level-1');
+            Route::post('{membership}/approve-level-2', [MembersController::class, 'approve_level_2'])->name('approve-level-2');
+            Route::post('{membership}/approve-level-3', [MembersController::class, 'approve_level_3'])->name('approve-level-3');
         });
-        
+
         // Savings Management
         Route::group(['prefix' => 'savings', 'as' => 'savings.'], function () {
             Route::get('/', [AdminSavingsController::class, 'index'])->name('index');
@@ -91,7 +92,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('products', [AdminSavingsController::class, 'products'])->name('products');
             Route::post('manual-transaction', [AdminSavingsController::class, 'manualTransaction'])->name('manual-transaction');
         });
-        
+
         // Loans Management
         Route::group(['prefix' => 'loans', 'as' => 'loans.'], function () {
             Route::get('/', [AdminLoansController::class, 'index'])->name('index');
@@ -102,7 +103,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('applications', [AdminLoansController::class, 'applications'])->name('applications');
             Route::get('products', [AdminLoansController::class, 'products'])->name('products');
         });
-        
+
         // Shares Management
         Route::group(['prefix' => 'shares', 'as' => 'shares.'], function () {
             Route::get('/', [AdminSharesController::class, 'index'])->name('index');
@@ -111,7 +112,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('dividends', [AdminSharesController::class, 'dividends'])->name('dividends');
             Route::post('dividends/declare', [AdminSharesController::class, 'declareDividend'])->name('dividends.declare');
         });
-        
+
         // Reports
         Route::group(['prefix' => 'reports', 'as' => 'reports.'], function () {
             Route::get('/', [AdminReportsController::class, 'index'])->name('index');

@@ -77,6 +77,6 @@ class AuthController extends Controller
      */
     private function isAdminUser($user)
     {
-        return in_array($user->role, ['admin', 'staff', 'loan_officer', 'accountant']);
+        return $user->isStaff();
     }
 }

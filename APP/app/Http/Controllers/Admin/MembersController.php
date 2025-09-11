@@ -52,7 +52,7 @@ class MembersController extends Controller
             });
         }
 
-        $members = $query->orderBy('created_at', 'desc')->paginate(20);
+        $members = $query->orderBy('created_at', 'desc')->paginate(60);
 
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
@@ -60,6 +60,56 @@ class MembersController extends Controller
         ];
 
         return view('admin.members.index', compact('members', 'breadcrumbs'));
+    }
+
+    /**
+     * Display a listing of membership requests (pending approvals)
+     */
+    public function requests(Request $request)
+    {
+        $query = User::where('role', 'member')
+            ->with(['accounts', 'loans', 'membership.profile'])
+            ->whereHas('membership', function($membershipQuery) {
+                $membershipQuery->where('approval_status', 'pending');
+            });
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('membership', function($membershipQuery) use ($search) {
+                      $membershipQuery->where('id', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('membership.profile', function($profileQuery) use ($search) {
+                      $profileQuery->where('phone', 'like', "%{$search}%")
+                               ->orWhere('national_id', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Membership approval status filter (if user wants to override the default 'pending')
+        if ($request->has('approval_status') && $request->approval_status) {
+            $query->whereHas('membership', function($membershipQuery) use ($request) {
+                $membershipQuery->where('approval_status', $request->approval_status);
+            });
+        }
+
+        $members = $query->orderBy('created_at', 'desc')->paginate(60);
+
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Members', 'url' => route('admin.members.index')],
+            ['text' => 'Membership Requests', 'url' => route('admin.members.requests')]
+        ];
+
+        return view('admin.members.index-requests', compact('members', 'breadcrumbs'));
     }
 
     public function show($id)
@@ -99,7 +149,7 @@ class MembersController extends Controller
     public function create(Request $request)
     {
         $memberType = $request->get('type', 'individual'); // Default to individual
-        
+
         // Validate member type
         if (!in_array($memberType, ['individual', 'vsla', 'mfi'])) {
             return redirect()->route('admin.members.index')
@@ -130,7 +180,7 @@ class MembersController extends Controller
     public function store(Request $request)
     {
         $memberType = $request->input('member_type');
-        
+
         // Validate member type
         if (!in_array($memberType, ['individual', 'vsla', 'mfi'])) {
             return redirect()->back()
@@ -289,7 +339,7 @@ class MembersController extends Controller
 
             // Update profile based on profile type
             $profile = $member->membership->profile;
-            
+
             if ($profile instanceof IndividualProfile) {
                 $this->updateIndividualProfile($request, $profile);
             } elseif ($profile instanceof VslaProfile) {
@@ -387,9 +437,9 @@ class MembersController extends Controller
         }));
     }
 
-    public function approveLevel1(Membership $membership)
+    public function approve_level_1(Membership $membership)
     {
-        $this->authorize('approveLevel1', $membership);
+        $this->authorize('approve_level_1', $membership);
 
         $membership->update([
             'approved_by_level_1' => auth()->id(),
@@ -399,9 +449,9 @@ class MembersController extends Controller
         return response()->json(['message' => 'Membership approved at level 1']);
     }
 
-    public function approveLevel2(Membership $membership)
+    public function approve_level_2(Membership $membership)
     {
-        $this->authorize('approveLevel2', $membership);
+        $this->authorize('approve_level_2', $membership);
 
         $membership->update([
             'approved_by_level_2' => auth()->id(),
@@ -411,9 +461,9 @@ class MembersController extends Controller
         return response()->json(['message' => 'Membership approved at level 2']);
     }
 
-    public function approveLevel3(Membership $membership)
+    public function approve_level_3(Membership $membership)
     {
-        $this->authorize('approveLevel3', $membership);
+        $this->authorize('approve_level_3', $membership);
 
         $member = $membership->user;
 

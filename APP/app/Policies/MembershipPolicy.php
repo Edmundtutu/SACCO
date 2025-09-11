@@ -14,7 +14,7 @@ class MembershipPolicy
     /**
      * Determine if the user can approve membership at staff_level_1.
      */
-    public function approveLevel1(User $user, Membership $membership): Response
+    public function approve_level_1(User $user, Membership $membership): Response
     {
         return $user->role === 'staff_level_1'
             ? Response::allow()
@@ -24,7 +24,7 @@ class MembershipPolicy
     /**
      * Determine if the user can approve membership at staff_level_2.
      */
-    public function approveLevel2(User $user, Membership $membership): Response
+    public function approve_level_2(User $user, Membership $membership): Response
     {
         if ($user->role !== 'staff_level_2') {
             return Response::deny('Only staff_level_2 can approve at this level.');
@@ -40,7 +40,7 @@ class MembershipPolicy
     /**
      * Determine if the user can approve membership at staff_level_3.
      */
-    public function approveLevel3(User $user, Membership $membership): Response
+    public function approve_level_3(User $user, Membership $membership): Response
     {
         if ($user->role !== 'staff_level_3') {
             return Response::deny('Only staff_level_3 can approve at this level.');
