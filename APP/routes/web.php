@@ -67,6 +67,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         Route::group(['prefix' => 'members', 'as' => 'members.'], function () {
             Route::get('/', [MembersController::class, 'index'])->name('index');
             Route::get('requests', [MembersController::class, 'requests'])->name('requests');
+            Route::get('requests/{id}/modal', [MembersController::class, 'requestModal'])->name('requests.modal');
             Route::get('create', [MembersController::class, 'create'])->name('create');
             Route::post('/', [MembersController::class, 'store'])->name('store');
             Route::get('{id}', [MembersController::class, 'show'])->name('show');
