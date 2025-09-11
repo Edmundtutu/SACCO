@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, PiggyBank, CreditCard, TrendingUp, User, LogOut, Settings, FileText } from 'lucide-react';
+import { Home, PiggyBank, CreditCard, TrendingUp, User, LogOut, Settings, FileText, ShieldCheck } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { logoutUser } from '@/store/authSlice';
@@ -15,6 +15,7 @@ const navigationItems = [
   { icon: TrendingUp, label: 'Shares', path: '/shares' },
   { icon: FileText, label: 'Reports', path: '/reports' },
   { icon: User, label: 'Profile', path: '/profile' },
+  { icon: ShieldCheck, label: 'Membership Requests', path: '/memberships/requests' },
 ];
 
 export function Sidebar() {
