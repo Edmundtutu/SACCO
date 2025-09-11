@@ -89,7 +89,7 @@ class MembersController extends Controller
             });
         }
 
-        // Status filter
+        // User Status filter
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
@@ -98,6 +98,40 @@ class MembersController extends Controller
         if ($request->has('approval_status') && $request->approval_status) {
             $query->whereHas('membership', function($membershipQuery) use ($request) {
                 $membershipQuery->where('approval_status', $request->approval_status);
+            });
+        }
+
+        // Profile type filter (IndividualProfile, VslaProfile, MfiProfile)
+        if ($request->has('profile_type') && $request->profile_type) {
+            $profileType = $request->profile_type;
+            $fullType = match ($profileType) {
+                'individual' => \App\Models\Membership\IndividualProfile::class,
+                'vsla' => \App\Models\Membership\VslaProfile::class,
+                'mfi' => \App\Models\Membership\MfiProfile::class,
+                default => null,
+            };
+            if ($fullType) {
+                $query->whereHas('membership', function($q) use ($fullType) {
+                    $q->where('profile_type', $fullType);
+                });
+            }
+        }
+
+        // Stage filter: level1, level2, level3, approved
+        if ($request->has('stage') && $request->stage) {
+            $stage = $request->stage;
+            $query->whereHas('membership', function($q) use ($stage) {
+                if ($stage === 'level1') {
+                    $q->whereNull('approved_by_level_1');
+                } elseif ($stage === 'level2') {
+                    $q->whereNotNull('approved_by_level_1')
+                      ->whereNull('approved_by_level_2');
+                } elseif ($stage === 'level3') {
+                    $q->whereNotNull('approved_by_level_2')
+                      ->whereNull('approved_by_level_3');
+                } elseif ($stage === 'approved') {
+                    $q->where('approval_status', 'approved');
+                }
             });
         }
 

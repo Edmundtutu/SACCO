@@ -1,399 +1,269 @@
-@extends('admin.layouts.app')
-
-@section('title', 'Membership Requests')
-
-@section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="page-title">Membership Requests</h1>
-                <p class="text-muted">Review new membership applications and approve at your level</p>
-            </div>
-            <div>
-                @php $role = auth()->user()->role ?? 'admin'; @endphp
-                <span class="badge bg-dark">Role: {{ str_replace('_', ' ', ucfirst($role)) }}</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membership Approval System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color:#3498db; --secondary-color:#2c3e50; --success-color:#2ecc71; --warning-color:#f39c12; --danger-color:#e74c3c; --light-bg:#f8f9fa; }
+        body { background-color:#f5f7f9; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-brand{ font-weight:700; color:var(--secondary-color)!important; }
+        .card{ border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,.1); margin-bottom:20px; border:none; }
+        .card-header{ background-color:white; border-bottom:2px solid #eaeaea; font-weight:600; padding:15px 20px; border-radius:10px 10px 0 0 !important; }
+        .profile-badge{ padding:5px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+        .badge-individual{ background-color:#e1f0ff; color:#0d6efd; }
+        .badge-vsla{ background-color:#e0f7fa; color:#0097a7; }
+        .badge-mfi{ background-color:#fce4ec; color:#d81b60; }
+        .approval-progress{ height:8px; border-radius:4px; }
+        .approval-item{ border-left:3px solid #eaeaea; padding:10px 15px; margin-bottom:10px; background:white; border-radius:5px; }
+        .approved-item{ border-left-color:var(--success-color); background-color:#f0fff4; }
+        .action-btn{ padding:5px 15px; border-radius:5px; font-weight:500; font-size:14px; }
+        .profile-detail-card{ border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:15px; background:white; }
+        .detail-item{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+        .detail-item:last-child{ border-bottom:none; }
+        .status-badge{ padding:5px 10px; border-radius:15px; font-size:12px; font-weight:600; }
+        .status-pending{ background-color:#fff3cd; color:#856404; }
+        .status-approved{ background-color:#d4edda; color:#155724; }
+        .check-item{ display:flex; align-items:center; margin-bottom:10px; }
+        .check-item input{ margin-right:10px; }
+        .nav-tabs .nav-link.active{ font-weight:600; border-bottom:3px solid var(--primary-color); }
+        .role-badge{ background-color:var(--secondary-color); color:white; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Membership Approval System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-user-cog me-1"></i> Admin Panel</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i> {{ auth()->user()->name ?? 'Admin' }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
-    </div>
-</div>
-<!-- Search and Filters -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form method="GET" action="{{ route('admin.members.requests') }}">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label for="search" class="form-label">Search Requests</label>
-                            <input type="text" class="form-control" id="search" name="search"
-                                   value="{{ request('search') }}"
-                                   placeholder="Name, email, member number, phone...">
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Membership Approval Requests</h2>
+                    <span class="role-badge badge">{{ Str::headline(str_replace('_',' ', auth()->user()->role ?? 'admin')) }}</span>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="GET" action="{{ route('admin.members.requests') }}">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Profile Type</label>
+                                    <select class="form-select" name="profile_type">
+                                        <option value="">All Types</option>
+                                        <option value="individual" {{ request('profile_type')=='individual'?'selected':'' }}>Individual</option>
+                                        <option value="vsla" {{ request('profile_type')=='vsla'?'selected':'' }}>VSLA</option>
+                                        <option value="mfi" {{ request('profile_type')=='mfi'?'selected':'' }}>MFI</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" name="stage">
+                                        <option value="">All Statuses</option>
+                                        <option value="level1" {{ request('stage')=='level1'?'selected':'' }}>Waiting Level 1</option>
+                                        <option value="level2" {{ request('stage')=='level2'?'selected':'' }}>Waiting Level 2</option>
+                                        <option value="level3" {{ request('stage')=='level3'?'selected':'' }}>Waiting Level 3</option>
+                                        <option value="approved" {{ request('stage')=='approved'?'selected':'' }}>Approved</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Search</label>
+                                    <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Search by name, email, or ID">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100">Apply Filters</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Pending Approval Requests</span>
+                        <span class="badge bg-primary">{{ $members->total() }} requests</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Profile Type</th>
+                                        <th>Submitted On</th>
+                                        <th>Approval Progress</th>
+                                        <th>Current Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($members as $member)
+                                        @php $ms = $member->membership; @endphp
+                                        <tr>
+                                            <td>#REQ-{{ $ms?->id }}</td>
+                                            <td>{{ $member->name }}</td>
+                                            <td>
+                                                @php $pt = $ms?->profile_type ? class_basename($ms->profile_type) : null; @endphp
+                                                @if($pt==='IndividualProfile')
+                                                    <span class="profile-badge badge-individual">Individual</span>
+                                                @elseif($pt==='VslaProfile')
+                                                    <span class="profile-badge badge-vsla">VSLA</span>
+                                                @elseif($pt==='MfiProfile')
+                                                    <span class="profile-badge badge-mfi">MFI</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Unknown</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $member->created_at->format('M d, Y') }}</td>
+                                            <td>
+                                                @php $progress=0; if($ms?->approved_by_level_1) $progress=33; if($ms?->approved_by_level_2) $progress=66; if($ms?->approved_by_level_3) $progress=100; @endphp
+                                                <div class="progress approval-progress"><div class="progress-bar bg-success" style="width: {{ $progress }}%"></div></div>
+                                                <small class="text-muted">
+                                                    @if($progress==0) No approvals yet @elseif($progress==33) Level 1/3 approved @elseif($progress==66) Level 2/3 approved @else Fully approved @endif
+                                                </small>
+                                            </td>
+                                            <td>
+                                                @if($ms?->approval_status==='approved')
+                                                    <span class="status-badge status-approved">Approved</span>
+                                                @elseif(!$ms?->approved_by_level_1)
+                                                    <span class="status-badge status-pending">Waiting Level 1</span>
+                                                @elseif(!$ms?->approved_by_level_2)
+                                                    <span class="status-badge status-pending">Waiting Level 2</span>
+                                                @elseif(!$ms?->approved_by_level_3)
+                                                    <span class="status-badge status-pending">Waiting Level 3</span>
+                                                @else
+                                                    <span class="status-badge status-approved">Approved</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary action-btn me-1 view-request" data-member-id="{{ $member->id }}">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </button>
+                                                @if($ms && $ms->approval_status==='pending')
+                                                    @can('approve_level_1', $ms)
+                                                        <button class="btn btn-sm btn-success action-btn approve-btn" data-level="1" data-membership-id="{{ $ms->id }}" {{ $ms->approved_by_level_1 ? 'disabled' : '' }}>
+                                                            <i class="fas fa-check me-1"></i> {{ $ms->approved_by_level_1 ? 'Approved' : 'Approve' }}
+                                                        </button>
+                                                    @endcan
+                                                    @can('approve_level_2', $ms)
+                                                        <button class="btn btn-sm btn-success action-btn approve-btn" data-level="2" data-membership-id="{{ $ms->id }}" {{ $ms->approved_by_level_1 ? '' : 'disabled' }}>
+                                                            <i class="fas fa-{{ $ms->approved_by_level_1 ? 'check' : 'clock' }} me-1"></i> {{ $ms->approved_by_level_1 ? 'Approve' : 'Waiting for Level 1' }}
+                                                        </button>
+                                                    @endcan
+                                                    @can('approve_level_3', $ms)
+                                                        <button class="btn btn-sm btn-success action-btn approve-btn" data-level="3" data-membership-id="{{ $ms->id }}" {{ $ms->approved_by_level_2 ? '' : 'disabled' }}>
+                                                            <i class="fas fa-{{ $ms->approved_by_level_2 ? 'check' : 'clock' }} me-1"></i> {{ $ms->approved_by_level_2 ? 'Approve' : 'Waiting for Level 2' }}
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <button class="btn btn-sm btn-secondary action-btn" disabled>
+                                                        <i class="fas fa-check-double me-1"></i> Completed
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="7" class="text-center text-muted py-4">No requests found</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-md-2">
-                            <label for="status" class="form-label">User Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="">All Statuses</option>
-                                <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>Pending</option>
-                                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="approval_status" class="form-label">Approval Status</label>
-                            <select class="form-select" id="approval_status" name="approval_status">
-                                <option value="">All</option>
-                                <option value="pending" {{ request('approval_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="approved" {{ request('approval_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ request('approval_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary me-2">
-                                <i class="bi bi-search"></i> Search
-                            </button>
-                            <a href="{{ route('admin.members.requests') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </a>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div><small class="text-muted">Showing {{ $members->firstItem() }} to {{ $members->lastItem() }} of {{ $members->total() }} results</small></div>
+                            <div>{{ $members->appends(request()->query())->links() }}</div>
                         </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Members Table -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-people"></i> Membership Requests
-                    <span class="badge bg-primary ms-2">{{ $members->total() }} total</span>
-                </h5>
-                <div class="small text-muted">
-                    <i class="bi bi-info-circle"></i> Approvals require sequential verification: L1 → L2 → L3
                 </div>
             </div>
-            <div class="card-body">
-                @if($members->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                            <tr>
-                                <th>Member #</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Contact</th>
-                                <th>Status</th>
-                                <th>Approval</th>
-                                <th>Progress</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($members as $member)
-                                <tr>
-                                    <td>
-                                        <strong>{{ $member->membership->id ?? 'N/A' }}</strong>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <strong>{{ $member->name }}</strong>
-                                            <br><small class="text-muted">{{ $member->email }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($member->membership && $member->membership->profile)
-                                            @php
-                                                $profileType = class_basename($member->membership->profile_type);
-                                            @endphp
-                                            @switch($profileType)
-                                                @case('IndividualProfile')
-                                                    <span class="badge bg-primary">Individual</span>
-                                                    @break
-                                                @case('VslaProfile')
-                                                    <span class="badge bg-info">VSLA</span>
-                                                    @break
-                                                @case('MfiProfile')
-                                                    <span class="badge bg-warning">MFI</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge bg-secondary">{{ $profileType }}</span>
-                                            @endswitch
-                                        @else
-                                            <span class="badge bg-light text-dark">No Profile</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($member->membership && $member->membership->profile)
-                                            @if($member->membership->profile instanceof App\Models\Membership\IndividualProfile)
-                                                {{ $member->membership->profile->phone ?? $member->email }}
-                                                @if($member->membership->profile->national_id)
-                                                    <br><small class="text-muted">ID: {{ $member->membership->profile->national_id }}</small>
-                                                @endif
-                                            @elseif($member->membership->profile instanceof App\Models\Membership\VslaProfile)
-                                                {{ $member->membership->profile->village ?? 'N/A' }}
-                                                <br><small class="text-muted">{{ $member->membership->profile->district ?? 'N/A' }}</small>
-                                            @elseif($member->membership->profile instanceof App\Models\Membership\MfiProfile)
-                                                {{ $member->membership->profile->contact_number ?? 'N/A' }}
-                                                <br><small class="text-muted">{{ $member->membership->profile->contact_person ?? 'N/A' }}</small>
-                                            @endif
-                                        @else
-                                            {{ $member->email }}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @switch($member->status)
-                                            @case('active')
-                                                <span class="badge bg-success">Active</span>
-                                                @break
-                                            @case('pending_approval')
-                                                <span class="badge bg-warning">Pending</span>
-                                                @break
-                                            @case('suspended')
-                                                <span class="badge bg-danger">Suspended</span>
-                                                @break
-                                            @case('inactive')
-                                                <span class="badge bg-secondary">Inactive</span>
-                                                @break
-                                            @default
-                                                <span class="badge bg-light text-dark">{{ str_replace('_', ' ', ucfirst($member->status)) }}</span>
-                                        @endswitch
-                                    </td>
-                                    <td>
-                                        @if($member->membership)
-                                            @switch($member->membership->approval_status)
-                                                @case('approved')
-                                                    <span class="badge bg-success">Approved</span>
-                                                    @break
-                                                @case('pending')
-                                                    <span class="badge bg-warning">Pending</span>
-                                                    @break
-                                                @case('rejected')
-                                                    <span class="badge bg-danger">Rejected</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge bg-secondary">{{ ucfirst($member->membership->approval_status) }}</span>
-                                            @endswitch
-                                        @else
-                                            <span class="badge bg-light text-dark">No Membership</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @php $ms = $member->membership; @endphp
-                                        @if($ms)
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge {{ $ms->approved_by_level_1 ? 'bg-success' : 'bg-light text-dark' }}">
-                                                    <i class="bi {{ $ms->approved_by_level_1 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L1
-                                                </span>
-                                                <span class="badge {{ $ms->approved_by_level_2 ? 'bg-success' : 'bg-light text-dark' }}">
-                                                    <i class="bi {{ $ms->approved_by_level_2 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L2
-                                                </span>
-                                                <span class="badge {{ $ms->approved_by_level_3 ? 'bg-success' : 'bg-light text-dark' }}">
-                                                    <i class="bi {{ $ms->approved_by_level_3 ? 'bi-check-circle-fill' : 'bi-circle' }}"></i> L3
-                                                </span>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td>{{ $member->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button type="button" class="btn btn-outline-primary btn-sm view-request" data-member-id="{{ $member->id }}" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <a href="{{ route('admin.members.edit', $member->id) }}" class="btn btn-outline-secondary btn-sm" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-
-                                            @php $membership = $member->membership; @endphp
-                                            @if($membership && $membership->approval_status == 'pending')
-                                                {{-- Level 1 button --}}
-                                                @can('approve_level_1', $membership)
-                                                    @if(!$membership->approved_by_level_1)
-                                                        <button type="button"
-                                                                class="btn btn-outline-success btn-sm approve-btn"
-                                                                data-membership-id="{{ $membership->id }}"
-                                                                data-level="1"
-                                                                title="Approve Level 1">
-                                                            <i class="bi bi-check-circle"></i> L1
-                                                        </button>
-                                                    @endif
-                                                @endcan
-
-                                                {{-- Level 2 button (disabled reason if L1 not yet) --}}
-                                                @if(!$membership->approved_by_level_2)
-                                                    @can('approve_level_2', $membership)
-                                                        @if($membership->approved_by_level_1)
-                                                            <button type="button"
-                                                                    class="btn btn-outline-success btn-sm approve-btn"
-                                                                    data-membership-id="{{ $membership->id }}"
-                                                                    data-level="2"
-                                                                    title="Approve Level 2">
-                                                                <i class="bi bi-check-circle"></i> L2
-                                                            </button>
-                                                        @else
-                                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Waiting for Level 1 approval">
-                                                                <i class="bi bi-hourglass"></i> L2
-                                                            </button>
-                                                        @endif
-                                                    @endcan
-                                                @endif
-
-                                                {{-- Level 3 button (disabled reason if L2 not yet) --}}
-                                                @if(!$membership->approved_by_level_3)
-                                                    @can('approve_level_3', $membership)
-                                                        @if($membership->approved_by_level_2)
-                                                            <button type="button"
-                                                                    class="btn btn-outline-success btn-sm approve-btn"
-                                                                    data-membership-id="{{ $membership->id }}"
-                                                                    data-level="3"
-                                                                    title="Approve Level 3 & Activate">
-                                                                <i class="bi bi-check-circle"></i> L3
-                                                            </button>
-                                                        @else
-                                                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Waiting for Level 2 approval">
-                                                                <i class="bi bi-hourglass"></i> L3
-                                                            </button>
-                                                        @endif
-                                                    @endcan
-                                                @endif
-                                            @endif
-
-                                            @if($member->status == 'active')
-                                                <form action="{{ route('admin.members.suspend', $member->id) }}"
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                            class="btn btn-outline-warning btn-sm"
-                                                            title="Suspend"
-                                                            onclick="return confirm('Suspend this member?')">
-                                                        <i class="bi bi-pause-circle"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-
-                                            @if($member->status == 'suspended')
-                                                <form action="{{ route('admin.members.activate', $member->id) }}"
-                                                      method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                            class="btn btn-outline-success btn-sm"
-                                                            title="Activate"
-                                                            onclick="return confirm('Activate this member?')">
-                                                        <i class="bi bi-play-circle"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                            <small class="text-muted">
-                                Showing {{ $members->firstItem() }} to {{ $members->lastItem() }} of {{ $members->total() }} results
-                            </small>
-                        </div>
-                        <div>
-                            {{ $members->appends(request()->query())->links() }}
-                        </div>
-                    </div>
-                @else
-                    <div class="text-center py-5">
-                        <i class="bi bi-people display-1 text-muted"></i>
-                        <h4 class="text-muted mt-3">No members found</h4>
-                        <p class="text-muted">Try adjusting your search criteria or add new members.</p>
-                    </div>
-                @endif
-            </div>
         </div>
     </div>
-</div>
 
-@push('scripts')
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Lazy modal loader
-            $(document).on('click', '.view-request', function() {
-                const memberId = $(this).data('member-id');
-                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
-                const modalContent = $('#detailModal .modal-content');
-                modalContent.html('<div class="p-5 text-center"><div class="spinner-border" role="status"></div><div class="mt-2">Loading...</div></div>');
-                modal.show();
-
-                $.get(`{{ route('admin.members.requests.modal', '') }}/${memberId}`, function(html) {
-                    modalContent.html(html);
-                }).fail(function(xhr){
-                    modalContent.html(`<div class="p-4"><div class="alert alert-danger mb-0">Failed to load details: ${xhr.responseJSON?.message || 'Unknown error'}</div></div>`);
+        document.addEventListener('DOMContentLoaded', function() {
+            const role = '{{ auth()->user()->role ?? 'admin' }}';
+            if (role === 'admin') {
+                document.querySelectorAll('.btn-success').forEach(btn => {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-eye me-1"></i> View Only';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
                 });
-            });
-            $('.approve-btn').click(function() {
-                const membershipId = $(this).data('membership-id');
-                const level = $(this).data('level');
-                const button = $(this);
+            }
 
-                if (confirm(`Approve this membership at level ${level}?`)) {
-                    $.ajax({
-                        url: `/admin/memberships/${membershipId}/approve-level-${level}`,
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        beforeSend: function() {
-                            button.prop('disabled', true).html('<i class="bi bi-clock"></i> Processing...');
-                        },
-                        success: function(response) {
-                            // On success, the record may move to next step or disappear if fully approved
-                            location.reload();
-                        },
-                        error: function(xhr) {
-                            const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Something went wrong';
-                            alert('Error: ' + msg);
-                            button.prop('disabled', false);
-                            const label = button.data('level');
-                            button.html(`<i class="bi bi-check-circle"></i> L${label}`);
-                        }
-                    });
+            document.addEventListener('click', function(e) {
+                const viewBtn = e.target.closest('.view-request');
+                if (viewBtn) {
+                    const memberId = viewBtn.getAttribute('data-member-id');
+                    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                    const modalContent = document.querySelector('#detailModal .modal-content');
+                    modalContent.innerHTML = '<div class="p-5 text-center"><div class="spinner-border" role="status"></div><div class="mt-2">Loading...</div></div>';
+                    modal.show();
+                    fetch(`{{ route('admin.members.requests.modal', '') }}/${memberId}`)
+                        .then(r=>r.text())
+                        .then(html=>{ modalContent.innerHTML = html; })
+                        .catch(()=>{ modalContent.innerHTML = '<div class="p-4"><div class="alert alert-danger mb-0">Failed to load details</div></div>'; });
+                }
+
+                const approveBtn = e.target.closest('.approve-btn');
+                if (approveBtn) {
+                    const membershipId = approveBtn.getAttribute('data-membership-id');
+                    const level = approveBtn.getAttribute('data-level');
+                    if (confirm(`Approve this membership at level ${level}?`)) {
+                        approveBtn.disabled = true; approveBtn.innerHTML = '<i class="fas fa-clock me-1"></i> Processing...';
+                        fetch(`/admin/memberships/${membershipId}/approve-level-${level}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } })
+                            .then(r=>{ if(!r.ok) throw new Error(); return r.json(); })
+                            .then(()=>{ location.reload(); })
+                            .catch(()=>{ approveBtn.disabled=false; });
+                    }
                 }
             });
-            // Delegate approval in modal and table
-            $(document).on('click', '.approve-btn', function() {
-                const membershipId = $(this).data('membership-id');
-                const level = $(this).data('level');
-                const button = $(this);
 
-                if (confirm(`Approve this membership at level ${level}?`)) {
-                    $.ajax({
-                        url: `/admin/memberships/${membershipId}/approve-level-${level}`,
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                        beforeSend: function() { button.prop('disabled', true).html('<i class="bi bi-clock"></i> Processing...'); },
-                        success: function(response) { location.reload(); },
-                        error: function(xhr) {
-                            const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Something went wrong';
-                            alert('Error: ' + msg);
-                            button.prop('disabled', false);
-                        }
-                    });
-                }
-            });
+            const checkboxes = document.querySelectorAll('.form-check-input');
+            function updateApprovalProgress() {
+                const total = checkboxes.length;
+                const checked = document.querySelectorAll('.form-check-input:checked').length;
+                const progress = (checked / total) * 100;
+                const bar = document.querySelector('#approval .progress-bar');
+                if (bar) bar.style.width = `${progress}%`;
+            }
+            checkboxes.forEach(cb => cb.addEventListener('change', updateApprovalProgress));
         });
     </script>
-@endpush
-
-<!-- Modal Shell -->
-<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content"></div>
-    </div>
-</div>
-@endsection
+</body>
+</html>
