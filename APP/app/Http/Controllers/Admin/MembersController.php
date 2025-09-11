@@ -524,7 +524,7 @@ class MembersController extends Controller
             'member_id' => $member->id, // Use member_id instead of user_id
             'account_number' => 'SAV' . str_pad($member->id, 6, '0', STR_PAD_LEFT),
             'account_type' => 'savings',
-            'product_id' => 1, // Default savings product
+            'savings_product_id' => 1, // Default savings product
             'balance' => 0,
             'status' => 'active',
         ]);

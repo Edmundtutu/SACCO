@@ -37,10 +37,6 @@ Route::get('/home', function(){
     return view('home');
 });
 
-Route::post('/signup', [Authcontroller::class , 'signup']);
-Route::post('/login', [Authcontroller::class , 'login']);
-Route::post('/logout',[Authcontroller::class, 'logout']);
-
 /*
 |--------------------------------------------------------------------------
 | Admin Panel Routes

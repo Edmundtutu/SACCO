@@ -25,7 +25,11 @@ class Membership extends Model
         'approved_by_level_3',
         'approved_at_level_3',
     ];
-
+    protected $casts = [ 
+        'approved_at_level_1' => 'datetime',
+        'approved_at_level_2' => 'datetime',
+        'approved_at_level_3' => 'datetime',
+    ];
     protected static function boot()
     {
         parent::boot();
