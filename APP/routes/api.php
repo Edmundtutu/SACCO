@@ -31,6 +31,15 @@ Route::group(['prefix' => 'auth'], function () {
 
         // Admin only routes
         Route::post('approve-member/{memberId}', [AuthController::class, 'approveMember']);
+
+        // Membership approval workflow (API)
+        Route::group(['prefix' => 'memberships'], function () {
+            Route::get('/', [\App\Http\Controllers\Api\MembershipsController::class, 'index']);
+            Route::get('{membership}', [\App\Http\Controllers\Api\MembershipsController::class, 'show']);
+            Route::post('{membership}/approve-level-1', [\App\Http\Controllers\Api\MembershipsController::class, 'approveLevel1']);
+            Route::post('{membership}/approve-level-2', [\App\Http\Controllers\Api\MembershipsController::class, 'approveLevel2']);
+            Route::post('{membership}/approve-level-3', [\App\Http\Controllers\Api\MembershipsController::class, 'approveLevel3']);
+        });
     });
 });
 

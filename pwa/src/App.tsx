@@ -12,6 +12,7 @@ import Savings from './pages/Savings';
 import Loans from './pages/Loans';
 import Shares from './pages/Shares';
 import Reports from './pages/Reports';
+import MembershipRequests from './pages/MembershipRequests';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -54,6 +55,11 @@ const App = () => (
               <Route path="/reports" element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              } />
+              <Route path="/memberships/requests" element={
+                <ProtectedRoute>
+                  <MembershipRequests />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
