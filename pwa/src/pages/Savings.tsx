@@ -103,7 +103,7 @@ export default function Savings() {
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">Features:</h4>
                     <div className="flex flex-wrap gap-1">
-                      {product.features.map((feature, index) => (
+                      {product?.features?.map((feature, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {feature}
                         </Badge>
