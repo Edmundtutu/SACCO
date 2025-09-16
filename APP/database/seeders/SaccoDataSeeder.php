@@ -23,7 +23,7 @@ class SaccoDataSeeder extends Seeder
     {
         // Create Chart of Accounts
         $this->createChartOfAccounts();
-        
+
         // Create Admin User
         $admin = User::create([
             'name' => 'System Administrator',
@@ -48,13 +48,13 @@ class SaccoDataSeeder extends Seeder
 
         // Create Savings Products
         $this->createSavingsProducts();
-        
+
         // Create Loan Products
         $this->createLoanProducts();
-        
+
         // Create Sample Members
         $this->createSampleMembers($admin, $loanOfficer);
-        
+
         echo "SACCO data seeded successfully!\n";
         echo "Admin Login: admin@sacco.com / password123\n";
         echo "Loan Officer Login: loans@sacco.com / password123\n";
@@ -62,48 +62,42 @@ class SaccoDataSeeder extends Seeder
 
     private function createChartOfAccounts()
     {
-        $accounts = [
-            // Assets
-            ['1001', 'Cash in Hand', 'asset', 'current_asset', 'debit'],
-            ['1002', 'Bank Account', 'asset', 'current_asset', 'debit'],
-            ['1003', 'Loans to Members', 'asset', 'current_asset', 'debit'],
-            ['1004', 'Interest Receivable', 'asset', 'current_asset', 'debit'],
-            ['1005', 'Office Equipment', 'asset', 'fixed_asset', 'debit'],
-            
-            // Liabilities
-            ['2001', 'Member Savings', 'liability', 'current_liability', 'credit'],
-            ['2002', 'Member Shares', 'liability', 'long_term_liability', 'credit'],
-            ['2003', 'Accrued Expenses', 'liability', 'current_liability', 'credit'],
-            
-            // Equity
-            ['3001', 'Retained Earnings', 'equity', 'retained_earnings', 'credit'],
-            ['3002', 'Current Year Earnings', 'equity', 'retained_earnings', 'credit'],
-            
-            // Income
-            ['4001', 'Interest on Loans', 'income', 'operating_income', 'credit'],
-            ['4002', 'Fee Income', 'income', 'operating_income', 'credit'],
-            ['4003', 'Other Income', 'income', 'non_operating_income', 'credit'],
-            
-            // Expenses
-            ['5001', 'Interest Expense', 'expense', 'operating_expense', 'debit'],
-            ['5002', 'Administrative Expenses', 'expense', 'operating_expense', 'debit'],
-            ['5003', 'Office Rent', 'expense', 'operating_expense', 'debit'],
-            ['5004', 'Utilities', 'expense', 'operating_expense', 'debit'],
+        // Database seeder or migration for Chart of Accounts
+        $chartOfAccounts = [
+            // ASSETS
+            ['account_code' => '1000', 'account_name' => 'ASSETS', 'account_type' => 'asset', 'normal_balance' => 'debit', 'level' => 1],
+            ['account_code' => '1001', 'account_name' => 'Cash in Hand', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
+            ['account_code' => '1002', 'account_name' => 'Cash at Bank', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
+            ['account_code' => '1100', 'account_name' => 'Loans Receivable', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
+
+            // LIABILITIES
+            ['account_code' => '2000', 'account_name' => 'LIABILITIES', 'account_type' => 'liability', 'normal_balance' => 'credit', 'level' => 1],
+            ['account_code' => '2001', 'account_name' => 'Member Savings Payable', 'account_type' => 'liability', 'normal_balance' => 'credit', 'parent_code' => '2000', 'level' => 2],
+            ['account_code' => '2002', 'account_name' => 'Dividends Payable', 'account_type' => 'liability', 'normal_balance' => 'credit', 'parent_code' => '2000', 'level' => 2],
+
+            // EQUITY
+            ['account_code' => '3000', 'account_name' => 'EQUITY', 'account_type' => 'equity', 'normal_balance' => 'credit', 'level' => 1],
+            ['account_code' => '3001', 'account_name' => 'Member Share Capital', 'account_type' => 'equity', 'normal_balance' => 'credit', 'parent_code' => '3000', 'level' => 2],
+            ['account_code' => '3002', 'account_name' => 'Retained Earnings', 'account_type' => 'equity', 'normal_balance' => 'credit', 'parent_code' => '3000', 'level' => 2],
+
+            // INCOME
+            ['account_code' => '4000', 'account_name' => 'INCOME', 'account_type' => 'income', 'normal_balance' => 'credit', 'level' => 1],
+            ['account_code' => '4001', 'account_name' => 'Loan Interest Income', 'account_type' => 'income', 'normal_balance' => 'credit', 'parent_code' => '4000', 'level' => 2],
+            ['account_code' => '4002', 'account_name' => 'Fee Income', 'account_type' => 'income', 'normal_balance' => 'credit', 'parent_code' => '4000', 'level' => 2],
+
+            // EXPENSES
+            ['account_code' => '5000', 'account_name' => 'EXPENSES', 'account_type' => 'expense', 'normal_balance' => 'debit', 'level' => 1],
+            ['account_code' => '5001', 'account_name' => 'Operating Expenses', 'account_type' => 'expense', 'normal_balance' => 'debit', 'parent_code' => '5000', 'level' => 2],
         ];
 
-        foreach ($accounts as $account) {
-            ChartOfAccount::create([
-                'account_code' => $account[0],
-                'account_name' => $account[1],
-                'account_type' => $account[2],
-                'account_subtype' => $account[3],
-                'normal_balance' => $account[4],
+        foreach ($chartOfAccounts as $account) {
+            DB::table('chart_of_accounts')->insert(array_merge($account, [
                 'is_active' => true,
                 'allow_manual_entry' => true,
-                'level' => 1,
                 'opening_balance' => 0,
-                'opening_date' => now(),
-            ]);
+                'created_at' => now(),
+                'updated_at' => now()
+            ]));
         }
     }
 
@@ -330,7 +324,7 @@ class SaccoDataSeeder extends Seeder
                 $accountNumber = 'SA' . str_pad($index + 1, 8, '0', STR_PAD_LEFT);
                 $balance = rand(5000, 50000);
                 $available = max(0, $balance - rand(0, 1000));
-                
+
                 Account::create([
                     'account_number' => $accountNumber,
                     'member_id' => $member->id,
