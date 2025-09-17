@@ -8,6 +8,7 @@ use App\Models\Loan;
 use App\Models\LoanProduct;
 use App\Models\User;
 use Illuminate\Http\Request;
+
 /**
  * This controller handles all endpoint requests related to loans.
  * It does not handle the creation of transactions, which is managed

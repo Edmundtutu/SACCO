@@ -14,7 +14,7 @@ class LoansController extends Controller
     public function index(Request $request)
     {
         $query = Loan::with(['user', 'loanProduct']);
-        
+
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -24,21 +24,21 @@ class LoansController extends Controller
                   ->orWhere('member_number', 'like', "%{$search}%");
             })->orWhere('loan_number', 'like', "%{$search}%");
         }
-        
+
         // Status filter
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
-        
+
         $loans = $query->orderBy('created_at', 'desc')->paginate(20);
-        
+
         $stats = [
             'total_loans' => Loan::count(),
             'pending_loans' => Loan::where('status', 'pending')->count(),
             'active_loans' => Loan::where('status', 'active')->count(),
             'total_disbursed' => Loan::where('status', '!=', 'pending')->sum('principal_amount'),
         ];
-        
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Loans', 'url' => route('admin.loans.index')]
@@ -74,7 +74,7 @@ class LoansController extends Controller
             ]);
 
             DB::commit();
-            
+
             return redirect()->back()
                 ->with('success', 'Loan approved successfully.');
 
@@ -100,31 +100,27 @@ class LoansController extends Controller
             ->with('success', 'Loan rejected successfully.');
     }
 
+    /**
+     * Disburse loan Logic is already implemented in the api end-point
+     *
+     * This method is just a placeholder for the frontend to call the api end-point
+     *
+     * The api end-point will be called from the frontend when the user clicks the disburse button
+     *
+     * The api end-point will then call the LoanDisbursementController::disburse method
+     *
+     * The LoanDisbursementController::disburse method will then call the LoanDisbursementService::disburse method
+     *
+     *
+     * @param Request $request
+     * @param int $id
+     * @return void
+     *
+    */
     public function disburse(Request $request, $id)
     {
-        $loan = Loan::where('status', 'approved')->findOrFail($id);
-
-        DB::beginTransaction();
-        try {
-            $loan->update([
-                'status' => 'active',
-                'disbursed_at' => now(),
-                'disbursed_by' => auth()->id(),
-            ]);
-
-            // Here you would typically integrate with your accounting system
-            // to record the disbursement transaction
-
-            DB::commit();
-            
-            return redirect()->back()
-                ->with('success', 'Loan disbursed successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()
-                ->with('error', 'Failed to disburse loan: ' . $e->getMessage());
-        }
+        // TODO: Redirect to and api endpoint where Loans disbursement is being managed
+        // ELSE: Cut out this method and directly call the api end-point directly in the frontend Js
     }
 
     public function applications()
@@ -146,7 +142,7 @@ class LoansController extends Controller
     public function products()
     {
         $products = LoanProduct::orderBy('name')->get();
-        
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Loans', 'url' => route('admin.loans.index')],

@@ -44,7 +44,7 @@ class SavingsController extends Controller
     }
     /**
      * Get transactions that have been processed by the account
-     *
+     * @param Account $account
      */
     public function getTransactions(Account $account): JsonResponse
     {

@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Transactions\LoanTransactionController;
+use App\Http\Controllers\Api\Transactions\SavingsTransactionController;
+use App\Http\Controllers\Api\Transactions\ShareTransactionController;
+use App\Http\Controllers\Api\Transactions\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
@@ -86,6 +90,44 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('loan-portfolio', [ReportsController::class, 'loanPortfolio']);
     });
 
+    /*
+     |-----------------------------------------------------------------------------------
+     *   DEDICATED TRANSACTIONS ROUTES
+     |----------------------------------------------------------------------------------
+    */
+
+    // Savings Transactions
+    Route::prefix('savings')->group(function () {
+        Route::post('deposit', [SavingsTransactionController::class, 'deposit']);
+        Route::post('withdrawal', [SavingsTransactionController::class, 'withdrawal']);
+        Route::get('balance/{account}', [SavingsTransactionController::class, 'balance']);
+        Route::get('history/{account}', [SavingsTransactionController::class, 'history']);
+        Route::post('reverse/{transaction}', [SavingsTransactionController::class, 'reverse']);
+    });
+
+    // Share Transactions
+    Route::prefix('shares')->group(function () {
+        Route::post('purchase', [ShareTransactionController::class, 'purchase']);
+        Route::get('portfolio/{member}', [ShareTransactionController::class, 'portfolio']);
+        Route::get('history/{member}', [ShareTransactionController::class, 'history']);
+    });
+
+    // Loan Transactions
+    Route::prefix('loans')->group(function () {
+        Route::post('disburse', [LoanTransactionController::class, 'disburse']);
+        Route::post('repayment', [LoanTransactionController::class, 'repayment']);
+        Route::get('schedule/{loan}', [LoanTransactionController::class, 'schedule']);
+        Route::get('history/{loan}', [LoanTransactionController::class, 'history']);
+        Route::get('summary/{loan}', [LoanTransactionController::class, 'summary']);
+    });
+
+    // General Transaction Routes
+    Route::prefix('transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('{transaction}', [TransactionController::class, 'show']);
+        Route::get('member/{member}', [TransactionController::class, 'memberTransactions']);
+        Route::get('summary/{member}', [TransactionController::class, 'memberSummary']);
+    });
 });
 
 // Legacy routes (for backward compatibility)
