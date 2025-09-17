@@ -40,8 +40,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     // Savings & Accounts
     Route::group(['prefix' => 'savings'], function () {
         Route::get('accounts', [SavingsController::class, 'getAccounts']);
-        Route::post('deposit', [SavingsController::class, 'deposit']);
-        Route::post('withdraw', [SavingsController::class, 'withdraw']);
         Route::get('products', [SavingsController::class, 'getSavingsProducts']);
         Route::get('accounts/{accountId}/transactions', [SavingsController::class, 'getTransactions']);
     });
