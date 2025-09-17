@@ -125,7 +125,8 @@ class Account extends Model
             return false;
         }
 
-        if (!$this->savingsProduct->allow_partial_withdrawals) {
+        // Check if savings product allows partial withdrawals
+        if ($this->savingsProduct && !$this->savingsProduct->allow_partial_withdrawals) {
             return false;
         }
 

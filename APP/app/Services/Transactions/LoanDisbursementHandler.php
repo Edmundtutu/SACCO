@@ -5,8 +5,8 @@ namespace App\Services\Transactions;
 use App\DTOs\LedgerEntryDTO;
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InvalidTransactionException;
+use App\Models\Loan;
 use App\Models\Transaction;
-use App\Services\Transactions\TransactionHandlerInterface;
 
 class LoanDisbursementHandler implements TransactionHandlerInterface
 {

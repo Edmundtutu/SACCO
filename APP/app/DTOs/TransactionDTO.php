@@ -23,14 +23,29 @@ class TransactionDTO
      */
     public static function fromRequest(Request $request): self
     {
+        // Determine transaction type based on route or request data
+        $type = $request->string('type');
+        if (!$type) {
+            // Infer type from route
+            $routeName = $request->route()?->getName();
+            $typeMap = [
+                'transactions.deposit' => 'deposit',
+                'transactions.withdrawal' => 'withdrawal',
+                'transactions.share-purchase' => 'share_purchase',
+                'transactions.loan-disbursement' => 'loan_disbursement',
+                'transactions.loan-repayment' => 'loan_repayment',
+            ];
+            $type = $typeMap[$routeName] ?? 'deposit';
+        }
+
         return new self(
             memberId: $request->integer('member_id'),
-            type: $request->string('type'),
+            type: $type,
             amount: $request->float('amount'),
             accountId: $request->integer('account_id') ?: null,
             feeAmount: $request->float('fee_amount') ?: null,
             description: $request->string('description') ?: null,
-            relatedLoanId: $request->integer('related_loan_id') ?: null,
+            relatedLoanId: $request->integer('related_loan_id') ?: $request->integer('loan_id') ?: null,
             processedBy: $request->integer('processed_by') ?: auth()->id(),
             metadata: $request->array('metadata') ?: null
         );

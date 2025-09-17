@@ -5,6 +5,7 @@ namespace App\Services\Transactions;
 use App\DTOs\LedgerEntryDTO;
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InvalidTransactionException;
+use App\Models\Account;
 use App\Models\Transaction;
 
 class DepositHandler implements TransactionHandlerInterface

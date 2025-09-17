@@ -14,14 +14,16 @@ class TransactionFailed
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $transactionData;
+    public string $errorMessage;
+
     /**
      * Create a new event instance.
-     *
-     * @return void
      */
-    public function __construct()
+    public function __construct($transactionData, string $errorMessage)
     {
-        //
+        $this->transactionData = $transactionData;
+        $this->errorMessage = $errorMessage;
     }
 
     /**

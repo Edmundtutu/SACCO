@@ -22,11 +22,11 @@ class BalanceDTO
         return new self(
             accountId: $account->id,
             currentBalance: $account->balance,
-            availableBalance: $availableBalance ?? $account->balance,
+            availableBalance: $availableBalance ?? $account->available_balance,
             pendingTransactions: 0, // Calculate this separately
-            minimumBalance: $account->savingsProduct->minimum_balance ?? 0,
+            minimumBalance: $account->minimum_balance ?? 0,
             interestEarned: $account->interest_earned ?? 0,
-            lastTransactionDate: $account->updated_at
+            lastTransactionDate: $account->last_transaction_date
         );
     }
 

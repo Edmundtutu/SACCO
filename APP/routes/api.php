@@ -53,12 +53,15 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/', [LoansController::class, 'index']);
         Route::post('apply', [LoansController::class, 'apply']);
         Route::get('{loanId}', [LoansController::class, 'show']);
+        // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/repay', [LoansController::class, 'repay']);
         Route::get('products', [LoansController::class, 'getLoanProducts']);
+        // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::get('{loanId}/schedule', [LoansController::class, 'getRepaymentSchedule']);
 
         // Admin/Staff only
         Route::post('{loanId}/approve', [LoansController::class, 'approve']);
+        // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/disburse', [LoansController::class, 'disburse']);
         Route::post('{loanId}/restructure', [LoansController::class, 'restructure']);
 
@@ -70,9 +73,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     // Shares
     Route::group(['prefix' => 'shares'], function () {
         Route::get('/', [SharesController::class, 'index']);
+        // This method action has been revised in a dedicated ShareTransactionController: Should be replaced with the corresponding route below
         Route::post('purchase', [SharesController::class, 'purchase']);
         Route::get('dividends', [SharesController::class, 'getDividends']);
-        Route::get('certificates', [SharesController::class, 'getCertificates']);
+        Route::get('certificates', [SharesController::class, 'getCertificates']); // To be looked into for replacement.
     });
 
     // Reports

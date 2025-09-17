@@ -8,7 +8,7 @@ use App\Exceptions\InvalidTransactionException;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
 use App\Models\Transaction;
-use App\Services\Transactions\TransactionHandlerInterface;
+use App\Services\LoanCalculationService;
 
 class LoanRepaymentHandler implements TransactionHandlerInterface
 {

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
 {
@@ -72,7 +73,7 @@ class Transaction extends Model
      */
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(User::class, 'member_id');
     }
 
     /**
@@ -137,5 +138,14 @@ class Transaction extends Model
     public function scopeByDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('transaction_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * General ledger entries for this transaction
+     */
+    public function generalLedgerEntries(): HasMany
+    {
+        return $this->hasMany(GeneralLedger::class, 'reference_id')
+            ->where('reference_type', 'Transaction');
     }
 }

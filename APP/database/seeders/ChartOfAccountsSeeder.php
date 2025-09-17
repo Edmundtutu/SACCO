@@ -1,0 +1,301 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class ChartOfAccountsSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $accounts = [
+            // ASSETS (1000-1999)
+            [
+                'account_code' => '1000',
+                'account_name' => 'ASSETS',
+                'account_type' => 'asset',
+                'account_subtype' => null,
+                'parent_code' => null,
+                'normal_balance' => 'debit',
+                'level' => 1,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+            [
+                'account_code' => '1001',
+                'account_name' => 'Cash in Hand',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'parent_code' => '1000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '1002',
+                'account_name' => 'Cash at Bank',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'parent_code' => '1000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '1003',
+                'account_name' => 'Mobile Money Account',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'parent_code' => '1000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '1100',
+                'account_name' => 'Loans Receivable',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'parent_code' => '1000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '1200',
+                'account_name' => 'Interest Receivable',
+                'account_type' => 'asset',
+                'account_subtype' => 'current_asset',
+                'parent_code' => '1000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+
+            // LIABILITIES (2000-2999)
+            [
+                'account_code' => '2000',
+                'account_name' => 'LIABILITIES',
+                'account_type' => 'liability',
+                'account_subtype' => null,
+                'parent_code' => null,
+                'normal_balance' => 'credit',
+                'level' => 1,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+            [
+                'account_code' => '2001',
+                'account_name' => 'Member Savings Payable',
+                'account_type' => 'liability',
+                'account_subtype' => 'current_liability',
+                'parent_code' => '2000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '2002',
+                'account_name' => 'Dividends Payable',
+                'account_type' => 'liability',
+                'account_subtype' => 'current_liability',
+                'parent_code' => '2000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '2003',
+                'account_name' => 'Interest Payable on Savings',
+                'account_type' => 'liability',
+                'account_subtype' => 'current_liability',
+                'parent_code' => '2000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+
+            // EQUITY (3000-3999)
+            [
+                'account_code' => '3000',
+                'account_name' => 'EQUITY',
+                'account_type' => 'equity',
+                'account_subtype' => null,
+                'parent_code' => null,
+                'normal_balance' => 'credit',
+                'level' => 1,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+            [
+                'account_code' => '3001',
+                'account_name' => 'Member Share Capital',
+                'account_type' => 'equity',
+                'account_subtype' => 'member_equity',
+                'parent_code' => '3000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '3002',
+                'account_name' => 'Retained Earnings',
+                'account_type' => 'equity',
+                'account_subtype' => 'retained_earnings',
+                'parent_code' => '3000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '3003',
+                'account_name' => 'Current Year Earnings',
+                'account_type' => 'equity',
+                'account_subtype' => 'current_earnings',
+                'parent_code' => '3000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+
+            // INCOME (4000-4999)
+            [
+                'account_code' => '4000',
+                'account_name' => 'INCOME',
+                'account_type' => 'income',
+                'account_subtype' => null,
+                'parent_code' => null,
+                'normal_balance' => 'credit',
+                'level' => 1,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+            [
+                'account_code' => '4001',
+                'account_name' => 'Loan Interest Income',
+                'account_type' => 'income',
+                'account_subtype' => 'interest_income',
+                'parent_code' => '4000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '4002',
+                'account_name' => 'Fee Income',
+                'account_type' => 'income',
+                'account_subtype' => 'fee_income',
+                'parent_code' => '4000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '4003',
+                'account_name' => 'Penalty Income',
+                'account_type' => 'income',
+                'account_subtype' => 'penalty_income',
+                'parent_code' => '4000',
+                'normal_balance' => 'credit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+
+            // EXPENSES (5000-5999)
+            [
+                'account_code' => '5000',
+                'account_name' => 'EXPENSES',
+                'account_type' => 'expense',
+                'account_subtype' => null,
+                'parent_code' => null,
+                'normal_balance' => 'debit',
+                'level' => 1,
+                'is_active' => true,
+                'allow_manual_entry' => false,
+            ],
+            [
+                'account_code' => '5001',
+                'account_name' => 'Operating Expenses',
+                'account_type' => 'expense',
+                'account_subtype' => 'operating_expense',
+                'parent_code' => '5000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '5002',
+                'account_name' => 'Interest Expense on Savings',
+                'account_type' => 'expense',
+                'account_subtype' => 'interest_expense',
+                'parent_code' => '5000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+            [
+                'account_code' => '5003',
+                'account_name' => 'Bad Debt Expense',
+                'account_type' => 'expense',
+                'account_subtype' => 'operating_expense',
+                'parent_code' => '5000',
+                'normal_balance' => 'debit',
+                'level' => 2,
+                'is_active' => true,
+                'allow_manual_entry' => true,
+            ],
+        ];
+
+        foreach ($accounts as $account) {
+            DB::table('chart_of_accounts')->insert(array_merge($account, [
+                'description' => $this->getAccountDescription($account['account_code']),
+                'opening_balance' => 0,
+                'opening_date' => now()->startOfYear(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
+        }
+    }
+
+    private function getAccountDescription(string $accountCode): string
+    {
+        $descriptions = [
+            '1001' => 'Physical cash held in SACCO vault and tills',
+            '1002' => 'SACCO funds held in bank accounts',
+            '1003' => 'SACCO funds in mobile money accounts',
+            '1100' => 'Outstanding loan amounts owed by members',
+            '1200' => 'Interest earned but not yet collected on loans',
+            '2001' => 'Amounts owed to members for their savings deposits',
+            '2002' => 'Dividends declared but not yet paid to members',
+            '2003' => 'Interest owed to members on their savings',
+            '3001' => 'Member ownership equity through share purchases',
+            '3002' => 'Accumulated profits retained in the SACCO',
+            '3003' => 'Current year profit or loss',
+            '4001' => 'Interest income earned from member loans',
+            '4002' => 'Income from various fees charged to members',
+            '4003' => 'Income from penalties on late loan payments',
+            '5001' => 'General operating expenses of the SACCO',
+            '5002' => 'Interest paid to members on their savings',
+            '5003' => 'Loans written off as uncollectible',
+        ];
+
+        return $descriptions[$accountCode] ?? 'Standard SACCO account';
+    }
+}

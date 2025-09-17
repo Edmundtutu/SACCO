@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Exceptions\InsufficientBalanceException;
+use App\Events\BalanceUpdated;
 use Illuminate\Support\Facades\DB;
 
 class BalanceService
@@ -44,6 +45,9 @@ class BalanceService
             'balance_after' => $account->balance
         ]);
 
+        // Fire balance updated event
+        event(new BalanceUpdated($account->id, $previousBalance, $account->balance));
+
         // Update interest earned if applicable
         $this->updateInterestEarned($account);
     }
@@ -80,7 +84,7 @@ class BalanceService
         $currentBalance = $account->balance;
 
         // Subtract minimum balance requirement
-        $minBalance = $account->savingsProduct->minimum_balance ?? 0;
+        $minBalance = $account->savingsProduct ? $account->savingsProduct->minimum_balance : $account->minimum_balance;
 
         // Subtract any pending withdrawals
         $pendingWithdrawals = Transaction::where('account_id', $account->id)
@@ -99,7 +103,7 @@ class BalanceService
      */
     protected function updateInterestEarned(Account $account): void
     {
-        if (!$account->savingsProduct->interest_rate) {
+        if (!$account->savingsProduct || !$account->savingsProduct->interest_rate) {
             return;
         }
 

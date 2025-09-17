@@ -14,14 +14,18 @@ class BalanceUpdated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public int $accountId;
+    public float $oldBalance;
+    public float $newBalance;
+
     /**
      * Create a new event instance.
-     *
-     * @return void
      */
-    public function __construct()
+    public function __construct(int $accountId, float $oldBalance, float $newBalance)
     {
-        //
+        $this->accountId = $accountId;
+        $this->oldBalance = $oldBalance;
+        $this->newBalance = $newBalance;
     }
 
     /**

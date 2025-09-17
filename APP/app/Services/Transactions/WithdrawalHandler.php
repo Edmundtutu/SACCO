@@ -5,6 +5,7 @@ namespace App\Services\Transactions;
 use App\DTOs\LedgerEntryDTO;
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InvalidTransactionException;
+use App\Exceptions\InsufficientBalanceException;
 use App\Models\Account;
 use App\Models\Transaction;
 
@@ -32,7 +33,7 @@ class WithdrawalHandler implements TransactionHandlerInterface
         }
 
         // Check minimum balance requirement
-        $minBalance = $account->savingsProduct->minimum_balance ?? 0;
+        $minBalance = $account->savingsProduct ? $account->savingsProduct->minimum_balance : $account->minimum_balance;
         if (($availableBalance - $transactionData->amount) < $minBalance) {
             throw new InvalidTransactionException("Withdrawal would breach minimum balance requirement");
         }
@@ -54,7 +55,7 @@ class WithdrawalHandler implements TransactionHandlerInterface
     {
         // Apply withdrawal fee if configured
         $account = Account::find($transactionData->accountId);
-        $withdrawalFee = $account->savingsProduct->withdrawal_fee ?? 0;
+        $withdrawalFee = $account->savingsProduct ? $account->savingsProduct->withdrawal_fee : config('sacco.withdrawal_fee', 0);
 
         if ($withdrawalFee > 0 && $transaction->fee_amount == 0) {
             $transaction->update([

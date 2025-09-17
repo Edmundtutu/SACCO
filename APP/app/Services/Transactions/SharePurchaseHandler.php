@@ -7,12 +7,13 @@ use App\DTOs\TransactionDTO;
 use App\Exceptions\InvalidTransactionException;
 use App\Models\Share;
 use App\Models\Transaction;
+use App\Services\NumberGenerationService;
 
 class SharePurchaseHandler implements TransactionHandlerInterface
 {
-    protected $numberGenerationService;
+    protected NumberGenerationService $numberGenerationService;
 
-    public function __construct($numberGenerationService)
+    public function __construct(NumberGenerationService $numberGenerationService)
     {
         $this->numberGenerationService = $numberGenerationService;
     }

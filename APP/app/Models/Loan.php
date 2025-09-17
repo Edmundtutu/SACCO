@@ -86,7 +86,7 @@ class Loan extends Model
      */
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(User::class, 'member_id');
     }
 
     /**
@@ -124,9 +124,17 @@ class Loan extends Model
     /**
      * Loan guarantors
      */
-    public function guarantors(): HasMany
+    public function loanGuarantors(): HasMany
     {
         return $this->hasMany(LoanGuarantor::class);
+    }
+
+    /**
+     * Alias for loanGuarantors for backward compatibility
+     */
+    public function guarantors(): HasMany
+    {
+        return $this->loanGuarantors();
     }
 
     /**

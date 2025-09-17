@@ -21,7 +21,8 @@ return new class extends Migration
             $table->enum('account_subtype', [
                 'current_asset', 'fixed_asset', 'current_liability', 'long_term_liability',
                 'owner_equity', 'retained_earnings', 'operating_income', 'non_operating_income',
-                'operating_expense', 'non_operating_expense'
+                'operating_expense', 'non_operating_expense',  'member_equity','current_earnings',
+                'interest_income', 'fee_income', 'penalty_income','interest_expense'
             ])->nullable();
             $table->string('parent_code')->nullable(); // For sub-accounts
             $table->text('description')->nullable();
