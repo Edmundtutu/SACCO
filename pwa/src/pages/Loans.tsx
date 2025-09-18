@@ -11,6 +11,7 @@ import { LoanTracker } from '@/components/loans/LoanTracker';
 import { LoanProducts } from '@/components/loans/LoanProducts';
 import { LoanApplication } from '@/components/loans/LoanApplication';
 import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
+import { LoanApplicationStatus } from '@/components/loans/LoanApplicationStatus';
 import { Calculator, FileText, CreditCard } from 'lucide-react';
 
 export default function Loans() {
@@ -25,7 +26,7 @@ export default function Loans() {
     dispatch(fetchLoanProducts());
   }, [dispatch]);
 
-  const activeLoan = loans.find(loan => loan.status === 'active');
+  const activeLoan = loans.find(loan => loan.status === 'active' || loan.status === 'disbursed');
   const totalOutstanding = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
   const totalPrincipal = loans.reduce((sum, loan) => sum + loan.principal_amount, 0);
   const repaymentProgress = totalPrincipal > 0 ? ((totalPrincipal - totalOutstanding) / totalPrincipal) * 100 : 0;
@@ -52,10 +53,11 @@ export default function Loans() {
       )}
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="calculator">Calculator</TabsTrigger>
         </TabsList>
 
@@ -76,13 +78,13 @@ export default function Loans() {
                     <div key={loan.id} className="p-4 border rounded-lg space-y-3">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-medium">{loan.product_name}</h3>
+                          <h3 className="font-medium">{loan.loan_product?.name || 'Loan'}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Applied: {new Date(loan.created_at).toLocaleDateString()}
+                            Applied: {new Date(loan.application_date).toLocaleDateString()}
                           </p>
                         </div>
-                        <Badge variant={loan.status === 'active' ? 'default' : 
-                                      loan.status === 'paid' ? 'secondary' : 
+                        <Badge variant={loan.status === 'active' || loan.status === 'disbursed' ? 'default' : 
+                                      loan.status === 'completed' ? 'secondary' : 
                                       loan.status === 'overdue' ? 'destructive' : 'outline'}>
                           {loan.status}
                         </Badge>
@@ -103,11 +105,11 @@ export default function Loans() {
                         </div>
                         <div>
                           <p className="text-muted-foreground">Next Payment</p>
-                          <p className="font-medium">{new Date(loan.next_payment_date).toLocaleDateString()}</p>
+                          <p className="font-medium">{loan.first_payment_date ? new Date(loan.first_payment_date).toLocaleDateString() : 'N/A'}</p>
                         </div>
                       </div>
 
-                      {loan.status === 'active' && (
+                      {(loan.status === 'active' || loan.status === 'disbursed') && (
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span>Repayment Progress</span>
@@ -130,7 +132,7 @@ export default function Loans() {
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-2xl font-bold text-primary">
-                      {loans.filter(l => l.status === 'active').length}
+                      {loans.filter(l => l.status === 'active' || l.status === 'disbursed').length}
                     </p>
                     <p className="text-sm text-muted-foreground">Active Loans</p>
                   </div>
@@ -146,7 +148,7 @@ export default function Loans() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Next Payment Due</span>
-                      <span className="font-medium">{new Date(activeLoan.next_payment_date).toLocaleDateString()}</span>
+                      <span className="font-medium">{activeLoan.first_payment_date ? new Date(activeLoan.first_payment_date).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     <Button className="w-full" variant="outline">
                       Make Payment
@@ -175,6 +177,22 @@ export default function Loans() {
             <Card>
               <CardContent className="flex items-center justify-center h-32">
                 <p className="text-muted-foreground">No active loans to show schedule</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="status">
+          {loans.length > 0 ? (
+            <div className="space-y-6">
+              {loans.map((loan) => (
+                <LoanApplicationStatus key={loan.id} loan={loan} />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center h-32">
+                <p className="text-muted-foreground">No loan applications to show</p>
               </CardContent>
             </Card>
           )}

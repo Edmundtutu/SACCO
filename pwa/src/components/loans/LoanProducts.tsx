@@ -7,10 +7,12 @@ interface LoanProduct {
   id: number;
   name: string;
   description: string;
-  max_amount: number;
+  maximum_amount: number;
   interest_rate: number;
-  max_term_months: number;
-  requirements: string[];
+  maximum_period_months: number;
+  eligibility_criteria?: string[];
+  require_collateral: boolean;
+  required_guarantors: number;
 }
 
 interface LoanProductsProps {
@@ -39,7 +41,7 @@ export function LoanProducts({ products, onApply }: LoanProductsProps) {
                 <TrendingUp className="w-4 h-4 text-success mx-auto mb-1" />
                 <p className="text-xs text-muted-foreground">Max Amount</p>
                 <p className="font-bold text-success">
-                  UGX {product.max_amount.toLocaleString()}
+                  UGX {product.maximum_amount.toLocaleString()}
                 </p>
               </div>
               
@@ -47,7 +49,7 @@ export function LoanProducts({ products, onApply }: LoanProductsProps) {
                 <Clock className="w-4 h-4 text-primary mx-auto mb-1" />
                 <p className="text-xs text-muted-foreground">Max Term</p>
                 <p className="font-bold text-primary">
-                  {product.max_term_months} months
+                  {product.maximum_period_months} months
                 </p>
               </div>
             </div>
@@ -60,15 +62,31 @@ export function LoanProducts({ products, onApply }: LoanProductsProps) {
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">Requirements:</h4>
-              <div className="space-y-1">
-                {product.requirements.map((req, index) => (
-                  <div key={index} className="flex items-start gap-2 text-xs">
-                    <CheckCircle className="w-3 h-3 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{req}</span>
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Guarantors Required:</span>
+                <Badge variant="outline">{product.required_guarantors}</Badge>
               </div>
+              
+              {product.require_collateral && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">Collateral:</span>
+                  <Badge variant="destructive">Required</Badge>
+                </div>
+              )}
+              
+              {product.eligibility_criteria && product.eligibility_criteria.length > 0 && (
+                <>
+                  <h4 className="text-sm font-medium">Eligibility Criteria:</h4>
+                  <div className="space-y-1">
+                    {product.eligibility_criteria.map((criteria, index) => (
+                      <div key={index} className="flex items-start gap-2 text-xs">
+                        <CheckCircle className="w-3 h-3 text-success mt-0.5 flex-shrink-0" />
+                        <span className="text-muted-foreground">{criteria}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             <Button 

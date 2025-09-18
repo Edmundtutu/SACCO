@@ -20,6 +20,7 @@
     <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
     <link href="{{ asset('css/membership_styles.css') }}" rel="stylesheet">
     <link href="{{ asset('css/side_bar_styles.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/admin-transactions.css') }}" rel="stylesheet">
 
     @stack('styles')
 </head>
@@ -93,6 +94,8 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Admin Transaction Management -->
+    <script src="{{ asset('js/admin-transactions.js') }}"></script>
 
     <script>
         $(document).ready(function () {

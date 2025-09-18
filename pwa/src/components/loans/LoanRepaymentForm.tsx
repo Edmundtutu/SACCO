@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
-import { repayLoan } from '@/store/loansSlice';
+import { repayLoan } from '@/store/transactionsSlice';
 import { CreditCard, DollarSign } from 'lucide-react';
 import type { Loan } from '@/types/api';
 
@@ -22,7 +22,7 @@ interface LoanRepaymentFormProps {
 export function LoanRepaymentForm({ isOpen, onClose, loan }: LoanRepaymentFormProps) {
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const { loading } = useSelector((state: RootState) => state.loans);
+  const { loading } = useSelector((state: RootState) => state.transactions);
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -63,12 +63,10 @@ export function LoanRepaymentForm({ isOpen, onClose, loan }: LoanRepaymentFormPr
 
     try {
       const result = await dispatch(repayLoan({
-        loanId: loan.id,
-        repaymentData: {
-          amount,
-          payment_method: formData.payment_method,
-          reference: formData.reference,
-        },
+        loan_id: loan.id,
+        amount,
+        payment_method: formData.payment_method,
+        notes: formData.reference,
       }) as any);
 
       if (repayLoan.fulfilled.match(result)) {

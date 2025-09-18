@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
-import { makeWithdrawal } from '@/store/savingsSlice';
+import { makeWithdrawal } from '@/store/transactionsSlice';
 import { ArrowDownRight, CreditCard, AlertTriangle } from 'lucide-react';
 import type { SavingsAccount } from '@/types/api';
 
@@ -21,7 +21,8 @@ interface WithdrawalFormProps {
 export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps) {
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const { loading } = useSelector((state: RootState) => state.savings);
+  const { loading } = useSelector((state: RootState) => state.transactions);
+  const { user } = useSelector((state: RootState) => state.auth);
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -71,6 +72,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
 
     try {
       const result = await dispatch(makeWithdrawal({
+        member_id: user?.id || 0,
         account_id: account.id,
         amount,
         description: formData.description || `Withdrawal from ${account.account_number}`,

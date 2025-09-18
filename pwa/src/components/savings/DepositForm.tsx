@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
-import { makeDeposit } from '@/store/savingsSlice';
+import { makeDeposit } from '@/store/transactionsSlice';
 import { ArrowUpRight, CreditCard } from 'lucide-react';
 import type { SavingsAccount } from '@/types/api';
 
@@ -21,11 +21,13 @@ interface DepositFormProps {
 export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const { loading } = useSelector((state: RootState) => state.savings);
+  const { loading } = useSelector((state: RootState) => state.transactions);
+  const { user } = useSelector((state: RootState) => state.auth);
   
   const [formData, setFormData] = useState({
     amount: '',
     payment_method: 'cash',
+    payment_reference: '',
     description: '',
   });
 
@@ -53,10 +55,14 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
 
     try {
       const result = await dispatch(makeDeposit({
+        member_id: user?.id || 0,
         account_id: account.id,
         amount,
-        payment_method: formData.payment_method,
         description: formData.description || `Deposit to ${account.account_number}`,
+        payment_reference: formData.payment_reference,
+        metadata: {
+          payment_method: formData.payment_method,
+        },
       }) as any);
 
       if (makeDeposit.fulfilled.match(result)) {
@@ -64,7 +70,7 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
           title: "Success",
           description: `Deposit of KES ${amount.toLocaleString()} successful`,
         });
-        setFormData({ amount: '', payment_method: 'cash', description: '' });
+        setFormData({ amount: '', payment_method: 'cash', payment_reference: '', description: '' });
         onClose();
       }
     } catch (error: any) {
@@ -147,6 +153,18 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
                 <SelectItem value="cheque">Cheque</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="payment_reference">Payment Reference (Optional)</Label>
+            <Input
+              id="payment_reference"
+              type="text"
+              value={formData.payment_reference}
+              onChange={(e) => setFormData({ ...formData, payment_reference: e.target.value })}
+              placeholder="Enter payment reference/transaction ID"
+              disabled={loading}
+            />
           </div>
 
           <div>

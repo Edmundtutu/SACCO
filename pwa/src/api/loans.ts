@@ -45,6 +45,16 @@ export const loansAPI = {
     return response.data;
   },
 
+  // Get loan transactions
+  async getLoanTransactions(loanId: number): Promise<ApiResponse<any[]>> {
+    const response = await apiClient.get('/transactions/history', {
+      params: {
+        related_loan_id: loanId
+      }
+    });
+    return response.data;
+  },
+
   async getRepaymentSchedule(loanId: number): Promise<ApiResponse<RepaymentSchedule[]>> {
     const response = await apiClient.get(`/loans/${loanId}/schedule`);
     return response.data;

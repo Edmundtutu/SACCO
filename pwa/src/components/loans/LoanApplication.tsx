@@ -30,6 +30,8 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
     amount: '',
     term_months: '',
     purpose: '',
+    collateral_description: '',
+    collateral_value: '',
   });
 
   const selectedProduct = products.find(p => p.id === Number(formData.product_id));
@@ -62,12 +64,24 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
       return;
     }
 
+    // Validate collateral if required
+    if (selectedProduct?.require_collateral && (!formData.collateral_description || !formData.collateral_value)) {
+      toast({
+        title: "Error",
+        description: "Collateral information is required for this loan product",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const result = await dispatch(applyForLoan({
-        product_id: parseInt(formData.product_id),
-        amount: parseFloat(formData.amount),
-        term_months: parseInt(formData.term_months),
+        loan_product_id: parseInt(formData.product_id),
+        principal_amount: parseFloat(formData.amount),
+        repayment_period_months: parseInt(formData.term_months),
         purpose: formData.purpose,
+        collateral_description: formData.collateral_description || undefined,
+        collateral_value: formData.collateral_value ? parseFloat(formData.collateral_value) : undefined,
       }));
       
       if (applyForLoan.fulfilled.match(result)) {
@@ -122,11 +136,11 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
                 placeholder="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                max={selectedProduct?.max_amount}
+                max={selectedProduct?.maximum_amount}
               />
               {selectedProduct && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Max: UGX {selectedProduct.max_amount.toLocaleString()}
+                  Max: UGX {selectedProduct.maximum_amount.toLocaleString()}
                 </p>
               )}
             </div>
@@ -139,11 +153,11 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
                 placeholder="12"
                 value={formData.term_months}
                 onChange={(e) => setFormData({ ...formData, term_months: e.target.value })}
-                max={selectedProduct?.max_term_months}
+                max={selectedProduct?.maximum_period_months}
               />
               {selectedProduct && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Max: {selectedProduct.max_term_months} months
+                  Max: {selectedProduct.maximum_period_months} months
                 </p>
               )}
             </div>
@@ -159,6 +173,32 @@ export function LoanApplication({ products, selectedProductId, onClose }: LoanAp
               rows={3}
             />
           </div>
+
+          {selectedProduct?.require_collateral && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="collateral_description">Collateral Description *</Label>
+                <Textarea
+                  id="collateral_description"
+                  placeholder="Describe the collateral you're providing..."
+                  value={formData.collateral_description}
+                  onChange={(e) => setFormData({ ...formData, collateral_description: e.target.value })}
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="collateral_value">Collateral Value (UGX) *</Label>
+                <Input
+                  id="collateral_value"
+                  type="number"
+                  placeholder="0"
+                  value={formData.collateral_value}
+                  onChange={(e) => setFormData({ ...formData, collateral_value: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Payment Calculator */}
           {formData.amount && formData.term_months && selectedProduct && (

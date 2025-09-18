@@ -189,87 +189,153 @@ export interface SavingsProduct {
 export interface Transaction {
   id: number;
   transaction_number: string;
-  type: 'deposit' | 'withdrawal' | 'interest' | 'fee' | 'transfer';
-  category: string;
+  member_id: number;
+  account_id?: number;
+  type: 'deposit' | 'withdrawal' | 'share_purchase' | 'loan_disbursement' | 'loan_repayment' | 'interest' | 'fee' | 'transfer';
+  category?: string;
   amount: number;
   fee_amount?: number;
   net_amount: number;
-  balance_before: number;
-  balance_after: number;
+  balance_before?: number;
+  balance_after?: number;
   description: string;
   payment_method?: string;
-  status: 'completed' | 'pending' | 'failed' | 'cancelled';
+  payment_reference?: string;
+  status: 'pending' | 'completed' | 'failed' | 'reversed';
   transaction_date: string;
-  processed_by?: string;
-  reference?: string;
+  value_date?: string;
+  related_loan_id?: number;
+  related_account_id?: number;
+  reversal_reason?: string;
+  reversed_by?: number;
+  reversed_at?: string;
+  processed_by?: number;
   metadata?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  member?: User;
+  account?: SavingsAccount;
+  loan?: Loan;
+  processedBy?: User;
+  reversedBy?: User;
 }
 
 // Loans Types
 export interface Loan {
   id: number;
   loan_number: string;
-  product_name: string;
+  member_id: number;
+  loan_product_id: number;
   principal_amount: number;
-  outstanding_balance: number;
   interest_rate: number;
-  term_months: number;
+  processing_fee: number;
+  insurance_fee: number;
+  total_amount: number;
+  repayment_period_months: number;
   monthly_payment: number;
-  next_payment_date: string;
-  next_payment_amount: number;
-  payments_made: number;
-  payments_remaining: number;
-  status: 'pending' | 'approved' | 'disbursed' | 'active' | 'paid' | 'overdue' | 'defaulted';
   application_date: string;
   approval_date?: string;
   disbursement_date?: string;
+  first_payment_date?: string;
+  maturity_date?: string;
+  status: 'pending' | 'approved' | 'disbursed' | 'active' | 'completed' | 'overdue' | 'defaulted' | 'rejected';
+  outstanding_balance: number;
+  principal_balance: number;
+  interest_balance: number;
+  penalty_balance: number;
+  total_paid: number;
   purpose: string;
+  collateral_description?: string;
+  collateral_value?: number;
+  rejection_reason?: string;
+  approved_by?: number;
+  disbursed_by?: number;
+  disbursement_account_id?: number;
+  created_at: string;
+  updated_at?: string;
   guarantors?: LoanGuarantor[];
   repayments?: LoanRepayment[];
-  loan_product: LoanProduct;
+  loan_product?: LoanProduct;
+  member?: User;
+  approvedBy?: User;
+  disbursedBy?: User;
+  disbursementAccount?: SavingsAccount;
 }
 
 export interface LoanProduct {
   id: number;
   name: string;
+  code: string;
   description: string;
-  min_amount: number;
-  max_amount: number;
+  type: string;
+  minimum_amount: number;
+  maximum_amount: number;
   interest_rate: number;
-  max_term_months: number;
-  processing_fee_rate?: number;
-  insurance_rate?: number;
-  guarantors_required: number;
-  collateral_required: boolean;
-  requirements: string[];
+  interest_calculation: 'flat_rate' | 'reducing_balance';
+  minimum_period_months: number;
+  maximum_period_months: number;
+  processing_fee_rate: number;
+  insurance_fee_rate: number;
+  required_guarantors: number;
+  guarantor_savings_multiplier: number;
+  grace_period_days: number;
+  penalty_rate: number;
+  minimum_savings_months: number;
+  savings_to_loan_ratio: number;
+  require_collateral: boolean;
   is_active: boolean;
+  eligibility_criteria?: string[];
+  required_documents?: string[];
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface LoanApplication {
-  product_id: number;
-  amount: number;
-  term_months: number;
+  loan_product_id: number;
+  principal_amount: number;
+  repayment_period_months: number;
   purpose: string;
+  collateral_description?: string;
+  collateral_value?: number;
   guarantor_ids?: number[];
 }
 
 export interface LoanGuarantor {
   id: number;
+  loan_id: number;
   guarantor_id: number;
-  guarantor_name: string;
-  amount_guaranteed: number;
-  status: 'pending' | 'accepted' | 'declined';
-  response_date?: string;
+  guarantor_savings_balance: number;
+  guarantee_amount: number;
+  status: 'pending' | 'accepted' | 'rejected';
+  accepted_at?: string;
+  rejected_at?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+  loan?: Loan;
+  guarantor?: User;
 }
 
 export interface LoanRepayment {
   id: number;
-  amount: number;
+  loan_id: number;
+  receipt_number: string;
+  installment_number: number;
+  scheduled_amount: number;
   principal_amount: number;
   interest_amount: number;
+  penalty_amount: number;
+  total_amount: number;
   payment_date: string;
   payment_method: string;
-  reference?: string;
+  payment_reference?: string;
+  status: 'pending' | 'completed' | 'failed';
+  notes?: string;
+  processed_by?: number;
+  created_at: string;
+  updated_at?: string;
+  loan?: Loan;
+  processedBy?: User;
 }
 
 export interface RepaymentSchedule {

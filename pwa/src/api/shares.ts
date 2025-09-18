@@ -27,4 +27,15 @@ export const sharesAPI = {
     const response = await apiClient.get('/shares/certificates');
     return response.data;
   },
+
+  // Get share transactions
+  async getTransactions(memberId: number): Promise<ApiResponse<any[]>> {
+    const response = await apiClient.get('/transactions/history', {
+      params: {
+        member_id: memberId,
+        type: 'share_purchase'
+      }
+    });
+    return response.data;
+  },
 };

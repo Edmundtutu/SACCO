@@ -1,14 +1,22 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Savings Management')
+@section('title', 'Transaction Management')
 
 @section('content')
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="page-title">Savings Management</h1>
-                <p class="text-muted">Manage member savings accounts, deposits, and withdrawals</p>
+                <h1 class="page-title">Transaction Management</h1>
+                <p class="text-muted">Monitor, approve, and manage all SACCO transactions</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#manualTransactionModal">
+                    <i class="bi bi-plus-circle"></i> Manual Transaction
+                </button>
+                <button class="btn btn-outline-primary" onclick="adminTransactionManager.loadTransactionData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
             </div>
         </div>
     </div>
@@ -20,11 +28,25 @@
         <div class="stats-card text-white">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">{{ number_format($stats['total_accounts']) }}</div>
-                    <div class="stats-label">Total Accounts</div>
+                    <div class="stats-number" id="totalTransactions">-</div>
+                    <div class="stats-label">Total Transactions</div>
                 </div>
                 <div class="stats-icon">
-                    <i class="bi bi-piggy-bank"></i>
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card text-white" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stats-number" id="pendingTransactions">-</div>
+                    <div class="stats-label">Pending Approval</div>
+                </div>
+                <div class="stats-icon">
+                    <i class="bi bi-clock"></i>
                 </div>
             </div>
         </div>
@@ -34,22 +56,8 @@
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #28a745, #20c997);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">UGX {{ number_format($stats['total_balance'], 2) }}</div>
-                    <div class="stats-label">Total Balance</div>
-                </div>
-                <div class="stats-icon">
-                    <i class="bi bi-cash-stack"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card text-white" style="background: linear-gradient(135deg, #fd7e14, #e83e8c);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stats-number">{{ number_format($stats['active_accounts']) }}</div>
-                    <div class="stats-label">Active Accounts</div>
+                    <div class="stats-number" id="completedTransactions">-</div>
+                    <div class="stats-label">Completed Today</div>
                 </div>
                 <div class="stats-icon">
                     <i class="bi bi-check-circle"></i>
@@ -62,45 +70,83 @@
         <div class="stats-card text-white" style="background: linear-gradient(135deg, #6f42c1, #e83e8c);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stats-number">{{ $stats['recent_transactions']->count() }}</div>
-                    <div class="stats-label">Recent Transactions</div>
+                    <div class="stats-number" id="totalVolume">-</div>
+                    <div class="stats-label">Volume Today</div>
                 </div>
                 <div class="stats-icon">
-                    <i class="bi bi-arrow-repeat"></i>
+                    <i class="bi bi-cash-stack"></i>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Actions -->
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="transactionFilters" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="transaction_type" class="form-label">Transaction Type</label>
+                        <select class="form-select" id="transaction_type" name="type">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="share_purchase">Share Purchase</option>
+                            <option value="loan_disbursement">Loan Disbursement</option>
+                            <option value="loan_repayment">Loan Repayment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="transaction_status" class="form-label">Status</label>
+                        <select class="form-select" id="transaction_status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="reversed">Reversed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="date_from" name="start_date">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="date_to" name="end_date">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Filter
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Transactions -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                <h5 class="mb-0">
+                    <i class="bi bi-clock"></i> Pending Transactions
+                    <span class="badge bg-warning ms-2" id="pendingCount">0</span>
+                </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.savings.accounts') }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                            <i class="bi bi-list"></i> View All Accounts
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.savings.transactions') }}" class="btn btn-outline-success btn-sm w-100 mb-2">
-                            <i class="bi bi-arrow-repeat"></i> View Transactions
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.savings.products') }}" class="btn btn-outline-info btn-sm w-100 mb-2">
-                            <i class="bi bi-gear"></i> Savings Products
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-outline-warning btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#manualTransactionModal">
-                            <i class="bi bi-plus-circle"></i> Manual Transaction
-                        </button>
+                <div id="pendingTransactions" class="pending-transactions">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2">Loading pending transactions...</p>
                     </div>
                 </div>
             </div>
@@ -108,74 +154,54 @@
     </div>
 </div>
 
-<!-- Recent Transactions -->
+<!-- Transaction History -->
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Transaction History
+                    <span class="badge bg-primary ms-2" id="totalCount">0</span>
+                </h5>
             </div>
             <div class="card-body">
-                @if($stats['recent_transactions']->count() > 0)
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
+                    <table id="transactionsTable" class="table table-hover transaction-table">
+                        <thead>
                             <tr>
-                                <th>Date</th>
+                                <th>Transaction #</th>
                                 <th>Member</th>
-                                <th>Account</th>
                                 <th>Type</th>
                                 <th>Amount</th>
-                                <th>Balance</th>
                                 <th>Status</th>
+                                <th>Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($stats['recent_transactions'] as $transaction)
                             <tr>
-                                <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
-                                <td>
-                                    <strong>{{ $transaction->account->user->name ?? 'N/A' }}</strong><br>
-                                    <small class="text-muted">{{ $transaction->account->user->member_number ?? 'N/A' }}</small>
-                                </td>
-                                <td>{{ $transaction->account->account_number }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $transaction->transaction_type == 'deposit' ? 'success' : 'warning' }}">
-                                        {{ ucfirst($transaction->transaction_type) }}
-                                    </span>
-                                </td>
-                                <td>UGX {{ number_format($transaction->amount, 2) }}</td>
-                                <td>UGX {{ number_format($transaction->account->balance, 2) }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : ($transaction->status == 'pending' ? 'warning' : 'danger') }}">
-                                        {{ ucfirst($transaction->status) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.savings.accounts.show', $transaction->account->id) }}" 
-                                       class="btn btn-outline-primary btn-sm" 
-                                       title="View Account">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Loading transactions...</p>
                                 </td>
                             </tr>
-                            @endforeach
                         </tbody>
                     </table>
                 </div>
-                <div class="text-center mt-3">
-                    <a href="{{ route('admin.savings.transactions') }}" class="btn btn-primary">
-                        View All Transactions
-                    </a>
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <small class="text-muted">
+                            Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalResults">0</span> results
+                        </small>
+                    </div>
+                    <div id="paginationContainer">
+                        <!-- Pagination will be inserted here -->
+                    </div>
                 </div>
-                @else
-                <div class="text-center py-5">
-                    <i class="bi bi-arrow-repeat display-1 text-muted"></i>
-                    <h4 class="text-muted mt-3">No recent transactions</h4>
-                    <p class="text-muted">Recent savings transactions will appear here.</p>
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -220,6 +246,7 @@
                                     <option value="">Select Type</option>
                                     <option value="deposit">Deposit</option>
                                     <option value="withdrawal">Withdrawal</option>
+                                    <option value="share_purchase">Share Purchase</option>
                                 </select>
                             </div>
                         </div>
@@ -260,71 +287,26 @@
         </div>
     </div>
 </div>
-
-<!-- Transaction Management Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-gear"></i> Transaction Management
-                    <button class="btn btn-sm btn-outline-primary float-end" onclick="adminTransactionManager.loadTransactionData()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
-                </h5>
-            </div>
-            <div class="card-body">
-                <!-- Pending Transactions -->
-                <div class="mb-4">
-                    <h6 class="text-muted mb-3">Pending Transactions</h6>
-                    <div id="pendingTransactions" class="pending-transactions">
-                        <div class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="text-muted mt-2">Loading pending transactions...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Transaction History -->
-                <div class="table-responsive">
-                    <table id="transactionsTable" class="table table-hover transaction-table">
-                        <thead>
-                            <tr>
-                                <th>Transaction #</th>
-                                <th>Member</th>
-                                <th>Account</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>Balance</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="9" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="text-muted mt-2">Loading transactions...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Member search functionality
+    // Initialize filters with default values
+    const today = new Date().toISOString().split('T')[0];
+    $('#date_from').val(today);
+    $('#date_to').val(today);
+    
+    // Load initial data
+    adminTransactionManager.loadTransactionData();
+    
+    // Handle filter form submission
+    $('#transactionFilters').on('submit', function(e) {
+        e.preventDefault();
+        adminTransactionManager.loadTransactionData();
+    });
+    
+    // Member search functionality (reuse from savings page)
     let searchTimeout;
     $('#member_search').on('input', function() {
         const search = $(this).val();
@@ -432,38 +414,22 @@ $(document).ready(function() {
             $('#account_id').html('<option value="">Error loading accounts</option>').prop('disabled', false);
         }
     }
-
-    // Transaction type change handler
-    $('#transaction_type').on('change', function() {
-        const type = $(this).val();
-        const amountInput = $('#amount');
-        
-        if (type === 'withdrawal') {
-            amountInput.attr('max', ''); // Remove max limit for now
-        } else {
-            amountInput.removeAttr('max');
-        }
-    });
-
-    // Form validation
-    $('#manualTransactionForm').on('submit', function(e) {
-        const memberId = $('#member_id').val();
-        const accountId = $('#account_id').val();
-        const type = $('#transaction_type').val();
-        const amount = $('#amount').val();
-        
-        if (!memberId || !accountId || !type || !amount) {
-            e.preventDefault();
-            alert('Please fill in all required fields');
-            return false;
-        }
-        
-        if (parseFloat(amount) <= 0) {
-            e.preventDefault();
-            alert('Amount must be greater than 0');
-            return false;
-        }
-    });
 });
+
+function clearFilters() {
+    $('#transactionFilters')[0].reset();
+    const today = new Date().toISOString().split('T')[0];
+    $('#date_from').val(today);
+    $('#date_to').val(today);
+    adminTransactionManager.loadTransactionData();
+}
+
+// Update statistics display
+function updateStatistics(stats) {
+    $('#totalTransactions').text(stats.total || 0);
+    $('#pendingTransactions').text(stats.pending || 0);
+    $('#completedTransactions').text(stats.completed || 0);
+    $('#totalVolume').text('UGX ' + (stats.volume || 0).toLocaleString());
+}
 </script>
 @endpush

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { purchaseShares } from '@/store/sharesSlice';
+import { purchaseShares } from '@/store/transactionsSlice';
 import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
 import { ShoppingCart, Calculator, TrendingUp } from 'lucide-react';
@@ -19,7 +19,8 @@ interface SharesPurchaseProps {
 export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
-  const { loading } = useSelector((state: RootState) => state.shares);
+  const { loading } = useSelector((state: RootState) => state.transactions);
+  const { user } = useSelector((state: RootState) => state.auth);
   
   const [amount, setAmount] = useState('');
   const [shares, setShares] = useState('');
@@ -60,9 +61,9 @@ export function SharesPurchase({ currentShares, shareValue }: SharesPurchaseProp
 
     try {
       const result = await dispatch(purchaseShares({
+        member_id: user?.id || 0,
         amount: parseFloat(amount),
-        shares: parseInt(shares),
-        payment_method: paymentMethod,
+        description: `Purchase of ${shares} shares at ${shareValue} per share`,
       }) as any);
       
       if (purchaseShares.fulfilled.match(result)) {

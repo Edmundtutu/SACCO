@@ -110,6 +110,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::post('dividends/declare', [AdminSharesController::class, 'declareDividend'])->name('dividends.declare');
         });
 
+        // Transactions Management
+        Route::group(['prefix' => 'transactions', 'as' => 'transactions.'], function () {
+            Route::get('/', function () {
+                return view('admin.transactions.index');
+            })->name('index');
+        });
+
         // Reports
         Route::group(['prefix' => 'reports', 'as' => 'reports.'], function () {
             Route::get('/', [AdminReportsController::class, 'index'])->name('index');

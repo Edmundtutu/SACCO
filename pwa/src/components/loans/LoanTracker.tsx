@@ -15,7 +15,7 @@ interface LoanTrackerProps {
 export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
   const [showRepaymentForm, setShowRepaymentForm] = useState(false);
   const amountPaid = loan.principal_amount - loan.outstanding_balance;
-  const isOverdue = new Date(loan.next_payment_date) < new Date() && loan.status === 'active';
+  const isOverdue = loan.first_payment_date && new Date(loan.first_payment_date) < new Date() && (loan.status === 'active' || loan.status === 'disbursed');
   
   return (
     <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-primary/20">
@@ -50,7 +50,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
             <Calendar className="w-6 h-6 text-primary mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Next Payment</p>
             <p className="font-bold text-primary">
-              {new Date(loan.next_payment_date).toLocaleDateString()}
+              {loan.first_payment_date ? new Date(loan.first_payment_date).toLocaleDateString() : 'N/A'}
             </p>
             <p className="text-sm font-medium">
               UGX {loan.monthly_payment.toLocaleString()}
@@ -60,7 +60,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">{loan.product_name}</span>
+            <span className="text-sm font-medium">{loan.loan_product?.name || 'Loan'}</span>
             <span className="text-sm text-muted-foreground">
               {Math.round(repaymentProgress)}% complete
             </span>
@@ -79,7 +79,7 @@ export function LoanTracker({ loan, repaymentProgress }: LoanTrackerProps) {
             className="flex-1" 
             variant={isOverdue ? 'destructive' : 'default'}
             onClick={() => setShowRepaymentForm(true)}
-            disabled={loan.status !== 'active'}
+            disabled={loan.status !== 'active' && loan.status !== 'disbursed'}
           >
             <CreditCard className="w-4 h-4 mr-2" />
             {isOverdue ? 'Pay Overdue Amount' : 'Make Payment'}

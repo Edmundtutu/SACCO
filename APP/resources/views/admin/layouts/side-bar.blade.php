@@ -75,6 +75,11 @@
                 <li><a href="#">Share Reports</a></li>
             </ul>
         </li>
+        <li class="{{request()->routeIs('admin.transactions.*') ? 'active' : ''}}">
+            <a href="{{route('admin.transactions.index')}}">
+                <i class="bi bi-arrow-repeat"></i> <span>Transactions</span>
+            </a>
+        </li>
         <li class="has-submenu">
             <a href="#">
                 <i class="bi bi-file-earmark-text"></i> <span>Reports</span>

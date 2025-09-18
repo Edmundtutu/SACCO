@@ -232,16 +232,13 @@
                                         @endif
                                         
                                         @if($loan->status == 'approved')
-                                        <form action="{{ route('admin.loans.disburse', $loan->id) }}" 
-                                              method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="btn btn-outline-info btn-sm" 
-                                                    title="Disburse" 
-                                                    onclick="return confirm('Disburse this loan?')">
-                                                <i class="bi bi-cash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                class="btn btn-outline-info btn-sm" 
+                                                title="Disburse" 
+                                                data-action="disburse-loan"
+                                                data-loan-id="{{ $loan->id }}">
+                                            <i class="bi bi-cash"></i>
+                                        </button>
                                         @endif
                                     </div>
                                 </td>

@@ -3,6 +3,7 @@ import authSlice from './authSlice';
 import savingsSlice from './savingsSlice';
 import loansSlice from './loansSlice';
 import sharesSlice from './sharesSlice';
+import transactionsSlice from './transactionsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     savings: savingsSlice,
     loans: loansSlice,
     shares: sharesSlice,
+    transactions: transactionsSlice,
   },
 });
 

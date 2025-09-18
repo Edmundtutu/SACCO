@@ -1,18 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, DollarSign, TrendingDown } from 'lucide-react';
-
-interface Loan {
-  id: number;
-  product_name: string;
-  principal_amount: number;
-  outstanding_balance: number;
-  interest_rate: number;
-  monthly_payment: number;
-  next_payment_date: string;
-  status: 'active' | 'paid' | 'overdue' | 'pending';
-  created_at: string;
-}
+import type { Loan } from '@/types/api';
 
 interface RepaymentScheduleProps {
   loan: Loan;
@@ -26,7 +15,7 @@ export function RepaymentSchedule({ loan }: RepaymentScheduleProps) {
     let balance = loan.outstanding_balance;
     const monthlyPayment = loan.monthly_payment;
     
-    let currentDate = new Date(loan.next_payment_date);
+    let currentDate = loan.first_payment_date ? new Date(loan.first_payment_date) : new Date();
     
     while (balance > 0 && schedule.length < 12) { // Show next 12 payments
       const interestPayment = balance * monthlyRate;
@@ -102,7 +91,7 @@ export function RepaymentSchedule({ loan }: RepaymentScheduleProps) {
             Repayment Schedule
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Showing next 12 payments for {loan.product_name}
+            Showing next 12 payments for {loan.loan_product?.name || 'Loan'}
           </p>
         </CardHeader>
         <CardContent>
