@@ -10,6 +10,8 @@ class GeneralLedger extends Model
 {
     use HasFactory;
 
+    protected $table = 'general_ledger';
+
     protected $fillable = [
         'transaction_id',
         'transaction_date',
