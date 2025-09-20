@@ -35,10 +35,41 @@ class SavingsTransactionController extends Controller
         try {
             $transactionDTO = new TransactionDTO(
                 memberId: $request->member_id,
+                type: 'deposit',
+                amount: $request->amount,
+                accountId: $request->account_id,
+                description: $request->description ?? 'Cash deposit',
+                processedBy: auth()->id()
+            );
+
+            $transaction = $this->transactionService->processTransaction($transactionDTO);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Deposit processed successfully',
+                'data' => new TransactionResource($transaction),
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Deposit processing failed',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Process a cash withdrawal
+     */
+    public function withdrawal(WithdrawalRequest $request): JsonResponse
+    {
+        try {
+            $transactionDTO = new TransactionDTO(
+                memberId: $request->member_id,
                 type: 'withdrawal',
                 amount: $request->amount,
                 accountId: $request->account_id,
-                feeAmount: $withdrawalFee,
                 description: $request->description ?? 'Cash withdrawal',
                 processedBy: auth()->id()
             );
