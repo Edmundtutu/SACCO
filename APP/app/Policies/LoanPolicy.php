@@ -18,7 +18,7 @@ class LoanPolicy
      */
     public function viewAny(User $user)
     {
-        //
+        return in_array($user->role, ['admin', 'staff', 'loan_officer']);
     }
 
     /**
@@ -30,7 +30,13 @@ class LoanPolicy
      */
     public function view(User $user, Loan $loan)
     {
-        //
+        // Admin, staff, and loan officers can view all loans
+        if (in_array($user->role, ['admin', 'staff', 'loan_officer'])) {
+            return true;
+        }
+
+        // Members can only view their own loans
+        return $loan->member_id === $user->id;
     }
 
     /**
@@ -89,6 +95,24 @@ class LoanPolicy
      */
     public function forceDelete(User $user, Loan $loan)
     {
-        //
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can view loan details.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Loan  $loan
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewLoanDetails(User $user, Loan $loan)
+    {
+        // Admin, staff, and loan officers can view all loan details
+        if (in_array($user->role, ['admin', 'staff', 'loan_officer'])) {
+            return true;
+        }
+
+        // Members can only view their own loan details
+        return $loan->member_id === $user->id;
     }
 }

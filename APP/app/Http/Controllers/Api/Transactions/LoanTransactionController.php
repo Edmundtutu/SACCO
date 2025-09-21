@@ -13,6 +13,7 @@ use App\Models\Loan;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class LoanTransactionController extends Controller
 {
@@ -126,7 +127,7 @@ class LoanTransactionController extends Controller
         try {
             $loan = Loan::findOrFail($loanId);
 
-            if (!auth()->user()->can('view-loan-details', $loan)) {
+            if (!Gate::allows('viewLoanDetails', $loan)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view loan details',
@@ -165,7 +166,7 @@ class LoanTransactionController extends Controller
         try {
             $loan = Loan::findOrFail($loanId);
 
-            if (!auth()->user()->can('view-loan-details', $loan)) {
+            if (!Gate::allows('viewLoanDetails', $loan)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view loan history',
@@ -215,7 +216,7 @@ class LoanTransactionController extends Controller
         try {
             $loan = Loan::findOrFail($loanId);
 
-            if (!auth()->user()->can('view-loan-details', $loan)) {
+            if (!Gate::allows('viewLoanDetails', $loan)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view loan summary',

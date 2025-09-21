@@ -15,6 +15,7 @@ use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class SavingsTransactionController extends Controller
 {
@@ -100,7 +101,7 @@ class SavingsTransactionController extends Controller
             $account = Account::findOrFail($accountId);
 
             // Check if user has permission to view this balance
-            if (!auth()->user()->can('view-account-balance', $account)) {
+            if (!Gate::allows('viewAccountBalance', $account)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view this account balance',
@@ -131,7 +132,7 @@ class SavingsTransactionController extends Controller
         try {
             $account = Account::findOrFail($accountId);
 
-            if (!auth()->user()->can('view-transaction-history', $account)) {
+            if (!Gate::allows('viewTransactionHistory', $account)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view transaction history',
@@ -188,7 +189,7 @@ class SavingsTransactionController extends Controller
         ]);
 
         try {
-            if (!auth()->user()->can('reverse-transactions')) {
+            if (!Gate::allows('reverse', Transaction::find($transactionId))) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to reverse transactions',

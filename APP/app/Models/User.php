@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Membership\Membership;
+use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Support\Facades\Gate;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, Authorizable;
 
     /**
      * The attributes that are mass assignable.

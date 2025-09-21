@@ -18,7 +18,7 @@ class TransactionPolicy
      */
     public function viewAny(User $user)
     {
-        //
+        return in_array($user->role, ['admin', 'staff', 'loan_officer']);
     }
 
     /**
@@ -30,7 +30,13 @@ class TransactionPolicy
      */
     public function view(User $user, Transaction $transaction)
     {
-        //
+        // Admin and staff can view all transactions
+        if (in_array($user->role, ['admin', 'staff'])) {
+            return true;
+        }
+
+        // Members can only view their own transactions
+        return $transaction->member_id === $user->id;
     }
 
     /**
@@ -41,7 +47,7 @@ class TransactionPolicy
      */
     public function create(User $user)
     {
-        //
+        return in_array($user->role, ['admin', 'staff', 'member']);
     }
 
     /**
@@ -53,7 +59,8 @@ class TransactionPolicy
      */
     public function update(User $user, Transaction $transaction)
     {
-        //
+        // Only admin and staff can update transactions
+        return in_array($user->role, ['admin', 'staff']);
     }
 
     /**
@@ -89,6 +96,24 @@ class TransactionPolicy
      */
     public function forceDelete(User $user, Transaction $transaction)
     {
-        //
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can reverse a transaction.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Transaction  $transaction
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function reverse(User $user, Transaction $transaction)
+    {
+        // Admin and staff can reverse any transaction
+        if (in_array($user->role, ['admin', 'staff'])) {
+            return true;
+        }
+
+        // Members can only reverse their own transactions if they're pending
+        return $transaction->member_id === $user->id && $transaction->status === 'pending';
     }
 }
