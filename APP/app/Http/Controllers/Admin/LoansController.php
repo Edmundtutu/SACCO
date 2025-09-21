@@ -13,12 +13,12 @@ class LoansController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Loan::with(['user', 'loanProduct']);
+        $query = Loan::with(['member', 'loanProduct']);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
+            $query->whereHas('member', function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('member_number', 'like', "%{$search}%");
@@ -49,7 +49,7 @@ class LoansController extends Controller
 
     public function show($id)
     {
-        $loan = Loan::with(['user', 'loanProduct', 'repayments', 'guarantors.guarantor'])
+        $loan = Loan::with(['member', 'loanProduct', 'repayments', 'guarantors.guarantor'])
             ->findOrFail($id);
 
         $breadcrumbs = [
@@ -126,7 +126,7 @@ class LoansController extends Controller
     public function applications()
     {
         $applications = Loan::where('status', 'pending')
-            ->with(['user', 'loanProduct'])
+            ->with(['member', 'loanProduct'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 

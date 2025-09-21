@@ -60,7 +60,7 @@ class AccountFactory extends Factory
             'last_transaction_date' => $this->faker->optional()->dateTimeThisYear(),
             'closure_reason' => $status === 'closed' ? $this->faker->sentence() : null,
             'closed_at' => $status === 'closed' ? now() : null,
-            'closed_by' => null,
+            'closed_by' => $status === 'closed' ? User::factory() : null,
         ];
     }
 }

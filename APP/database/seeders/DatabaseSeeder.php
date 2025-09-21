@@ -15,8 +15,8 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
          $this->call([
-//              MemberSeeder::class
-             SaccoDataSeeder::class
+             SaccoDataSeeder::class,
+             MemberSeeder::class,
          ]);
     }
 }

@@ -62,43 +62,8 @@ class SaccoDataSeeder extends Seeder
 
     private function createChartOfAccounts()
     {
-        // Database seeder or migration for Chart of Accounts
-        $chartOfAccounts = [
-            // ASSETS
-            ['account_code' => '1000', 'account_name' => 'ASSETS', 'account_type' => 'asset', 'normal_balance' => 'debit', 'level' => 1],
-            ['account_code' => '1001', 'account_name' => 'Cash in Hand', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
-            ['account_code' => '1002', 'account_name' => 'Cash at Bank', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
-            ['account_code' => '1100', 'account_name' => 'Loans Receivable', 'account_type' => 'asset', 'normal_balance' => 'debit', 'parent_code' => '1000', 'level' => 2],
-
-            // LIABILITIES
-            ['account_code' => '2000', 'account_name' => 'LIABILITIES', 'account_type' => 'liability', 'normal_balance' => 'credit', 'level' => 1],
-            ['account_code' => '2001', 'account_name' => 'Member Savings Payable', 'account_type' => 'liability', 'normal_balance' => 'credit', 'parent_code' => '2000', 'level' => 2],
-            ['account_code' => '2002', 'account_name' => 'Dividends Payable', 'account_type' => 'liability', 'normal_balance' => 'credit', 'parent_code' => '2000', 'level' => 2],
-
-            // EQUITY
-            ['account_code' => '3000', 'account_name' => 'EQUITY', 'account_type' => 'equity', 'normal_balance' => 'credit', 'level' => 1],
-            ['account_code' => '3001', 'account_name' => 'Member Share Capital', 'account_type' => 'equity', 'normal_balance' => 'credit', 'parent_code' => '3000', 'level' => 2],
-            ['account_code' => '3002', 'account_name' => 'Retained Earnings', 'account_type' => 'equity', 'normal_balance' => 'credit', 'parent_code' => '3000', 'level' => 2],
-
-            // INCOME
-            ['account_code' => '4000', 'account_name' => 'INCOME', 'account_type' => 'income', 'normal_balance' => 'credit', 'level' => 1],
-            ['account_code' => '4001', 'account_name' => 'Loan Interest Income', 'account_type' => 'income', 'normal_balance' => 'credit', 'parent_code' => '4000', 'level' => 2],
-            ['account_code' => '4002', 'account_name' => 'Fee Income', 'account_type' => 'income', 'normal_balance' => 'credit', 'parent_code' => '4000', 'level' => 2],
-
-            // EXPENSES
-            ['account_code' => '5000', 'account_name' => 'EXPENSES', 'account_type' => 'expense', 'normal_balance' => 'debit', 'level' => 1],
-            ['account_code' => '5001', 'account_name' => 'Operating Expenses', 'account_type' => 'expense', 'normal_balance' => 'debit', 'parent_code' => '5000', 'level' => 2],
-        ];
-
-        foreach ($chartOfAccounts as $account) {
-            DB::table('chart_of_accounts')->insert(array_merge($account, [
-                'is_active' => true,
-                'allow_manual_entry' => true,
-                'opening_balance' => 0,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]));
-        }
+        // Use the dedicated ChartOfAccountsSeeder
+        $this->call(ChartOfAccountsSeeder::class);
     }
 
     private function createSavingsProducts()

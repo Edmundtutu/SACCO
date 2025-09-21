@@ -87,7 +87,7 @@ class LoanFactory extends Factory
             'rejection_reason' => null,
             'approved_by' => null,
             'disbursed_by' => null,
-            'disbursement_account_id' => Account::factory(),
+            'disbursement_account_id' => null,
         ];
     }
 }

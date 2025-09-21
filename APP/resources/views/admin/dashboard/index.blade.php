@@ -178,7 +178,7 @@
                     <div class="list-group-item px-0">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <h6 class="mb-1">{{ $loan->user->name }}</h6>
+                                <h6 class="mb-1">{{ $loan->member->name }}</h6>
                                 <p class="mb-1 text-muted small">UGX{{ number_format($loan->principal_amount, 2) }}</p>
                                 <small class="text-muted">{{ $loan->created_at->format('M d, Y') }}</small>
                             </div>

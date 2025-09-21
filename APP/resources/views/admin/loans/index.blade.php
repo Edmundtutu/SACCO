@@ -181,8 +181,8 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <strong>{{ $loan->user->name }}</strong><br>
-                                        <small class="text-muted">{{ $loan->user->member_number ?? $loan->user->email }}</small>
+                                        <strong>{{ $loan->member->name }}</strong><br>
+                                        <small class="text-muted">{{ $loan->member->member_number ?? $loan->member->email }}</small>
                                     </div>
                                 </td>
                                 <td>{{ $loan->loanProduct->name ?? 'N/A' }}</td>
@@ -249,14 +249,15 @@
                 </div>
                 
                 <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        <small class="text-muted">
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <div class="pagination-info">
+                        <small>
+                            <i class="bi bi-info-circle me-1"></i>
                             Showing {{ $loans->firstItem() }} to {{ $loans->lastItem() }} of {{ $loans->total() }} results
                         </small>
                     </div>
                     <div>
-                        {{ $loans->appends(request()->query())->links() }}
+                        {{ $loans->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
                 @else

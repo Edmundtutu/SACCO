@@ -306,14 +306,15 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div>
-                                <small class="text-muted">
+                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                            <div class="pagination-info">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
                                     Showing {{ $members->firstItem() }} to {{ $members->lastItem() }} of {{ $members->total() }} results
                                 </small>
                             </div>
                             <div>
-                                {{ $members->appends(request()->query())->links() }}
+                                {{ $members->appends(request()->query())->links('pagination::bootstrap-5') }}
                             </div>
                         </div>
                     @else

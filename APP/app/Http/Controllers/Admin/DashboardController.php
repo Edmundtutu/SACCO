@@ -30,7 +30,7 @@ class DashboardController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get(),
-            'recent_loans' => Loan::with(['user'])
+            'recent_loans' => Loan::with(['member'])
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get(),
