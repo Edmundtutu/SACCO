@@ -93,6 +93,14 @@ class Transaction extends Model
     }
 
     /**
+     * Loan relationship (alias for relatedLoan for backward compatibility)
+     */
+    public function loan(): BelongsTo
+    {
+        return $this->belongsTo(Loan::class, 'related_loan_id');
+    }
+
+    /**
      * Related account for transfers
      */
     public function relatedAccount(): BelongsTo

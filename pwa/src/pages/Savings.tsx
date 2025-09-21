@@ -11,6 +11,7 @@ import { Target, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { SavingsProgress } from '@/components/savings/SavingsProgress';
 import { AccountsList } from '@/components/savings/AccountsList';
 import { TransactionHistory } from '@/components/savings/TransactionHistory';
+import { TransactionManager } from '@/components/transactions/TransactionManager';
 
 export default function Savings() {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,9 +50,10 @@ export default function Savings() {
       />
 
       <Tabs defaultValue="accounts" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="accounts">My Accounts</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="manager">Transaction Manager</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
         </TabsList>
 
@@ -77,6 +79,10 @@ export default function Savings() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="manager">
+          <TransactionManager />
         </TabsContent>
 
         <TabsContent value="products">

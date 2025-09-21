@@ -75,10 +75,22 @@
                 <li><a href="#">Share Reports</a></li>
             </ul>
         </li>
-        <li class="{{request()->routeIs('admin.transactions.*') ? 'active' : ''}}">
-            <a href="{{route('admin.transactions.index')}}">
+        <li class="has-submenu">
+            <a href="#">
                 <i class="bi bi-arrow-repeat"></i> <span>Transactions</span>
             </a>
+            <ul class="submenu list-unstyled">
+                <li class="{{request()->routeIs('admin.transactions.index') ? 'active' : ''}}">
+                    <a href="{{route('admin.transactions.index')}}">
+                        Transaction Management
+                    </a>
+                </li>
+                <li class="{{request()->routeIs('admin.transactions.ledger') ? 'active' : ''}}">
+                    <a href="{{route('admin.transactions.ledger')}}">
+                        General Ledger
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="has-submenu">
             <a href="#">

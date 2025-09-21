@@ -378,9 +378,11 @@ export interface Dividend {
 }
 
 export interface SharePurchase {
-  shares: number;
+  member_id: number;
+  shares?: number;
   amount: number;
-  payment_method: string;
+  payment_method?: string;
+  description?: string;
 }
 
 // Reports Types

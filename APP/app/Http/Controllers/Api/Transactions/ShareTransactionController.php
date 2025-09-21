@@ -27,10 +27,23 @@ class ShareTransactionController extends Controller
     public function purchase(SharePurchaseRequest $request): JsonResponse
     {
         try {
+            // Find the member's primary account
+            $account = \App\Models\Account::where('member_id', $request->member_id)
+                ->where('status', 'active')
+                ->first();
+            
+            if (!$account) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active account found for member',
+                ], 422);
+            }
+
             $transactionDTO = new TransactionDTO(
                 memberId: $request->member_id,
                 type: 'share_purchase',
                 amount: $request->amount,
+                accountId: $account->id,
                 description: $request->description ?? 'Share purchase',
                 processedBy: auth()->id()
             );

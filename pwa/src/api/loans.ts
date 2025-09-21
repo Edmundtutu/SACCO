@@ -41,7 +41,12 @@ export const loansAPI = {
   },
 
   async repay(loanId: number, repaymentData: RepaymentData): Promise<ApiResponse<LoanRepayment>> {
-    const response = await apiClient.post(`/loans/${loanId}/repay`, repaymentData);
+    const response = await apiClient.post('/loans/repayment', {
+      loan_id: loanId,
+      amount: repaymentData.amount,
+      payment_method: repaymentData.payment_method,
+      notes: repaymentData.reference,
+    });
     return response.data;
   },
 
@@ -56,7 +61,7 @@ export const loansAPI = {
   },
 
   async getRepaymentSchedule(loanId: number): Promise<ApiResponse<RepaymentSchedule[]>> {
-    const response = await apiClient.get(`/loans/${loanId}/schedule`);
+    const response = await apiClient.get(`/loans/schedule/${loanId}`);
     return response.data;
   },
 

@@ -14,7 +14,11 @@ export const sharesAPI = {
   },
 
   async purchase(purchaseData: SharePurchase): Promise<ApiResponse<SharesAccount>> {
-    const response = await apiClient.post('/shares/purchase', purchaseData);
+    const response = await apiClient.post('/shares/purchase', {
+      member_id: purchaseData.member_id,
+      amount: purchaseData.amount,
+      description: purchaseData.description,
+    });
     return response.data;
   },
 

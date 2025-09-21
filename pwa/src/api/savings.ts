@@ -40,7 +40,7 @@ export const savingsAPI = {
   },
 
   async deposit(depositData: DepositData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/deposit', {
+    const response = await apiClient.post('/savings/deposit', {
       member_id: depositData.member_id,
       account_id: depositData.account_id,
       amount: depositData.amount,
@@ -52,7 +52,7 @@ export const savingsAPI = {
   },
 
   async withdraw(withdrawalData: WithdrawalData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/withdrawal', {
+    const response = await apiClient.post('/savings/withdrawal', {
       member_id: withdrawalData.member_id,
       account_id: withdrawalData.account_id,
       amount: withdrawalData.amount,

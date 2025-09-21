@@ -115,6 +115,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('/', function () {
                 return view('admin.transactions.index');
             })->name('index');
+            Route::get('ledger', function () {
+                return view('admin.transactions.ledger');
+            })->name('ledger');
         });
 
         // Reports

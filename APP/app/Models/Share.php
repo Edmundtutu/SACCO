@@ -21,6 +21,7 @@ class Share extends Model
         'status',
         'notes',
         'issued_by',
+        'processed_by',
     ];
 
     protected $casts = [

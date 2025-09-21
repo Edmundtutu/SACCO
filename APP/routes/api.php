@@ -128,9 +128,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     // General Transaction Routes
     Route::prefix('transactions')->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
-        Route::get('{transaction}', [TransactionController::class, 'show']);
+        
+        // Admin transaction management (specific routes first)
+        Route::get('pending', [TransactionController::class, 'getPending']);
         Route::get('member/{member}', [TransactionController::class, 'memberTransactions']);
         Route::get('summary/{member}', [TransactionController::class, 'memberSummary']);
+        
+        // General ledger
+        Route::get('ledger/general', [TransactionController::class, 'getGeneralLedger']);
+        Route::get('ledger/trial-balance', [TransactionController::class, 'getTrialBalance']);
+        
+        // Dynamic routes (must come last)
+        Route::get('{transaction}', [TransactionController::class, 'show']);
+        Route::post('{transaction}/approve', [TransactionController::class, 'approve']);
+        Route::post('{transaction}/reject', [TransactionController::class, 'reject']);
+        Route::post('{transaction}/reverse', [TransactionController::class, 'reverse']);
     });
 });
 

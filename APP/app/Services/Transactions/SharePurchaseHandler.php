@@ -48,8 +48,10 @@ class SharePurchaseHandler implements TransactionHandlerInterface
             'certificate_number' => $this->numberGenerationService->generateCertificateNumber(),
             'shares_count' => $shareCount,
             'share_value' => $shareValue,
+            'total_value' => $transaction->amount,
             'purchase_date' => now(),
-            'status' => 'active'
+            'status' => 'active',
+            'processed_by' => $transaction->processed_by ?? 1, // Use transaction processed_by or default to 1
         ]);
     }
 

@@ -221,4 +221,282 @@ class TransactionController extends Controller
             'data' => new TransactionResource($reversedTransaction)
         ]);
     }
+
+    /**
+     * Get all transactions (admin)
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = \App\Models\Transaction::with(['member', 'account', 'loan']);
+
+        // Apply filters
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->start_date) {
+            $query->where('transaction_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->where('transaction_date', '<=', $request->end_date);
+        }
+
+        if ($request->member_id) {
+            $query->where('member_id', $request->member_id);
+        }
+
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate(25);
+
+        return response()->json([
+            'success' => true,
+            'data' => TransactionResource::collection($transactions),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+                'last_page' => $transactions->lastPage(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get single transaction details
+     */
+    public function show($id): JsonResponse
+    {
+        $transaction = \App\Models\Transaction::with(['member', 'account', 'loan', 'processedBy', 'reversedBy'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => new TransactionResource($transaction)
+        ]);
+    }
+
+    /**
+     * Get member transactions
+     */
+    public function memberTransactions($memberId, Request $request): JsonResponse
+    {
+        $query = \App\Models\Transaction::where('member_id', $memberId);
+
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->start_date) {
+            $query->where('transaction_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->where('transaction_date', '<=', $request->end_date);
+        }
+
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => TransactionResource::collection($transactions),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+                'last_page' => $transactions->lastPage(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get member transaction summary
+     */
+    public function memberSummary($memberId, Request $request): JsonResponse
+    {
+        $dateRange = null;
+        if ($request->start_date && $request->end_date) {
+            $dateRange = [$request->start_date, $request->end_date];
+        }
+
+        $summary = $this->transactionService->getMemberTransactionSummary($memberId, $dateRange);
+
+        return response()->json([
+            'success' => true,
+            'data' => $summary
+        ]);
+    }
+
+    /**
+     * Get pending transactions (admin)
+     */
+    public function getPending(): JsonResponse
+    {
+        $transactions = \App\Models\Transaction::with(['member', 'account'])
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => TransactionResource::collection($transactions)
+        ]);
+    }
+
+    /**
+     * Approve transaction (admin)
+     */
+    public function approve($id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $transaction = \App\Models\Transaction::findOrFail($id);
+        
+        if ($transaction->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction is not pending approval'
+            ], 400);
+        }
+
+        $transaction->update([
+            'status' => 'completed',
+            'processed_by' => Auth::id(),
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'approval_notes' => $request->notes,
+                'approved_at' => now()->toISOString()
+            ])
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction approved successfully',
+            'data' => new TransactionResource($transaction)
+        ]);
+    }
+
+    /**
+     * Reject transaction (admin)
+     */
+    public function reject($id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'rejection_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $transaction = \App\Models\Transaction::findOrFail($id);
+        
+        if ($transaction->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction is not pending approval'
+            ], 400);
+        }
+
+        $transaction->update([
+            'status' => 'failed',
+            'processed_by' => Auth::id(),
+            'metadata' => array_merge($transaction->metadata ?? [], [
+                'rejection_reason' => $request->rejection_reason,
+                'rejected_at' => now()->toISOString()
+            ])
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction rejected successfully',
+            'data' => new TransactionResource($transaction)
+        ]);
+    }
+
+    /**
+     * Get general ledger entries
+     */
+    public function getGeneralLedger(Request $request): JsonResponse
+    {
+        $query = \App\Models\GeneralLedger::query();
+
+        // Apply filters
+        if ($request->start_date) {
+            $query->where('transaction_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->where('transaction_date', '<=', $request->end_date);
+        }
+
+        if ($request->account_code) {
+            $query->where('account_code', $request->account_code);
+        }
+
+        $entries = $query->orderBy('transaction_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        // Calculate totals
+        $totalDebits = $entries->sum('debit_amount');
+        $totalCredits = $entries->sum('credit_amount');
+
+        return response()->json([
+            'success' => true,
+            'data' => $entries->items(),
+            'meta' => [
+                'current_page' => $entries->currentPage(),
+                'total' => $entries->total(),
+                'per_page' => $entries->perPage(),
+                'last_page' => $entries->lastPage(),
+                'total_debits' => $totalDebits,
+                'total_credits' => $totalCredits,
+                'balance' => $totalDebits - $totalCredits
+            ]
+        ]);
+    }
+
+    /**
+     * Get trial balance
+     */
+    public function getTrialBalance(Request $request): JsonResponse
+    {
+        $query = \App\Models\GeneralLedger::selectRaw('
+            account_code,
+            account_name,
+            SUM(debit_amount) as total_debits,
+            SUM(credit_amount) as total_credits,
+            (SUM(debit_amount) - SUM(credit_amount)) as balance
+        ');
+
+        if ($request->start_date) {
+            $query->where('transaction_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->where('transaction_date', '<=', $request->end_date);
+        }
+
+        $trialBalance = $query->groupBy('account_code', 'account_name')
+            ->orderBy('account_code')
+            ->get();
+
+        $totalDebits = $trialBalance->sum('total_debits');
+        $totalCredits = $trialBalance->sum('total_credits');
+
+        return response()->json([
+            'success' => true,
+            'data' => $trialBalance,
+            'meta' => [
+                'total_debits' => $totalDebits,
+                'total_credits' => $totalCredits,
+                'balance' => $totalDebits - $totalCredits,
+                'is_balanced' => abs($totalDebits - $totalCredits) < 0.01
+            ]
+        ]);
+    }
 }

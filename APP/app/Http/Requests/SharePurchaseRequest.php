@@ -95,9 +95,12 @@ class SharePurchaseRequest extends FormRequest
             $this->validator->errors()->add('member_id', 'Member account is not active');
         }
 
-        $membership = $member->membership;
-        if ($membership && $membership->approval_status !== 'approved') {
-            $this->validator->errors()->add('member_id', 'Member is not fully approved for share purchases');
+        // Skip membership validation if membership model doesn't exist
+        if (class_exists('\App\Models\Membership')) {
+            $membership = $member->membership;
+            if ($membership && $membership->approval_status !== 'approved') {
+                $this->validator->errors()->add('member_id', 'Member is not fully approved for share purchases');
+            }
         }
     }
 

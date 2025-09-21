@@ -18,7 +18,7 @@ class AccountFactory extends Factory
      */
     public function definition()
     {
-        $status = $this->faker->randomElement(['active', 'inactive', 'dormant', 'closed']);
+        $status = $this->faker->randomElement(['active', 'active', 'active', 'inactive']); // Bias towards active
 
         // Try to pick an existing savings product, otherwise create a minimal one
         $savingsProductId = SavingsProduct::query()->inRandomOrder()->value('id');

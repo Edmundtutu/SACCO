@@ -250,7 +250,6 @@ test('member can access their own profile', function () {
 
         $response->assertStatus(200);
     });
-});
 
 test('member cannot approve other members', function () {
         // Create pending member
@@ -321,7 +320,6 @@ test('member cannot approve other members', function () {
 
         $response->assertStatus(404);
     });
-});
 
 test('loan officer can access their profile', function () {
         $response = $this->withHeaders([
@@ -367,7 +365,6 @@ test('loan officer can access their profile', function () {
 
         $response->assertStatus(403);
     });
-});
 
 test('members cannot access each others data', function () {
         // Test member 1 trying to access member 2's accounts
@@ -417,7 +414,6 @@ test('members cannot access each others data', function () {
             expect($account1Ids)->not->toBe($account2Ids);
         }
     });
-});
 
 test('admin role has highest privileges', function () {
         // Admin can approve members
@@ -468,7 +464,6 @@ test('admin role has highest privileges', function () {
         expect($profileRole)->toBe($loginRole);
         expect($profileRole)->toBe('admin');
     });
-});
 
 test('logout invalidates token for subsequent requests', function () {
         // First verify token works
