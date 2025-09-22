@@ -380,6 +380,11 @@
     background-color: #6c757d !important;
 }
 
+.badge.bg-light {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
 /* Loading States */
 .btn.loading {
     position: relative;

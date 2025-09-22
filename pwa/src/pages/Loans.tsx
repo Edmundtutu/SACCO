@@ -4,226 +4,378 @@ import { RootState, AppDispatch } from '@/store';
 import { fetchLoans, fetchLoanProducts } from '@/store/loansSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { LoanTracker } from '@/components/loans/LoanTracker';
-import { LoanProducts } from '@/components/loans/LoanProducts';
-import { LoanApplication } from '@/components/loans/LoanApplication';
-import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
+import { Badge } from '@/components/ui/badge';
+import { LoanApplicationForm } from '@/components/loans/LoanApplicationForm';
 import { LoanApplicationStatus } from '@/components/loans/LoanApplicationStatus';
-import { Calculator, FileText, CreditCard } from 'lucide-react';
+import { LoanTracker } from '@/components/loans/LoanTracker';
+import { LoanRepaymentForm } from '@/components/loans/LoanRepaymentForm';
+import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
+import { TransactionHistory } from '@/components/transactions/TransactionHistory';
+import { 
+  Plus, 
+  CreditCard, 
+  TrendingUp, 
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  Calculator
+} from 'lucide-react';
 
 export default function Loans() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loans, products, loading } = useSelector((state: RootState) => state.loans);
-  const [selectedLoanId, setSelectedLoanId] = useState<number | null>(null);
-  const [showApplication, setShowApplication] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const { user } = useSelector((state: RootState) => (state.auth as any));
+  const { loans, products: loanProducts, loading } = useSelector((state: RootState) => state.loans);
+  
+  const [applicationModalOpen, setApplicationModalOpen] = useState(false);
+  const [repaymentModalOpen, setRepaymentModalOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState<any>(null);
 
   useEffect(() => {
     dispatch(fetchLoans());
     dispatch(fetchLoanProducts());
   }, [dispatch]);
 
-  const activeLoan = loans.find(loan => loan.status === 'active' || loan.status === 'disbursed');
-  const totalOutstanding = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-UG', {
+      style: 'currency',
+      currency: 'UGX',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'approved':
+        return <Badge className="bg-blue-100 text-blue-800">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      case 'completed':
+        return <Badge className="bg-gray-100 text-gray-800">Completed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'pending':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      case 'approved':
+        return <CheckCircle className="w-5 h-5 text-blue-600" />;
+      case 'rejected':
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-gray-600" />;
+      default:
+        return <Clock className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const activeLoans = loans.filter(loan => loan.status === 'active');
+  const pendingLoans = loans.filter(loan => loan.status === 'pending');
+  const totalOutstanding = activeLoans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
   const totalPrincipal = loans.reduce((sum, loan) => sum + loan.principal_amount, 0);
-  const repaymentProgress = totalPrincipal > 0 ? ((totalPrincipal - totalOutstanding) / totalPrincipal) * 100 : 0;
 
   return (
-    <div className="p-4 space-y-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Loans</h1>
+          <h1 className="font-heading text-2xl md:text-3xl font-bold">Loans</h1>
           <p className="text-muted-foreground">Manage your loans and applications</p>
         </div>
-        <Button onClick={() => setShowApplication(true)} className="gap-2">
-          <FileText className="w-4 h-4" />
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setApplicationModalOpen(true)}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
           Apply for Loan
         </Button>
+          {activeLoans.length > 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => setRepaymentModalOpen(true)}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Make Payment
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Loan Repayment Tracker */}
-      {activeLoan && (
-        <LoanTracker 
-          loan={activeLoan}
-          repaymentProgress={repaymentProgress}
-        />
-      )}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Active Loans</p>
+                <p className="text-2xl font-bold font-heading">{activeLoans.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">
+                Outstanding: {formatCurrency(totalOutstanding)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Pending Applications</p>
+                <p className="text-2xl font-bold font-heading">{pendingLoans.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex items-center justify-center">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">
+                Under review
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Total Borrowed</p>
+                <p className="text-2xl font-bold font-heading">{formatCurrency(totalPrincipal)}</p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">
+                All time
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Credit Score</p>
+                <p className="text-2xl font-bold font-heading">Good</p>
+              </div>
+              <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                <FileText className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">
+                Based on payment history
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="my-loans" className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="status">Status</TabsTrigger>
-          <TabsTrigger value="calculator">Calculator</TabsTrigger>
+          <TabsTrigger value="my-loans" className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            My Loans
+          </TabsTrigger>
+          <TabsTrigger value="applications" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Applications
+          </TabsTrigger>
+          <TabsTrigger value="repayment" className="flex items-center gap-2">
+            <Calculator className="w-4 h-4" />
+            Repayment
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Transactions
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Products
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
+        <TabsContent value="my-loans" className="space-y-4">
+          {activeLoans.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {activeLoans.map((loan) => (
+                <Card key={loan.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
+                    <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  My Loans
+                        {getStatusIcon(loan.status)}
+                        {loan.loan_number}
                 </CardTitle>
+                      {getStatusBadge(loan.status)}
+                    </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {loans.length === 0 ? (
-                  <p className="text-muted-foregrounde py-8 text-center">No active loans</p>
-                ) : (
-                  loans.map((loan) => (
-                    <div key={loan.id} className="p-4 border rounded-lg space-y-3">
-                      <div className="flex justify-between items-start">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <h3 className="font-medium">{loan.loan_product?.name || 'Loan'}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Applied: {new Date(loan.application_date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Badge variant={loan.status === 'active' || loan.status === 'disbursed' ? 'default' : 
-                                      loan.status === 'completed' ? 'secondary' : 
-                                      loan.status === 'overdue' ? 'destructive' : 'outline'}>
-                          {loan.status}
-                        </Badge>
+                        <p className="text-sm text-muted-foreground">Principal Amount</p>
+                        <p className="font-semibold">{formatCurrency(loan.principal_amount)}</p>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Principal</p>
-                          <p className="font-medium">UGX {loan.principal_amount.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Outstanding Balance</p>
+                        <p className="font-semibold text-red-600">{formatCurrency(loan.outstanding_balance)}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Outstanding</p>
-                          <p className="font-medium">UGX {loan.outstanding_balance.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Interest Rate</p>
+                        <p className="font-semibold">{loan.interest_rate}% p.a.</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Monthly Payment</p>
-                          <p className="font-medium">UGX {loan.monthly_payment.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Next Payment</p>
-                          <p className="font-medium">{loan.first_payment_date ? new Date(loan.first_payment_date).toLocaleDateString() : 'N/A'}</p>
-                        </div>
+                        <p className="text-sm text-muted-foreground">Next Payment</p>
+                        <p className="font-semibold">{formatCurrency((loan as any).next_payment_amount || 0)}</p>
                       </div>
-
-                      {(loan.status === 'active' || loan.status === 'disbursed') && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Repayment Progress</span>
-                            <span>{Math.round(((loan.principal_amount - loan.outstanding_balance) / loan.principal_amount) * 100)}%</span>
-                          </div>
-                          <Progress value={((loan.principal_amount - loan.outstanding_balance) / loan.principal_amount) * 100} />
-                        </div>
-                      )}
                     </div>
-                  ))
-                )}
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedLoan(loan);
+                          setRepaymentModalOpen(true);
+                        }}
+                      >
+                        Make Payment
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setSelectedLoan(loan)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-2xl font-bold text-primary">
-                      {loans.filter(l => l.status === 'active' || l.status === 'disbursed').length}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Active Loans</p>
-                  </div>
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-2xl font-bold text-success">
-                      UGX {totalOutstanding.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Outstanding</p>
-                  </div>
-                </div>
-                
-                {activeLoan && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Next Payment Due</span>
-                      <span className="font-medium">{activeLoan.first_payment_date ? new Date(activeLoan.first_payment_date).toLocaleDateString() : 'N/A'}</span>
-                    </div>
-                    <Button className="w-full" variant="outline">
-                      Make Payment
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="products">
-          <LoanProducts 
-            products={products}
-            onApply={(productId) => {
-              setSelectedProductId(productId);
-              setShowApplication(true);
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent value="schedule">
-          {activeLoan ? (
-            <RepaymentSchedule loan={activeLoan} />
           ) : (
             <Card>
-              <CardContent className="flex items-center justify-center h-32">
-                <p className="text-muted-foreground">No active loans to show schedule</p>
+              <CardContent className="text-center py-12">
+                <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  No active loans
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You don't have any active loans at the moment.
+                </p>
+                <Button onClick={() => setApplicationModalOpen(true)}>
+                  Apply for a Loan
+                </Button>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="status">
-          {loans.length > 0 ? (
-            <div className="space-y-6">
-              {loans.map((loan) => (
-                <LoanApplicationStatus key={loan.id} loan={loan} />
-              ))}
+        <TabsContent value="applications" className="space-y-4">
+          <LoanApplicationStatus loan={null} />
+        </TabsContent>
+
+        <TabsContent value="repayment" className="space-y-4">
+          {activeLoans.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LoanTracker loan={activeLoans[0]} repaymentProgress={75} />
+              <RepaymentSchedule loan={activeLoans[0]} />
             </div>
           ) : (
             <Card>
-              <CardContent className="flex items-center justify-center h-32">
-                <p className="text-muted-foreground">No loan applications to show</p>
+              <CardContent className="text-center py-12">
+                <Calculator className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  No active loans to repay
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  You don't have any active loans that require repayment.
+                </p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        <TabsContent value="calculator">
+        <TabsContent value="transactions" className="space-y-4">
+          <TransactionHistory memberId={user?.id || 0} />
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="w-5 h-5" />
-                Loan Calculator
-              </CardTitle>
+              <CardTitle>Available Loan Products</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Loan calculator coming soon...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {loanProducts.map((product) => (
+                  <Card key={product.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{product.description}</p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">Interest Rate:</span>
+                          <span className="font-semibold text-green-600">{product.interest_rate}% p.a.</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Min Amount:</span>
+                          <span className="font-semibold">{formatCurrency(product.minimum_amount)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Max Amount:</span>
+                          <span className="font-semibold">{formatCurrency(product.maximum_amount)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Max Period:</span>
+                          <span className="font-semibold">{product.maximum_period_months} months</span>
+                        </div>
+                      </div>
+                      <Button 
+                        className="w-full mt-4" 
+                        size="sm"
+                        onClick={() => setApplicationModalOpen(true)}
+                      >
+                        Apply Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Loan Application Modal */}
-      {showApplication && (
-        <LoanApplication 
-          products={products}
-          selectedProductId={selectedProductId}
-          onClose={() => {
-            setShowApplication(false);
-            setSelectedProductId(null);
-          }}
-        />
-      )}
+      {/* Modals */}
+      <LoanApplicationForm 
+        isOpen={applicationModalOpen}
+        onClose={() => setApplicationModalOpen(false)}
+      />
+      
+      <LoanRepaymentForm 
+        isOpen={repaymentModalOpen}
+        onClose={() => setRepaymentModalOpen(false)}
+        loan={selectedLoan}
+      />
     </div>
   );
 }

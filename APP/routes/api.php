@@ -134,9 +134,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     });
 });
 
-// Legacy routes (for backward compatibility)
-Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers\Api\V1'], function () {
-    Route::apiResource('accounts', AccountController::class);
-    Route::apiResource('loans', LoanController::class);
-    Route::apiResource('transactions', TransactionController::class);
-});
+// Legacy routes (for backward compatibility) - Commented out due to missing controllers
+// Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers\Api\V1'], function () {
+//     Route::apiResource('accounts', AccountController::class);
+//     Route::apiResource('loans', LoanController::class);
+//     Route::apiResource('transactions', TransactionController::class);
+// });

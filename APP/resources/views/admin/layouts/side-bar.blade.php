@@ -75,10 +75,28 @@
                 <li><a href="#">Share Reports</a></li>
             </ul>
         </li>
-        <li class="{{request()->routeIs('admin.transactions.*') ? 'active' : ''}}">
-            <a href="{{route('admin.transactions.index')}}">
+        <li class="has-submenu">
+            <a href="#">
                 <i class="bi bi-arrow-repeat"></i> <span>Transactions</span>
             </a>
+            <ul class="submenu list-unstyled">
+                <li class="{{request()->routeIs('admin.transactions.index') ? 'active' : ''}}">
+                    <a href="{{route('admin.transactions.index')}}">
+                        All Transactions
+                    </a>
+                </li>
+                <li class="{{request()->routeIs('admin.transactions.general-ledger') ? 'active' : ''}}">
+                    <a href="{{route('admin.transactions.general-ledger')}}">
+                        General Ledger
+                    </a>
+                </li>
+                <li class="{{request()->routeIs('admin.transactions.trial-balance') ? 'active' : ''}}">
+                    <a href="{{route('admin.transactions.trial-balance')}}">
+                        Trial Balance
+                    </a>
+                </li>
+                <li><a href="#">Pending Approvals</a></li>
+            </ul>
         </li>
         <li class="has-submenu">
             <a href="#">
@@ -136,3 +154,4 @@
         });
     });
 </script>
+

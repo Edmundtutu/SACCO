@@ -1,225 +1,317 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Admin Dashboard')
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="text-muted">Welcome to the SACCO Management System Admin Panel</p>
-    </div>
-</div>
-
-<!-- Statistics Cards -->
-<div class="row">
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stats-card text-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stats-number">{{ number_format($stats['total_members']) }}</div>
-                    <div class="stats-label">Total Members</div>
-                </div>
-                <div class="stats-icon">
-                    <i class="bi bi-people"></i>
-                </div>
-            </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+            <p class="text-muted">SACCO Management System Overview</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stats-card text-white" style="background: linear-gradient(135deg, #28a745, #20c997);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stats-number">UGX{{ number_format($stats['total_savings'], 2) }}</div>
-                    <div class="stats-label">Total Savings</div>
-                </div>
-                <div class="stats-icon">
-                    <i class="bi bi-piggy-bank"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stats-card text-white" style="background: linear-gradient(135deg, #fd7e14, #e83e8c);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stats-number">UGX{{ number_format($stats['total_loans'], 2) }}</div>
-                    <div class="stats-label">Total Loans</div>
-                </div>
-                <div class="stats-icon">
-                    <i class="bi bi-currency-dollar"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stats-card text-white" style="background: linear-gradient(135deg, #6f42c1, #e83e8c);">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stats-number">UGX{{ number_format($stats['total_shares'], 2) }}</div>
-                    <div class="stats-label">Total Shares</div>
-                </div>
-                <div class="stats-icon">
-                    <i class="bi bi-graph-up"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <h6>Members</h6>
-                        <a href="{{ route('admin.members.index') }}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-people"></i> View All Members
-                        </a>
-                        @if($stats['pending_members'] > 0)
-                        <a href="{{ route('admin.members.index', ['status' => 'pending']) }}" class="btn btn-warning btn-sm">
-                            <i class="bi bi-clock"></i> Pending ({{ $stats['pending_members'] }})
-                        </a>
-                        @endif
-                    </div>
-                    <div class="col-md-3">
-                        <h6>Savings</h6>
-                        <a href="{{ route('admin.savings.index') }}" class="btn btn-outline-success btn-sm">
-                            <i class="bi bi-piggy-bank"></i> Manage Savings
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <h6>Loans</h6>
-                        <a href="{{ route('admin.loans.index') }}" class="btn btn-outline-warning btn-sm">
-                            <i class="bi bi-currency-dollar"></i> Manage Loans
-                        </a>
-                        @if($stats['pending_loans'] > 0)
-                        <a href="{{ route('admin.loans.index', ['status' => 'pending']) }}" class="btn btn-warning btn-sm">
-                            <i class="bi bi-clock"></i> Pending ({{ $stats['pending_loans'] }})
-                        </a>
-                        @endif
-                    </div>
-                    <div class="col-md-3">
-                        <h6>Reports</h6>
-                        <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-info btn-sm">
-                            <i class="bi bi-file-earmark-text"></i> Generate Reports
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
-            </div>
-            <div class="card-body">
-                @if($stats['recent_transactions']->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Member</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($stats['recent_transactions'] as $transaction)
-                            <tr>
-                                <td>{{ $transaction->created_at->format('M d, Y') }}</td>
-                                <td>{{ $transaction->account->user->name ?? 'N/A' }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $transaction->transaction_type == 'deposit' ? 'success' : 'warning' }}">
-                                        {{ ucfirst($transaction->transaction_type) }}
-                                    </span>
-                                </td>
-                                <td>UGX{{ number_format($transaction->amount, 2) }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : 'warning' }}">
-                                        {{ ucfirst($transaction->status) }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @else
-                <p class="text-muted text-center">No recent transactions found.</p>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-currency-dollar"></i> Recent Loan Applications</h5>
-            </div>
-            <div class="card-body">
-                @if($stats['recent_loans']->count() > 0)
-                <div class="list-group list-group-flush">
-                    @foreach($stats['recent_loans'] as $loan)
-                    <div class="list-group-item px-0">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">{{ $loan->member->name }}</h6>
-                                <p class="mb-1 text-muted small">UGX{{ number_format($loan->principal_amount, 2) }}</p>
-                                <small class="text-muted">{{ $loan->created_at->format('M d, Y') }}</small>
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Members
                             </div>
-                            <span class="badge bg-{{ $loan->status == 'pending' ? 'warning' : ($loan->status == 'approved' ? 'success' : 'danger') }}">
-                                {{ ucfirst($loan->status) }}
-                            </span>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ \App\Models\User::where('role', 'member')->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    @endforeach
-                </div>
-                @else
-                <p class="text-muted text-center">No recent loan applications.</p>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Section -->
-<div class="row mt-4">
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Monthly Savings Growth</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="savingsChart"></canvas>
                 </div>
             </div>
         </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Savings
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                UGX {{ number_format(\App\Models\Account::sum('balance')) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-piggy-bank fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Active Loans
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ \App\Models\Loan::where('status', 'active')->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Transactions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ \App\Models\Transaction::where('status', 'pending')->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Member Status Distribution</h5>
+    <!-- Pending Approvals Alert -->
+    @php
+        $pendingTransactions = \App\Models\Transaction::where('status', 'pending')->count();
+        $pendingLoans = \App\Models\Loan::where('status', 'pending')->count();
+        $pendingMembers = \App\Models\User::where('role', 'member')->where('status', 'pending')->count();
+    @endphp
+
+    @if($pendingTransactions > 0 || $pendingLoans > 0 || $pendingMembers > 0)
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Attention!</strong> You have pending approvals:
+        @if($pendingTransactions > 0)
+            <a href="{{ route('admin.transactions.index') }}" class="alert-link">{{ $pendingTransactions }} transactions</a>
+        @endif
+        @if($pendingLoans > 0)
+            <a href="{{ route('admin.loans.index') }}" class="alert-link">{{ $pendingLoans }} loans</a>
+        @endif
+        @if($pendingMembers > 0)
+            <a href="{{ route('admin.members.requests') }}" class="alert-link">{{ $pendingMembers }} members</a>
+        @endif
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
+    <div class="row">
+        <!-- Recent Transactions -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                    <a href="{{ route('admin.transactions.index') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Transaction #</th>
+                                    <th>Member</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse(\App\Models\Transaction::with('member')->orderBy('created_at', 'desc')->limit(10)->get() as $transaction)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('admin.transactions.show', $transaction->id) }}" class="text-decoration-none">
+                                            {{ $transaction->transaction_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $transaction->member->name ?? 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ $transaction->type == 'deposit' ? 'success' : ($transaction->type == 'withdrawal' ? 'warning' : 'info') }}">
+                                            {{ ucfirst(str_replace('_', ' ', $transaction->type)) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">UGX {{ number_format($transaction->amount) }}</td>
+                                    <td>
+                                        @switch($transaction->status)
+                                            @case('pending')
+                                                <span class="badge badge-warning">Pending</span>
+                                                @break
+                                            @case('completed')
+                                                <span class="badge badge-success">Completed</span>
+                                                @break
+                                            @case('rejected')
+                                                <span class="badge badge-danger">Rejected</span>
+                                                @break
+                                            @default
+                                                <span class="badge badge-light">{{ ucfirst($transaction->status) }}</span>
+                                        @endswitch
+                                    </td>
+                                    <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center">No transactions found</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="memberStatusChart"></canvas>
+        </div>
+
+        <!-- Quick Actions & Stats -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.transactions.index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-exchange-alt"></i> Process Transaction
+                        </a>
+                        <a href="{{ route('admin.loans.index') }}" class="btn btn-outline-success">
+                            <i class="fas fa-hand-holding-usd"></i> Review Loans
+                        </a>
+                        <a href="{{ route('admin.members.requests') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-user-plus"></i> Approve Members
+                        </a>
+                        <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar"></i> Generate Reports
+                        </a>
+                        <a href="{{ route('admin.transactions.general-ledger') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-book"></i> General Ledger
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Financial Summary</h6>
+                </div>
+                <div class="card-body">
+                    @php
+                        $totalSavings = \App\Models\Account::sum('balance');
+                        $totalLoans = \App\Models\Loan::where('status', 'active')->sum('outstanding_balance');
+                        $totalShares = \App\Models\Share::sum('total_value');
+                        $todayTransactions = \App\Models\Transaction::whereDate('created_at', today())->sum('amount');
+                    @endphp
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Total Savings:</span>
+                            <span class="font-weight-bold">UGX {{ number_format($totalSavings) }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Outstanding Loans:</span>
+                            <span class="font-weight-bold text-danger">UGX {{ number_format($totalLoans) }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Share Capital:</span>
+                            <span class="font-weight-bold text-info">UGX {{ number_format($totalShares) }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Today's Transactions:</span>
+                            <span class="font-weight-bold text-success">UGX {{ number_format($todayTransactions) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">System Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Database:</span>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">API Status:</span>
+                            <span class="badge badge-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Last Backup:</span>
+                            <span class="text-muted">{{ now()->subDays(1)->format('M d, Y') }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Active Users:</span>
+                            {{-- TODO: to a column on the users table to track the last login time--}}
+                            {{-- <span class="font-weight-bold">{{ \App\Models\User::where('last_login_at', '>', now()->subHours(1))->count() }}</span> --}} 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Transaction Volume (Last 7 Days)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="transactionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Member Growth</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="memberChart" width="400" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -228,50 +320,73 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Sample chart data - replace with actual data from controller
-const savingsCtx = document.getElementById('savingsChart').getContext('2d');
-new Chart(savingsCtx, {
+function refreshDashboard() {
+    location.reload();
+}
+
+// Transaction Chart
+const transactionCtx = document.getElementById('transactionChart').getContext('2d');
+const transactionChart = new Chart(transactionCtx, {
     type: 'line',
     data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels: [
+            @for($i = 6; $i >= 0; $i--)
+                '{{ now()->subDays($i)->format("M d") }}',
+            @endfor
+        ],
         datasets: [{
-            label: 'Savings Growth',
-            data: [12000, 19000, 15000, 25000, 32000, 30000],
-            borderColor: '#3399CC',
-            backgroundColor: 'rgba(51, 153, 204, 0.1)',
-            tension: 0.4
+            label: 'Transactions',
+            data: [
+                @for($i = 6; $i >= 0; $i--)
+                    {{ \App\Models\Transaction::whereDate('created_at', now()->subDays($i))->count() }},
+                @endfor
+            ],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
         }]
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false,
         scales: {
             y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'UGX' + value.toLocaleString();
-                    }
-                }
+                beginAtZero: true
             }
         }
     }
 });
 
-const memberStatusCtx = document.getElementById('memberStatusChart').getContext('2d');
-new Chart(memberStatusCtx, {
-    type: 'doughnut',
+// Member Growth Chart
+const memberCtx = document.getElementById('memberChart').getContext('2d');
+const memberChart = new Chart(memberCtx, {
+    type: 'bar',
     data: {
-        labels: ['Active', 'Pending', 'Suspended'],
+        labels: [
+            @for($i = 5; $i >= 0; $i--)
+                '{{ now()->subMonths($i)->format("M Y") }}',
+            @endfor
+        ],
         datasets: [{
-            data: [{{ $stats['active_members'] }}, {{ $stats['pending_members'] }}, {{ $stats['total_members'] - $stats['active_members'] - $stats['pending_members'] }}],
-            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+            label: 'New Members',
+            data: [
+                @for($i = 5; $i >= 0; $i--)
+                    {{ \App\Models\User::where('role', 'member')->whereMonth('created_at', now()->subMonths($i)->month)->whereYear('created_at', now()->subMonths($i)->year)->count() }},
+                @endfor
+            ],
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
         }]
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
     }
 });
 </script>

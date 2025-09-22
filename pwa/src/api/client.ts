@@ -1,15 +1,11 @@
-import axios from 'axios';
-import { store } from '../store';
-import { logoutUser } from '../store/authSlice';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { store } from '@/store';
+import type { RootState } from '@/store';
 
-// Base API URL - Update this to match your Laravel backend
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-api-domain.com/api'  // Update this with your production API URL
-  : 'http://localhost:8000/api';       // Development API URL
-
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000,
+// Create axios instance
+const apiClient: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -19,45 +15,30 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    const state = store.getState() as RootState;
+    const token = (state.auth as any).token;
+    
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor to handle errors and token refresh
+// Response interceptor to handle common errors
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Try to refresh token
-        const refreshResponse = await apiClient.post('/auth/refresh');
-        const newToken = refreshResponse.data.data?.token || refreshResponse.data.token;
-        
-        localStorage.setItem('token', newToken);
-        apiClient.defaults.headers.Authorization = `Bearer ${newToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, logout user
-        store.dispatch(logoutUser());
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-
-    // Handle other errors
-    if (error.response?.data?.message) {
-      return Promise.reject(new Error(error.response.data.message));
+  (response: AxiosResponse) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid, redirect to login
+      store.dispatch({ type: 'auth/logout' });
+      window.location.href = '/login';
     }
     
     return Promise.reject(error);

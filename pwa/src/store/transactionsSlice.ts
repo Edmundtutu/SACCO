@@ -1,21 +1,13 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { transactionsAPI } from '../api/transactions';
-import type { 
-  Transaction, 
-  DepositData, 
-  WithdrawalData, 
-  SharePurchaseData,
-  LoanDisbursementData,
-  LoanRepaymentData,
-  TransactionHistoryParams,
-  TransactionSummaryParams,
-  TransactionReversalData
-} from '../api/transactions';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { transactionsAPI } from '@/api/transactions';
+import type { Transaction, ApiResponse } from '@/types/api';
 
-interface TransactionsState {
+interface TransactionState {
   transactions: Transaction[];
-  pendingTransactions: Transaction[];
-  transactionSummary: {
+  loading: boolean;
+  error: string | null;
+  currentTransaction: Transaction | null;
+  summary: {
     total_transactions: number;
     total_deposits: number;
     total_withdrawals: number;
@@ -24,144 +16,146 @@ interface TransactionsState {
     total_share_purchases: number;
     net_cash_flow: number;
   } | null;
-  loading: boolean;
-  error: string | null;
-  pagination: {
-    current_page: number;
-    total: number;
-    per_page: number;
-    last_page: number;
-  } | null;
 }
 
-const initialState: TransactionsState = {
+const initialState: TransactionState = {
   transactions: [],
-  pendingTransactions: [],
-  transactionSummary: null,
   loading: false,
   error: null,
-  pagination: null,
+  currentTransaction: null,
+  summary: null,
 };
 
-// Async thunks
+// Async thunks for transaction operations
 export const makeDeposit = createAsyncThunk(
-  'transactions/deposit',
-  async (depositData: DepositData) => {
-    const response = await transactionsAPI.deposit(depositData);
-    if (response.success && response.data) {
+  'transactions/makeDeposit',
+  async (depositData: {
+    member_id: number;
+    account_id: number;
+    amount: number;
+    description?: string;
+    payment_reference?: string;
+    metadata?: Record<string, any>;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.deposit(depositData);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to make deposit');
     }
-    throw new Error(response.message || 'Failed to make deposit');
   }
 );
 
 export const makeWithdrawal = createAsyncThunk(
-  'transactions/withdraw',
-  async (withdrawalData: WithdrawalData) => {
-    const response = await transactionsAPI.withdraw(withdrawalData);
-    if (response.success && response.data) {
+  'transactions/makeWithdrawal',
+  async (withdrawalData: {
+    member_id: number;
+    account_id: number;
+    amount: number;
+    description?: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.withdraw(withdrawalData);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to make withdrawal');
     }
-    throw new Error(response.message || 'Failed to make withdrawal');
   }
 );
 
 export const purchaseShares = createAsyncThunk(
   'transactions/purchaseShares',
-  async (shareData: SharePurchaseData) => {
-    const response = await transactionsAPI.purchaseShares(shareData);
-    if (response.success && response.data) {
+  async (shareData: {
+    member_id: number;
+    amount: number;
+    description?: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.purchaseShares(shareData);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to purchase shares');
     }
-    throw new Error(response.message || 'Failed to purchase shares');
   }
 );
 
 export const disburseLoan = createAsyncThunk(
   'transactions/disburseLoan',
-  async (disbursementData: LoanDisbursementData) => {
-    const response = await transactionsAPI.disburseLoan(disbursementData);
-    if (response.success && response.data) {
+  async (disbursementData: {
+    loan_id: number;
+    disbursement_method: 'cash' | 'bank_transfer' | 'mobile_money';
+    notes?: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.disburseLoan(disbursementData);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to disburse loan');
     }
-    throw new Error(response.message || 'Failed to disburse loan');
   }
 );
 
 export const repayLoan = createAsyncThunk(
   'transactions/repayLoan',
-  async (repaymentData: LoanRepaymentData) => {
-    const response = await transactionsAPI.repayLoan(repaymentData);
-    if (response.success && response.data) {
+  async (repaymentData: {
+    loan_id: number;
+    amount: number;
+    payment_method?: string;
+    notes?: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.repayLoan(repaymentData);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to repay loan');
     }
-    throw new Error(response.message || 'Failed to repay loan');
   }
 );
 
 export const fetchTransactionHistory = createAsyncThunk(
   'transactions/fetchHistory',
-  async (params: TransactionHistoryParams) => {
-    const response = await transactionsAPI.getHistory(params);
-    if (response.success && response.data) {
+  async (params: {
+    member_id: number;
+    start_date?: string;
+    end_date?: string;
+    type?: 'deposit' | 'withdrawal' | 'share_purchase' | 'loan_disbursement' | 'loan_repayment';
+    page?: number;
+    per_page?: number;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.getHistory(params);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch transaction history');
     }
-    throw new Error(response.message || 'Failed to fetch transaction history');
   }
 );
 
 export const fetchTransactionSummary = createAsyncThunk(
   'transactions/fetchSummary',
-  async (params: TransactionSummaryParams) => {
-    const response = await transactionsAPI.getSummary(params);
-    if (response.success && response.data) {
+  async (params: {
+    member_id: number;
+    start_date?: string;
+    end_date?: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.getSummary(params);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch transaction summary');
     }
-    throw new Error(response.message || 'Failed to fetch transaction summary');
   }
 );
 
-export const fetchPendingTransactions = createAsyncThunk(
-  'transactions/fetchPending',
-  async () => {
-    const response = await transactionsAPI.getPending();
-    if (response.success && response.data) {
+export const fetchTransaction = createAsyncThunk(
+  'transactions/fetchTransaction',
+  async (transactionId: number, { rejectWithValue }) => {
+    try {
+      const response = await transactionsAPI.getTransaction(transactionId);
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch transaction');
     }
-    throw new Error(response.message || 'Failed to fetch pending transactions');
-  }
-);
-
-export const reverseTransaction = createAsyncThunk(
-  'transactions/reverse',
-  async (reversalData: TransactionReversalData) => {
-    const response = await transactionsAPI.reverse(reversalData);
-    if (response.success && response.data) {
-      return response.data;
-    }
-    throw new Error(response.message || 'Failed to reverse transaction');
-  }
-);
-
-export const approveTransaction = createAsyncThunk(
-  'transactions/approve',
-  async ({ transactionId, notes }: { transactionId: number; notes?: string }) => {
-    const response = await transactionsAPI.approve(transactionId, notes);
-    if (response.success && response.data) {
-      return response.data;
-    }
-    throw new Error(response.message || 'Failed to approve transaction');
-  }
-);
-
-export const rejectTransaction = createAsyncThunk(
-  'transactions/reject',
-  async ({ transactionId, reason }: { transactionId: number; reason: string }) => {
-    const response = await transactionsAPI.reject(transactionId, reason);
-    if (response.success && response.data) {
-      return response.data;
-    }
-    throw new Error(response.message || 'Failed to reject transaction');
   }
 );
 
@@ -172,9 +166,11 @@ const transactionsSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    clearTransactions: (state) => {
-      state.transactions = [];
-      state.pagination = null;
+    clearCurrentTransaction: (state) => {
+      state.currentTransaction = null;
+    },
+    setCurrentTransaction: (state, action: PayloadAction<Transaction>) => {
+      state.currentTransaction = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -187,12 +183,13 @@ const transactionsSlice = createSlice({
       .addCase(makeDeposit.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions.unshift(action.payload);
+        state.currentTransaction = action.payload;
       })
       .addCase(makeDeposit.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to make deposit';
+        state.error = action.payload as string;
       })
-
+      
       // Make Withdrawal
       .addCase(makeWithdrawal.pending, (state) => {
         state.loading = true;
@@ -201,12 +198,13 @@ const transactionsSlice = createSlice({
       .addCase(makeWithdrawal.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions.unshift(action.payload);
+        state.currentTransaction = action.payload;
       })
       .addCase(makeWithdrawal.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to make withdrawal';
+        state.error = action.payload as string;
       })
-
+      
       // Purchase Shares
       .addCase(purchaseShares.pending, (state) => {
         state.loading = true;
@@ -215,12 +213,13 @@ const transactionsSlice = createSlice({
       .addCase(purchaseShares.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions.unshift(action.payload);
+        state.currentTransaction = action.payload;
       })
       .addCase(purchaseShares.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to purchase shares';
+        state.error = action.payload as string;
       })
-
+      
       // Disburse Loan
       .addCase(disburseLoan.pending, (state) => {
         state.loading = true;
@@ -229,12 +228,13 @@ const transactionsSlice = createSlice({
       .addCase(disburseLoan.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions.unshift(action.payload);
+        state.currentTransaction = action.payload;
       })
       .addCase(disburseLoan.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to disburse loan';
+        state.error = action.payload as string;
       })
-
+      
       // Repay Loan
       .addCase(repayLoan.pending, (state) => {
         state.loading = true;
@@ -243,12 +243,13 @@ const transactionsSlice = createSlice({
       .addCase(repayLoan.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions.unshift(action.payload);
+        state.currentTransaction = action.payload;
       })
       .addCase(repayLoan.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to repay loan';
+        state.error = action.payload as string;
       })
-
+      
       // Fetch Transaction History
       .addCase(fetchTransactionHistory.pending, (state) => {
         state.loading = true;
@@ -257,50 +258,42 @@ const transactionsSlice = createSlice({
       .addCase(fetchTransactionHistory.fulfilled, (state, action) => {
         state.loading = false;
         state.transactions = action.payload.data;
-        state.pagination = action.payload.meta;
       })
       .addCase(fetchTransactionHistory.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch transaction history';
+        state.error = action.payload as string;
       })
-
+      
       // Fetch Transaction Summary
+      .addCase(fetchTransactionSummary.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchTransactionSummary.fulfilled, (state, action) => {
-        state.transactionSummary = action.payload;
+        state.loading = false;
+        state.summary = action.payload;
       })
-
-      // Fetch Pending Transactions
-      .addCase(fetchPendingTransactions.fulfilled, (state, action) => {
-        state.pendingTransactions = action.payload;
+      .addCase(fetchTransactionSummary.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
-
-      // Reverse Transaction
-      .addCase(reverseTransaction.fulfilled, (state, action) => {
-        const index = state.transactions.findIndex(t => t.id === action.payload.id);
-        if (index !== -1) {
-          state.transactions[index] = action.payload;
-        }
+      
+      // Fetch Single Transaction
+      .addCase(fetchTransaction.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
-
-      // Approve Transaction
-      .addCase(approveTransaction.fulfilled, (state, action) => {
-        // Remove from pending transactions
-        state.pendingTransactions = state.pendingTransactions.filter(
-          t => t.id !== action.payload.id
-        );
-        // Add to main transactions
-        state.transactions.unshift(action.payload);
+      .addCase(fetchTransaction.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentTransaction = action.payload;
       })
-
-      // Reject Transaction
-      .addCase(rejectTransaction.fulfilled, (state, action) => {
-        // Remove from pending transactions
-        state.pendingTransactions = state.pendingTransactions.filter(
-          t => t.id !== action.payload.id
-        );
+      .addCase(fetchTransaction.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { clearError, clearTransactions } = transactionsSlice.actions;
+export const { clearError, clearCurrentTransaction, setCurrentTransaction } = transactionsSlice.actions;
+
 export default transactionsSlice.reducer;
