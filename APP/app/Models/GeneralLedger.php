@@ -66,6 +66,14 @@ class GeneralLedger extends Model
     }
 
     /**
+     * Transaction related to this ledger entry
+     */
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'reference_id');
+    }
+
+    /**
      * Get posted entries
      */
     public function scopePosted($query)

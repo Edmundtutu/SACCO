@@ -68,7 +68,7 @@ class SavingsController extends Controller
     public function showAccount($id)
     {
         $account = Account::where('account_type', 'savings')
-            ->with(['user', 'transactions' => function($q) {
+            ->with(['member', 'transactions' => function($q) {
                 $q->orderBy('created_at', 'desc');
             }, 'savingsProduct'])
             ->findOrFail($id);

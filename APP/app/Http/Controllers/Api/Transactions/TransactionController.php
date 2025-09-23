@@ -200,6 +200,130 @@ class TransactionController extends Controller
     }
 
     /**
+     * Get all transactions (admin only)
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = \App\Models\Transaction::with(['member', 'account', 'relatedLoan']);
+
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('member_id')) {
+            $query->where('member_id', $request->member_id);
+        }
+
+        if ($request->has('date_from')) {
+            $query->whereDate('transaction_date', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('transaction_date', '<=', $request->date_to);
+        }
+
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => TransactionResource::collection($transactions),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get single transaction details
+     */
+    public function show(int $transactionId): JsonResponse
+    {
+        $transaction = \App\Models\Transaction::with([
+            'member',
+            'account.savingsProduct',
+            'relatedLoan.loanProduct',
+            'processedBy',
+            'reversedBy',
+            'generalLedgerEntries'
+        ])->findOrFail($transactionId);
+
+        return response()->json([
+            'success' => true,
+            'data' => new TransactionResource($transaction)
+        ]);
+    }
+
+    /**
+     * Get transaction history for a member
+     */
+    public function memberTransactions(Request $request, int $memberId): JsonResponse
+    {
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'type' => ['nullable', 'string', 'in:deposit,withdrawal,share_purchase,loan_disbursement,loan_repayment'],
+        ]);
+
+        $query = \App\Models\Transaction::where('member_id', $memberId);
+
+        if ($request->start_date) {
+            $query->where('transaction_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->where('transaction_date', '<=', $request->end_date);
+        }
+
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        $transactions = $query->orderBy('transaction_date', 'desc')->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => TransactionResource::collection($transactions),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get transaction summary for a member
+     */
+    public function memberSummary(Request $request, int $memberId): JsonResponse
+    {
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $dateRange = null;
+        if ($request->start_date && $request->end_date) {
+            $dateRange = [$request->start_date, $request->end_date];
+        }
+
+        $summary = $this->transactionService->getMemberTransactionSummary(
+            $memberId,
+            $dateRange
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $summary
+        ]);
+    }
+
+    /**
      * Reverse a transaction
      */
     public function reverse(Request $request): JsonResponse

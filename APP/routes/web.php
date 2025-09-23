@@ -113,15 +113,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // Transactions Management
         Route::group(['prefix' => 'transactions', 'as' => 'transactions.'], function () {
             Route::get('/', [\App\Http\Controllers\Admin\TransactionsController::class, 'index'])->name('index');
-            Route::get('{id}', [\App\Http\Controllers\Admin\TransactionsController::class, 'show'])->name('show');
             Route::post('process', [\App\Http\Controllers\Admin\TransactionsController::class, 'process'])->name('process');
-            Route::post('{id}/approve', [\App\Http\Controllers\Admin\TransactionsController::class, 'approve'])->name('approve');
-            Route::post('{id}/reject', [\App\Http\Controllers\Admin\TransactionsController::class, 'reject'])->name('reject');
-            Route::post('{id}/reverse', [\App\Http\Controllers\Admin\TransactionsController::class, 'reverse'])->name('reverse');
             Route::get('stats', [\App\Http\Controllers\Admin\TransactionsController::class, 'stats'])->name('stats');
             Route::get('general-ledger', [\App\Http\Controllers\Admin\TransactionsController::class, 'generalLedger'])->name('general-ledger');
             Route::get('trial-balance', [\App\Http\Controllers\Admin\TransactionsController::class, 'trialBalance'])->name('trial-balance');
             Route::get('export', [\App\Http\Controllers\Admin\TransactionsController::class, 'export'])->name('export');
+            Route::get('{id}', [\App\Http\Controllers\Admin\TransactionsController::class, 'show'])->name('show');
+            Route::post('{id}/approve', [\App\Http\Controllers\Admin\TransactionsController::class, 'approve'])->name('approve');
+            Route::post('{id}/reject', [\App\Http\Controllers\Admin\TransactionsController::class, 'reject'])->name('reject');
+            Route::post('{id}/reverse', [\App\Http\Controllers\Admin\TransactionsController::class, 'reverse'])->name('reverse');
         });
 
         // Reports

@@ -315,7 +315,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
                 </div>
               ))}
             </div>
-          ) : transactions.length > 0 ? (
+          ) : transactions?.length > 0 ? (
             <div className="divide-y">
               {transactions.map((transaction) => (
                 <div key={transaction.id} className="p-4 hover:bg-muted/50 transition-colors">

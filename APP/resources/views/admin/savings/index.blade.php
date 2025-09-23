@@ -141,16 +141,45 @@
                                 </td>
                                 <td>{{ $transaction->account->account_number }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $transaction->transaction_type == 'deposit' ? 'success' : 'warning' }}">
-                                        {{ ucfirst($transaction->transaction_type) }}
-                                    </span>
+                                    @switch($transaction->type)
+                                        @case('deposit')
+                                            <span class="badge-icon bg-success">Deposit</span>
+                                            @break
+                                        @case('withdrawal')
+                                            <span class="badge-icon bg-warning">Withdrawal</span>
+                                            @break
+                                        @case('share_purchase')
+                                            <span class="badge-icon bg-info">Share Purchase</span>
+                                            @break
+                                        @case('loan_disbursement')
+                                            <span class="badge-icon bg-primary">Loan Disbursement</span>
+                                            @break
+                                        @case('loan_repayment')
+                                            <span class="badge-icon bg-secondary">Loan Repayment</span>
+                                            @break
+                                        @default
+                                            <span class="badge-icon bg-light">{{ ucfirst($transaction->type) }}</span>
+                                    @endswitch
                                 </td>
                                 <td>UGX {{ number_format($transaction->amount, 2) }}</td>
                                 <td>UGX {{ number_format($transaction->account->balance, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : ($transaction->status == 'pending' ? 'warning' : 'danger') }}">
-                                        {{ ucfirst($transaction->status) }}
-                                    </span>
+                                    @switch($transaction->status)
+                                        @case('completed')
+                                            <span class="badge-status completed">Completed</span>
+                                            @break
+                                        @case('pending')
+                                            <span class="badge-status pending">Pending</span>
+                                            @break
+                                        @case('failed')
+                                            <span class="badge-status failed">Failed</span>
+                                            @break
+                                        @case('reversed')
+                                            <span class="badge-status reversed">Reversed</span>
+                                            @break
+                                        @default
+                                            <span class="badge-status default">{{ ucfirst($transaction->status) }}</span>
+                                    @endswitch
                                 </td>
                                 <td>
                                     <a href="{{ route('admin.savings.accounts.show', $transaction->account->id) }}" 

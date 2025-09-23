@@ -68,7 +68,7 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
       if (makeDeposit.fulfilled.match(result)) {
         toast({
           title: "Success",
-          description: `Deposit of KES ${amount.toLocaleString()} successful`,
+          description: `Deposit of UGX ${amount.toLocaleString()} successful`,
         });
         setFormData({ amount: '', payment_method: 'cash', payment_reference: '', description: '' });
         onClose();
@@ -85,7 +85,7 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'UGX',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -117,7 +117,7 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="amount">Amount (KES) *</Label>
+            <Label htmlFor="amount">Amount (UGX) *</Label>
             <Input
               id="amount"
               type="number"

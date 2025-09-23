@@ -129,13 +129,19 @@
         <div class="col-lg-8">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
-                    <a href="{{ route('admin.transactions.index') }}" class="btn btn-sm btn-primary">View All</a>
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-arrow-repeat"></i> Recent Transactions 
+                        <span class="badge bg-primary ms-2">{{ $stats['recent_transactions']->total() }} total</span>
+                    </h6>
+                    <a href="{{ route('admin.transactions.index') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-eye"></i> View All
+                    </a>
                 </div>
                 <div class="card-body">
+                    @if($stats['recent_transactions']->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Transaction #</th>
                                     <th>Member</th>
@@ -146,45 +152,92 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse(\App\Models\Transaction::with('member')->orderBy('created_at', 'desc')->limit(10)->get() as $transaction)
-                                <tr>
+                                @foreach($stats['recent_transactions'] as $transaction)
+                                <tr style="cursor: pointer;" onclick="window.location.href='{{ route('admin.transactions.show', $transaction->id) }}'">
                                     <td>
-                                        <a href="{{ route('admin.transactions.show', $transaction->id) }}" class="text-decoration-none">
-                                            {{ $transaction->transaction_number }}
-                                        </a>
+                                        <strong>
+                                            {{ $transaction->transaction_number ?? 'T' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT) }}
+                                        </strong>
                                     </td>
-                                    <td>{{ $transaction->member->name ?? 'N/A' }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $transaction->type == 'deposit' ? 'success' : ($transaction->type == 'withdrawal' ? 'warning' : 'info') }}">
-                                            {{ ucfirst(str_replace('_', ' ', $transaction->type)) }}
-                                        </span>
+                                        <div>
+                                            <strong>{{ $transaction->account->member->name ?? 'N/A' }}</strong><br>
+                                            <small class="text-muted">{{ $transaction->account->member->member_number ?? $transaction->account->member->email ?? 'N/A' }}</small>
+                                        </div>
                                     </td>
-                                    <td class="text-end">UGX {{ number_format($transaction->amount) }}</td>
+                                    <td>
+                                        @switch($transaction->type)
+                                            @case('deposit')
+                                                <span class="badge-icon bg-success">Deposit</span>
+                                                @break
+                                            @case('withdrawal')
+                                                <span class="badge-icon bg-warning">Withdrawal</span>
+                                                @break
+                                            @case('loan_disbursement')
+                                                <span class="badge-icon bg-info">Loan Disbursement</span>
+                                                @break
+                                            @case('loan_repayment')
+                                                <span class="badge-icon bg-primary">Loan Repayment</span>
+                                                @break
+                                            @case('share_purchase')
+                                                <span class="badge-icon bg-secondary">Share Purchase</span>
+                                                @break
+                                            @default
+                                                <span class="badge-icon bg-light text-dark">{{ ucfirst(str_replace('_', ' ', $transaction->type)) }}</span>
+                                        @endswitch
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-nowrap">UGX {{ number_format($transaction->amount, 2) }}</strong>
+                                    </td>
                                     <td>
                                         @switch($transaction->status)
                                             @case('pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge-status pending">Pending</span>
                                                 @break
                                             @case('completed')
-                                                <span class="badge badge-success">Completed</span>
+                                                <span class="badge-status completed">Completed</span>
                                                 @break
                                             @case('rejected')
-                                                <span class="badge badge-danger">Rejected</span>
+                                                <span class="badge-status failed">Rejected</span>
+                                                @break
+                                            @case('failed')
+                                                <span class="badge-status failed">Failed</span>
                                                 @break
                                             @default
-                                                <span class="badge badge-light">{{ ucfirst($transaction->status) }}</span>
+                                                <span class="badge-status default">{{ ucfirst($transaction->status) }}</span>
                                         @endswitch
                                     </td>
-                                    <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
+                                    <td>
+                                        <div>
+                                           <span class="text-nowrap"> {{ $transaction->created_at->format('M d') }}</span><br>
+                                            <small class="text-muted">{{ $transaction->created_at->format('H:i') }}</small>
+                                        </div>
+                                    </td>
                                 </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">No transactions found</td>
-                                </tr>
-                                @endforelse
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div class="pagination-info">
+                            <small>
+                                <i class="bi bi-info-circle me-1"></i>
+                                Showing {{ $stats['recent_transactions']->firstItem() }} to {{ $stats['recent_transactions']->lastItem() }} of {{ $stats['recent_transactions']->total() }} results
+                            </small>
+                        </div>
+                        <div>
+                            {{ $stats['recent_transactions']->links('pagination.bootstrap-5') }}
+                        </div>
+                    </div>
+                    @else
+                    <div class="text-center py-5">
+                        <i class="bi bi-arrow-repeat display-1 text-muted"></i>
+                        <h4 class="text-muted mt-3">No recent transactions found</h4>
+                        <p class="text-muted">Transactions will appear here once they are created.</p>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -296,22 +349,40 @@
     <!-- Charts Row -->
     <div class="row">
         <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Transaction Volume (Last 7 Days)</h6>
+            <div class="card shadow mb-4 chart-card">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-graph-up me-2"></i>Transaction Volume (Last 7 Days)
+                    </h6>
+                    <div class="chart-controls">
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshTransactionChart()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="transactionChart" width="400" height="200"></canvas>
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="transactionChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Member Growth</h6>
+            <div class="card shadow mb-4 chart-card">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-people me-2"></i>Member Growth
+                    </h6>
+                    <div class="chart-controls">
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshMemberChart()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="memberChart" width="400" height="200"></canvas>
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="memberChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -326,6 +397,14 @@ function refreshDashboard() {
     location.reload();
 }
 
+function refreshTransactionChart() {
+    transactionChart.update('active');
+}
+
+function refreshMemberChart() {
+    memberChart.update('active');
+}
+
 // Transaction Chart
 const transactionCtx = document.getElementById('transactionChart').getContext('2d');
 const transactionChart = new Chart(transactionCtx, {
@@ -337,23 +416,95 @@ const transactionChart = new Chart(transactionCtx, {
             @endfor
         ],
         datasets: [{
-            label: 'Transactions',
+            label: 'Daily Transactions',
             data: [
                 @for($i = 6; $i >= 0; $i--)
                     {{ \App\Models\Transaction::whereDate('created_at', now()->subDays($i))->count() }},
                 @endfor
             ],
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1
+            borderColor: '#3399CC',
+            backgroundColor: 'rgba(51, 153, 204, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#3399CC',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: '#2980b9',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3
         }]
     },
     options: {
         responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: '500'
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: '#3399CC',
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: false,
+                titleFont: {
+                    size: 14,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    size: 13
+                }
             }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: '#6c757d',
+                    font: {
+                        size: 11,
+                        weight: '500'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    color: '#6c757d',
+                    font: {
+                        size: 11,
+                        weight: '500'
+                    }
+                }
+            }
+        },
+        animation: {
+            duration: 2000,
+            easing: 'easeInOutQuart'
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
         }
     }
 });
@@ -375,17 +526,104 @@ const memberChart = new Chart(memberCtx, {
                     {{ \App\Models\User::where('role', 'member')->whereMonth('created_at', now()->subMonths($i)->month)->whereYear('created_at', now()->subMonths($i)->year)->count() }},
                 @endfor
             ],
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
+            backgroundColor: [
+                'rgba(52, 152, 219, 0.8)',
+                'rgba(46, 204, 113, 0.8)',
+                'rgba(155, 89, 182, 0.8)',
+                'rgba(241, 196, 15, 0.8)',
+                'rgba(230, 126, 34, 0.8)',
+                'rgba(231, 76, 60, 0.8)'
+            ],
+            borderColor: [
+                '#3498db',
+                '#2ecc71',
+                '#9b59b6',
+                '#f1c40f',
+                '#e67e22',
+                '#e74c3c'
+            ],
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+            hoverBackgroundColor: [
+                'rgba(52, 152, 219, 1)',
+                'rgba(46, 204, 113, 1)',
+                'rgba(155, 89, 182, 1)',
+                'rgba(241, 196, 15, 1)',
+                'rgba(230, 126, 34, 1)',
+                'rgba(231, 76, 60, 1)'
+            ],
+            hoverBorderWidth: 3
         }]
     },
     options: {
         responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: '500'
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: '#3498db',
+                borderWidth: 1,
+                cornerRadius: 8,
+                displayColors: false,
+                titleFont: {
+                    size: 14,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    size: 13
+                }
             }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: '#6c757d',
+                    font: {
+                        size: 11,
+                        weight: '500'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    color: '#6c757d',
+                    font: {
+                        size: 11,
+                        weight: '500'
+                    }
+                }
+            }
+        },
+        animation: {
+            duration: 2000,
+            easing: 'easeInOutQuart'
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
         }
     }
 });

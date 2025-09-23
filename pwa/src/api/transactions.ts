@@ -62,31 +62,31 @@ export interface TransactionReversalData {
 export const transactionsAPI = {
   // Deposit transactions
   async deposit(depositData: DepositData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/deposit', depositData);
+    const response = await apiClient.post('/savings/deposit', depositData);
     return response.data;
   },
 
   // Withdrawal transactions
   async withdraw(withdrawalData: WithdrawalData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/withdrawal', withdrawalData);
+    const response = await apiClient.post('/savings/withdrawal', withdrawalData);
     return response.data;
   },
 
   // Share purchase transactions
   async purchaseShares(shareData: SharePurchaseData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/share-purchase', shareData);
+    const response = await apiClient.post('/shares/purchase', shareData);
     return response.data;
   },
 
   // Loan disbursement transactions
   async disburseLoan(disbursementData: LoanDisbursementData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/loan-disbursement', disbursementData);
+    const response = await apiClient.post('/loans/disburse', disbursementData);
     return response.data;
   },
 
   // Loan repayment transactions
   async repayLoan(repaymentData: LoanRepaymentData): Promise<ApiResponse<Transaction>> {
-    const response = await apiClient.post('/transactions/loan-repayment', repaymentData);
+    const response = await apiClient.post('/loans/repayment', repaymentData);
     return response.data;
   },
 
@@ -100,7 +100,15 @@ export const transactionsAPI = {
       last_page: number;
     };
   }>> {
-    const response = await apiClient.get('/transactions/history', { params });
+    const response = await apiClient.get(`/transactions/member/${params.member_id}`, { 
+      params: {
+        start_date: params.start_date,
+        end_date: params.end_date,
+        type: params.type,
+        page: params.page,
+        per_page: params.per_page
+      }
+    });
     return response.data;
   },
 
@@ -114,7 +122,12 @@ export const transactionsAPI = {
     total_share_purchases: number;
     net_cash_flow: number;
   }>> {
-    const response = await apiClient.get('/transactions/summary', { params });
+    const response = await apiClient.get(`/transactions/summary/${params.member_id}`, { 
+      params: {
+        start_date: params.start_date,
+        end_date: params.end_date
+      }
+    });
     return response.data;
   },
 

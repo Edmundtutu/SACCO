@@ -81,7 +81,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
       if (makeWithdrawal.fulfilled.match(result)) {
         toast({
           title: "Success",
-          description: `Withdrawal of KES ${amount.toLocaleString()} successful`,
+          description: `Withdrawal of UGX ${amount.toLocaleString()} successful`,
         });
         setFormData({ amount: '', description: '' });
         onClose();
@@ -98,7 +98,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'KES',
+      currency: 'UGX',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -137,7 +137,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="amount">Amount (KES) *</Label>
+            <Label htmlFor="amount">Amount (UGX) *</Label>
             <Input
               id="amount"
               type="number"

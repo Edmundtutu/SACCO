@@ -9,6 +9,7 @@ use App\Http\Resources\TransactionResource;
 use App\Services\TransactionService;
 use App\DTOs\TransactionDTO;
 use App\Models\Share;
+use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

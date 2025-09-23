@@ -87,7 +87,7 @@ class TransactionsController extends Controller
     /**
      * Show transaction details
      */
-    public function show(int $id): View
+    public function show(string $id): View
     {
         $transaction = Transaction::with([
             'member',

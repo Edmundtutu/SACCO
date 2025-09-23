@@ -257,7 +257,7 @@
                         </small>
                     </div>
                     <div>
-                        {{ $loans->appends(request()->query())->links('pagination::bootstrap-5') }}
+                        {{ $loans->appends(request()->query())->links('pagination.bootstrap-5') }}
                     </div>
                 </div>
                 @else

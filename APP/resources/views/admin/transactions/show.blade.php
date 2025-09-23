@@ -59,102 +59,152 @@
     <div class="row">
         <!-- Transaction Information -->
         <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Transaction Information</h6>
+            <div class="card shadow mb-4 modern-card">
+                <div class="card-header py-3 modern-card-header">
+                    <h6 class="m-0 font-weight-bold text">
+                        <i class="fas fa-receipt me-2"></i>Transaction Information
+                    </h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body modern-card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td class="font-weight-bold">Transaction Number:</td>
-                                    <td>{{ $transaction->transaction_number }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Date:</td>
-                                    <td>{{ $transaction->transaction_date->format('M d, Y H:i:s') }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Value Date:</td>
-                                    <td>{{ $transaction->value_date ? $transaction->value_date->format('M d, Y') : 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Type:</td>
-                                    <td>
-                                        <span class="badge badge-{{ $transaction->type == 'deposit' ? 'success' : ($transaction->type == 'withdrawal' ? 'warning' : 'info') }}">
-                                            {{ ucfirst(str_replace('_', ' ', $transaction->type)) }}
+                            <div class="info-section">
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-hashtag text-primary me-2"></i>Transaction Number:
+                                    </span>
+                                    <span class="info-value">{{ $transaction->transaction_number }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-calendar text-primary me-2"></i>Date:
+                                    </span>
+                                    <span class="info-value">{{ $transaction->transaction_date->format('M d, Y H:i:s') }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-calendar-check text-primary me-2"></i>Value Date:
+                                    </span>
+                                    <span class="info-value">{{ $transaction->value_date ? $transaction->value_date->format('M d, Y') : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-tags text-primary me-2"></i>Type:
+                                    </span>
+                                    <span class="info-value">
+                                        <span class="badge-icon
+                                            @switch($transaction->type)
+                                                @case('deposit')
+                                                    bg-success
+                                                    @break
+                                                @case('withdrawal')
+                                                    bg-warning
+                                                    @break
+                                                @default
+                                                    bg-info {{-- Default for other transaction types --}}
+                                            @endswitch
+                                        ">
+                                            <i class="fas fa-{{ $transaction->type == 'deposit' ? 'arrow-down' : ($transaction->type == 'withdrawal' ? 'arrow-up' : 'exchange-alt') }} me-1"></i>
+                                            {{ ucfirst($transaction->type) }}
                                         </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Status:</td>
-                                    <td>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-info-circle text-primary me-2"></i>Status:
+                                    </span>
+                                    <span class="info-value">
                                         @switch($transaction->status)
                                             @case('pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge-icon bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>Pending
+                                                </span>
                                                 @break
                                             @case('completed')
-                                                <span class="badge badge-success">Completed</span>
+                                                <span class="badge-icon bg-success">
+                                                    <i class="fas fa-check-circle me-1"></i>Completed
+                                                </span>
                                                 @break
                                             @case('rejected')
-                                                <span class="badge badge-danger">Rejected</span>
+                                                <span class="badge-icon bg-danger">
+                                                    <i class="fas fa-times-circle me-1"></i>Rejected
+                                                </span>
                                                 @break
                                             @case('reversed')
-                                                <span class="badge badge-secondary">Reversed</span>
+                                                <span class="badge-icon bg-secondary">
+                                                    <i class="fas fa-undo me-1"></i>Reversed
+                                                </span>
                                                 @break
                                             @default
-                                                <span class="badge badge-light">{{ ucfirst($transaction->status) }}</span>
+                                                <span class="badge-icon bg-light">
+                                                    <i class="fas fa-question-circle me-1"></i>{{ ucfirst($transaction->status) }}
+                                                </span>
                                         @endswitch
-                                    </td>
-                                </tr>
-                            </table>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td class="font-weight-bold">Amount:</td>
-                                    <td class="h5 {{ $transaction->type == 'deposit' ? 'text-success' : 'text-danger' }}">
+                            <div class="info-section">
+                                <div class="info-row amount-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-dollar-sign text-primary me-2"></i>Amount:
+                                    </span>
+                                    <span class="info-value amount-display {{ $transaction->type == 'deposit' ? 'text-success' : 'text-danger' }}">
                                         {{ $transaction->type == 'deposit' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 2) }}
-                                    </td>
-                                </tr>
+                                    </span>
+                                </div>
                                 @if($transaction->fee_amount > 0)
-                                <tr>
-                                    <td class="font-weight-bold">Fee Amount:</td>
-                                    <td>UGX {{ number_format($transaction->fee_amount, 2) }}</td>
-                                </tr>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-percentage text-primary me-2"></i>Fee Amount:
+                                    </span>
+                                    <span class="info-value">UGX {{ number_format($transaction->fee_amount, 2) }}</span>
+                                </div>
                                 @endif
-                                <tr>
-                                    <td class="font-weight-bold">Net Amount:</td>
-                                    <td class="font-weight-bold">UGX {{ number_format($transaction->net_amount, 2) }}</td>
-                                </tr>
+                                <div class="info-row net-amount-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-calculator text-primary me-2"></i>Net Amount:
+                                    </span>
+                                    <span class="info-value font-weight-bold net-amount">UGX {{ number_format($transaction->net_amount, 2) }}</span>
+                                </div>
                                 @if($transaction->balance_before)
-                                <tr>
-                                    <td class="font-weight-bold">Balance Before:</td>
-                                    <td>UGX {{ number_format($transaction->balance_before, 2) }}</td>
-                                </tr>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-history text-primary me-2"></i>Balance Before:
+                                    </span>
+                                    <span class="info-value">UGX {{ number_format($transaction->balance_before, 2) }}</span>
+                                </div>
                                 @endif
                                 @if($transaction->balance_after)
-                                <tr>
-                                    <td class="font-weight-bold">Balance After:</td>
-                                    <td>UGX {{ number_format($transaction->balance_after, 2) }}</td>
-                                </tr>
+                                <div class="info-row">
+                                    <span class="info-label">
+                                        <i class="fas fa-wallet text-primary me-2"></i>Balance After:
+                                    </span>
+                                    <span class="info-value balance-after">UGX {{ number_format($transaction->balance_after, 2) }}</span>
+                                </div>
                                 @endif
-                            </table>
+                            </div>
                         </div>
                     </div>
                     
                     @if($transaction->description)
-                    <div class="mt-4">
-                        <h6 class="font-weight-bold">Description:</h6>
-                        <p class="text-muted">{{ $transaction->description }}</p>
+                    <div class="mt-4 description-section">
+                        <h6 class="font-weight-bold section-title">
+                            <i class="fas fa-align-left text-primary me-2"></i>Description:
+                        </h6>
+                        <div class="description-content">
+                            <p class="text-muted mb-0">{{ $transaction->description }}</p>
+                        </div>
                     </div>
                     @endif
 
                     @if($transaction->metadata)
-                    <div class="mt-4">
-                        <h6 class="font-weight-bold">Additional Information:</h6>
-                        <div class="bg-light p-3 rounded">
+                    <div class="mt-4 metadata-section">
+                        <h6 class="font-weight-bold section-title">
+                            <i class="fas fa-code text-primary me-2"></i>Additional Information:
+                        </h6>
+                        <div class="metadata-content">
                             <pre class="mb-0">{{ json_encode($transaction->metadata, JSON_PRETTY_PRINT) }}</pre>
                         </div>
                     </div>
@@ -164,18 +214,28 @@
 
             <!-- General Ledger Entries -->
             @if($transaction->generalLedgerEntries->count() > 0)
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">General Ledger Entries</h6>
+            <div class="card shadow mb-4 modern-card">
+                <div class="card-header py-3 modern-card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text">
+                            <i class="bi bi-journal-bookmark"></i> General Ledger Entries 
+                            <span class="badge bg-light text-dark ms-2">{{ $transaction->generalLedgerEntries->count() }} entries</span>
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-light" onclick="printLedger()">
+                                <i class="bi bi-printer"></i> Print
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body modern-card-body">
                     <div class="table-responsive">
                         <table class="table table-bordered">
-                            <thead>
+                            <thead class="modern-table-header">
                                 <tr>
-                                    <th>Account Code</th>
+                                    <th>Code</th>
                                     <th>Account Name</th>
-                                    <th>Account Type</th>
+                                    <th>Type</th>
                                     <th class="text-end">Debit Amount</th>
                                     <th class="text-end">Credit Amount</th>
                                     <th>Description</th>
@@ -184,36 +244,80 @@
                             <tbody>
                                 @foreach($transaction->generalLedgerEntries as $entry)
                                 <tr>
-                                    <td>{{ $entry->account_code }}</td>
-                                    <td>{{ $entry->account_name }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $entry->account_type == 'asset' ? 'primary' : ($entry->account_type == 'liability' ? 'warning' : 'info') }}">
-                                            {{ ucfirst($entry->account_type) }}
-                                        </span>
+                                        <strong class="text-nowrap">{{ $entry->account_code }}</strong>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="text-nowrap">{{ $entry->account_name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @switch($entry->account_type)
+                                            @case('asset')
+                                                <span class="badge-icon bg-primary">
+                                                    <i class="bi bi-coin me-1"></i>Asset
+                                                </span>
+                                                @break
+                                            @case('liability')
+                                                <span class="badge-icon bg-warning">
+                                                    <i class="bi bi-handshake me-1"></i>Liability
+                                                </span>
+                                                @break
+                                            @case('equity')
+                                                <span class="badge-icon bg-info">
+                                                    <i class="bi bi-shield-check me-1"></i>Equity
+                                                </span>
+                                                @break
+                                            @case('income')
+                                                <span class="badge-icon bg-success">
+                                                    <i class="bi bi-arrow-up-circle me-1"></i>Income
+                                                </span>
+                                                @break
+                                            @case('expense')
+                                                <span class="badge-icon bg-danger">
+                                                    <i class="bi bi-arrow-down-circle me-1"></i>Expense
+                                                </span>
+                                                @break
+                                            @default
+                                                <span class="badge-icon bg-secondary">
+                                                    <i class="bi bi-info-circle me-1"></i>{{ ucfirst($entry->account_type) }}
+                                                </span>
+                                        @endswitch
                                     </td>
                                     <td class="text-end">
                                         @if($entry->debit_amount > 0)
-                                            UGX {{ number_format($entry->debit_amount, 2) }}
+                                            <strong class="text-nowrap text-danger">UGX {{ number_format($entry->debit_amount, 2) }}</strong>
                                         @else
-                                            -
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
                                         @if($entry->credit_amount > 0)
-                                            UGX {{ number_format($entry->credit_amount, 2) }}
+                                            <strong class="text-nowrap text-success">UGX {{ number_format($entry->credit_amount, 2) }}</strong>
                                         @else
-                                            -
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ $entry->description }}</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;" title="{{ $entry->description }}">
+                                            {{ $entry->description ?? 'No description' }}
+                                        </div>
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot>
+                            <tfoot class="table-light">
                                 <tr class="font-weight-bold">
-                                    <td colspan="3">Total</td>
-                                    <td class="text-end">UGX {{ number_format($transaction->generalLedgerEntries->sum('debit_amount'), 2) }}</td>
-                                    <td class="text-end">UGX {{ number_format($transaction->generalLedgerEntries->sum('credit_amount'), 2) }}</td>
+                                    <td colspan="3" class="total-label">
+                                        <i class="bi bi-calculator me-2"></i>Total
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-danger">UGX {{ number_format($transaction->generalLedgerEntries->sum('debit_amount'), 2) }}</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-success">UGX {{ number_format($transaction->generalLedgerEntries->sum('credit_amount'), 2) }}</strong>
+                                    </td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -257,7 +361,7 @@
                         <tr>
                             <td class="font-weight-bold">Status:</td>
                             <td>
-                                <span class="badge badge-{{ $transaction->member->status == 'active' ? 'success' : 'warning' }}">
+                                <span class="badge-icon bg-{{ $transaction->member->status == 'active' ? 'success' : 'warning' }}">
                                     {{ ucfirst($transaction->member->status ?? 'Unknown') }}
                                 </span>
                             </td>
@@ -298,7 +402,7 @@
                         <tr>
                             <td class="font-weight-bold">Status:</td>
                             <td>
-                                <span class="badge badge-{{ $transaction->account->status == 'active' ? 'success' : 'warning' }}">
+                                <span class="badge-icon bg-{{ $transaction->account->status == 'active' ? 'success' : 'warning' }}">
                                     {{ ucfirst($transaction->account->status) }}
                                 </span>
                             </td>
@@ -335,7 +439,7 @@
                         <tr>
                             <td class="font-weight-bold">Status:</td>
                             <td>
-                                <span class="badge badge-{{ $transaction->relatedLoan->status == 'active' ? 'success' : 'warning' }}">
+                                <span class="badge-icon bg-{{ $transaction->relatedLoan->status == 'active' ? 'success' : 'warning' }}">
                                     {{ ucfirst($transaction->relatedLoan->status) }}
                                 </span>
                             </td>
@@ -410,6 +514,10 @@ console.log('Transaction data:', {
     type: '{{ $transaction->type }}',
     member: '{{ $transaction->member->name ?? 'N/A' }}'
 });
+
+function printLedger() {
+    window.print();
+}
 
 // Modal functionality is handled by the modal partials
 
