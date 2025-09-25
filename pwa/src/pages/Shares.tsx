@@ -10,6 +10,7 @@ import { SharesPurchase } from '@/components/shares/SharesPurchase';
 import { SharesCertificate } from '@/components/shares/SharesCertificate';
 import { DividendHistory } from '@/components/shares/DividendHistory';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
+import { MobileToolbar } from '@/components/layout/MobileToolbar';
 import { 
   TrendingUp, 
   PieChart, 
@@ -21,8 +22,8 @@ import {
 
 export default function Shares() {
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => (state.auth as any));
-  const { account: sharesAccount, loading } = useSelector((state: RootState) => state.shares);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { account: sharesAccount = null, loading } = useSelector((state: RootState) => state.shares);
   
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
 
@@ -44,21 +45,31 @@ export default function Shares() {
   const dividendsEarned = sharesAccount?.dividends_earned || 0;
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">Shares</h1>
-          <p className="text-muted-foreground">Manage your share capital and dividends</p>
+    <>
+      {/* Mobile Toolbar */}
+      <MobileToolbar 
+        title="Shares" 
+        user={user}
+        showNotifications={true}
+      />
+
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">Shares</h1>
+              <p className="text-muted-foreground">Manage your share capital and dividends</p>
+            </div>
+            <Button 
+              onClick={() => setPurchaseModalOpen(true)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Buy Shares
+            </Button>
+          </div>
         </div>
-        <Button 
-          onClick={() => setPurchaseModalOpen(true)}
-          className="bg-primary hover:bg-primary/90"
-        >
-          <TrendingUp className="w-4 h-4 mr-2" />
-          Buy Shares
-        </Button>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -282,7 +293,7 @@ export default function Shares() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-4">
-          <TransactionHistory memberId={user?.id || 0} />
+          <TransactionHistory memberId={user?.id || 0} context="shares" />
         </TabsContent>
       </Tabs>
 
@@ -309,6 +320,7 @@ export default function Shares() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

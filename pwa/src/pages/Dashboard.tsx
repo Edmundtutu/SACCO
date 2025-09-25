@@ -4,11 +4,15 @@ import { RootState, AppDispatch } from '@/store';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
 import { fetchLoans } from '@/store/loansSlice';
 import { fetchShares } from '@/store/sharesSlice';
+import { fetchTransactionHistory } from '@/store/transactionsSlice';
+import { fetchSavingsGoals, updateCurrentAmount } from '@/store/savingsGoalsSlice';
 import { OverviewChart } from '@/components/dashboard/OverviewChart';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { MobileToolbar } from '@/components/layout/MobileToolbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock, PieChart, User } from 'lucide-react';
 
 export function Dashboard() {
@@ -17,6 +21,8 @@ export function Dashboard() {
   const { accounts } = useSelector((state: RootState) => state.savings);
   const { loans } = useSelector((state: RootState) => state.loans);
   const { account: sharesAccount } = useSelector((state: RootState) => state.shares);
+  const { transactions } = useSelector((state: RootState) => state.transactions);
+  const { activeGoal, goals } = useSelector((state: RootState) => state.savingsGoals);
 
   // Add responsive state
   const [isMobile, setIsMobile] = useState(false);
@@ -25,7 +31,34 @@ export function Dashboard() {
     dispatch(fetchSavingsAccounts());
     dispatch(fetchLoans());
     dispatch(fetchShares());
-  }, [dispatch]);
+    // Fetch recent transactions for dashboard
+    if (user?.id) {
+      dispatch(fetchTransactionHistory({
+        member_id: user.id,
+        per_page: 5 // Only get the 5 most recent transactions
+      }));
+      dispatch(fetchSavingsGoals(user.id));
+    }
+  }, [dispatch, user?.id]);
+
+  // Calculate derived values
+  const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const totalLoans = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
+  const totalShares = sharesAccount?.total_value || 0;
+  const activeLoan = loans.find(loan => ['active', 'disbursed', 'approved'].includes(loan.status));
+  const nextPayment = (activeLoan as any)?.next_payment_date;
+  const nextPaymentAmount = (activeLoan as any)?.next_payment_amount || 0;
+
+  // Sync savings goals with actual savings balance
+  useEffect(() => {
+    if (goals.length > 0 && totalSavings > 0) {
+      goals.forEach(goal => {
+        if (goal.current_amount !== totalSavings) {
+          dispatch(updateCurrentAmount({ goalId: goal.id, amount: totalSavings }));
+        }
+      });
+    }
+  }, [totalSavings, goals, dispatch]);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -37,12 +70,6 @@ export function Dashboard() {
     window.addEventListener('resize', checkIfMobile);
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
-
-  const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
-  const totalLoans = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
-  const totalShares = sharesAccount?.total_value || 0;
-  const nextPayment = loans.find(loan => loan.status === 'active')?.next_payment_date;
-  const nextPaymentAmount = loans.find(loan => loan.status === 'active')?.next_payment_amount || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
@@ -71,52 +98,56 @@ export function Dashboard() {
 
 
 
-  // Mock recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'deposit',
-      description: 'Salary deposit',
-      amount: 75000,
-      date: '2024-01-15T10:30:00',
-      icon: ArrowUpRight,
-      iconColor: 'text-green-600',
-    },
-    {
-      id: 2,
-      type: 'withdrawal',
-      description: 'ATM withdrawal',
-      amount: -5000,
-      date: '2024-01-14T14:20:00',
-      icon: ArrowDownLeft,
-      iconColor: 'text-red-600',
-    },
-    {
-      id: 3,
-      type: 'loan_repayment',
-      description: 'Loan repayment',
-      amount: -15000,
-      date: '2024-01-13T09:15:00',
-      icon: Clock,
-      iconColor: 'text-blue-600',
-    },
-  ];
+  // Transform transactions into recent activities
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'deposit':
+        return { icon: ArrowUpRight, color: 'text-green-600' };
+      case 'withdrawal':
+        return { icon: ArrowDownLeft, color: 'text-red-600' };
+      case 'loan_disbursement':
+        return { icon: TrendingUp, color: 'text-blue-600' };
+      case 'loan_repayment':
+        return { icon: Clock, color: 'text-orange-600' };
+      case 'share_purchase':
+        return { icon: PieChart, color: 'text-purple-600' };
+      default:
+        return { icon: ArrowUpRight, color: 'text-gray-600' };
+    }
+  };
+
+  const recentActivities = transactions.slice(0, 5).map(transaction => {
+    const { icon, color } = getTransactionIcon(transaction.type);
+    return {
+      id: transaction.id,
+      type: transaction.type,
+      description: transaction.description || `${transaction.type.replace('_', ' ')} transaction`,
+      amount: transaction.amount,
+      date: transaction.transaction_date || transaction.created_at,
+      icon,
+      iconColor: color,
+    };
+  });
 
   return (
+    <>
+      {/* Mobile Toolbar */}
+      <MobileToolbar 
+        title="Home" 
+        user={user}
+        showNotifications={true}
+        onNotificationClick={() => {
+          // Handle notification click
+          console.log('Notifications clicked');
+        }}
+      />
+
       <div className="p-4 md:p-6 space-y-6 animate-fade-in">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-2xl md:text-3xl font-bold">
-              {getGreeting()}, {user?.name?.split(' ')[0]}!
-            </h1>
-          </div>
-          <Avatar className="h-12 w-12">
-            <AvatarImage src="" />
-            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
-              {user?.name?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <h1 className="font-heading text-2xl md:text-3xl font-bold">
+            {getGreeting()}, {user?.name?.split(' ')[0]}!
+          </h1>
         </div>
 
         {/* Quick Stats - Hidden on mobile */}
@@ -199,7 +230,7 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Member #</p>
-                      <p className="font-mono font-bold">{user?.member_number || 'Pending'}</p>
+                      <p className="font-mono font-bold">{(user as any)?.member_number || 'Pending'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -249,35 +280,67 @@ export function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Savings Goal Progress (Mock) */}
+            {/* Savings Goal Progress */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading">Savings Goal</CardTitle>
+                <CardTitle>
+                  {activeGoal ? activeGoal.title : 'Savings Goal'}
+                </CardTitle>
               </CardHeader>
               <CardContent>
+                {activeGoal ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Monthly Target</span>
-                    <span className="font-bold">{formatCurrency(100000)}</span>
+                      <span className="font-medium">{activeGoal.title}</span>
+                      <span className="font-bold">{formatCurrency(activeGoal.target_amount)}</span>
                   </div>
                   <div className="w-full bg-accent rounded-full h-2">
                     <div
                         className="bg-primary h-2 rounded-full transition-all duration-500"
-                        style={{ width: '70%' }}
+                        style={{ 
+                          width: `${Math.min((activeGoal.current_amount / activeGoal.target_amount) * 100, 100)}%` 
+                        }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>70% achieved</span>
-                    <span>{formatCurrency(70000)} saved</span>
+                      <span>
+                        {Math.round((activeGoal.current_amount / activeGoal.target_amount) * 100)}% achieved
+                      </span>
+                      <span>{formatCurrency(activeGoal.current_amount)} saved</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-primary">
+                        {activeGoal.current_amount >= activeGoal.target_amount 
+                          ? '🎉 Goal achieved! Congratulations!' 
+                          : `Keep it up! ${formatCurrency(activeGoal.target_amount - activeGoal.current_amount)} to go!`
+                        }
+                      </p>
+                    </div>
+                    {activeGoal.target_date && (
+                      <div className="text-center text-xs text-muted-foreground">
+                        Target date: {new Date(activeGoal.target_date).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-primary"> Great progress! Keep it up!</p>
+                ) : (
+                  <div className="text-center py-8">
+                    <PieChart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                      No Savings Goal Set
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Set a savings goal to track your progress and stay motivated.
+                    </p>
+                    <Button size="sm" variant="outline">
+                      Set Goal
+                    </Button>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+    </>
   );
 }

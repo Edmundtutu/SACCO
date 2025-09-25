@@ -52,10 +52,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::group(['prefix' => 'loans'], function () {
         Route::get('/', [LoansController::class, 'index']);
         Route::post('apply', [LoansController::class, 'apply']);
+    
+        // Put static routes BEFORE dynamic {loanId}
+        Route::get('products', [LoansController::class, 'getLoanProducts']);
+    
         Route::get('{loanId}', [LoansController::class, 'show']);
         // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/repay', [LoansController::class, 'repay']);
-        Route::get('products', [LoansController::class, 'getLoanProducts']);
         // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::get('{loanId}/schedule', [LoansController::class, 'getRepaymentSchedule']);
 
@@ -64,11 +67,11 @@ Route::group(['middleware' => 'auth:api'], function () {
         // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/disburse', [LoansController::class, 'disburse']);
         Route::post('{loanId}/restructure', [LoansController::class, 'restructure']);
-
-        // Guarantorship
+    
         Route::post('{loanId}/guarantee', [LoansController::class, 'addGuarantor']);
         Route::post('guarantors/{guarantorId}/respond', [LoansController::class, 'respondToGuarantee']);
     });
+    
 
     // Shares
     Route::group(['prefix' => 'shares'], function () {
@@ -127,10 +130,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     // General Transaction Routes
     Route::prefix('transactions')->group(function () {
-        Route::get('/', [TransactionController::class, 'index']);
-        Route::get('{transaction}', [TransactionController::class, 'show']);
-        Route::get('member/{member}', [TransactionController::class, 'memberTransactions']);
-        Route::get('summary/{member}', [TransactionController::class, 'memberSummary']);
+        Route::get('/', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+        Route::get('member/{member}', [TransactionController::class, 'memberTransactions'])->name('transactions.member');
+        Route::get('summary/{member}', [TransactionController::class, 'memberSummary'])->name('transactions.summary');
     });
 });
 

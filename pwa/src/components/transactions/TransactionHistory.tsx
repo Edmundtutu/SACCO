@@ -14,7 +14,7 @@ import {
   ArrowUpRight, 
   ArrowDownLeft, 
   CreditCard, 
-  TrendingUp, 
+  TrendingUp,
   Calendar,
   Filter,
   Download,
@@ -24,12 +24,15 @@ import type { Transaction } from '@/types/api';
 
 interface TransactionHistoryProps {
   memberId: number;
+  context?: 'savings' | 'loans' | 'shares' | 'all';
+  accountId?: number;
+  loanId?: number;
 }
 
-export function TransactionHistory({ memberId }: TransactionHistoryProps) {
+export function TransactionHistory({ memberId, context = 'all', accountId, loanId }: TransactionHistoryProps) {
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const { transactions, loading, summary } = useSelector((state: RootState) => state.transactions);
+  const { transactions = [], loading, summary } = useSelector((state: RootState) => state.transactions);
   
   const [filters, setFilters] = useState({
     start_date: '',
@@ -41,21 +44,67 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
 
   const [showFilters, setShowFilters] = useState(false);
 
+  const getEmptyStateMessage = () => {
+    switch (context) {
+      case 'savings':
+        return 'You haven\'t made any savings transactions yet. Start by making a deposit or withdrawal.';
+      case 'loans':
+        return 'You haven\'t made any loan transactions yet. Apply for a loan to see transactions here.';
+      case 'shares':
+        return 'You haven\'t made any share purchases yet. Buy shares to see transactions here.';
+      case 'all':
+      default:
+        return 'You haven\'t made any transactions yet.';
+    }
+  };
+
+
   useEffect(() => {
     loadTransactions();
     loadSummary();
-  }, [memberId, filters]);
+  }, [memberId, context, filters]);
 
   const loadTransactions = async () => {
     try {
-      await dispatch(fetchTransactionHistory({
-        member_id: memberId,
+      // Determine transaction types based on context
+      let transactionTypes: string[] = [];
+      switch (context) {
+        case 'savings':
+          transactionTypes = ['deposit', 'withdrawal'];
+          break;
+        case 'loans':
+          transactionTypes = ['loan_disbursement', 'loan_repayment'];
+          break;
+        case 'shares':
+          transactionTypes = ['share_purchase'];
+          break;
+        case 'all':
+        default:
+          transactionTypes = ['deposit', 'withdrawal', 'share_purchase', 'loan_disbursement', 'loan_repayment'];
+          break;
+      }
+
+      // Use context-specific type filter if no specific type is selected
+      // But only if the user has explicitly selected a type filter
+      const typeFilter = filters.type || undefined;
+
+      const result = await dispatch(fetchTransactionHistory({
+      member_id: memberId,
         start_date: filters.start_date || undefined,
         end_date: filters.end_date || undefined,
-        type: filters.type as 'deposit' | 'withdrawal' | 'share_purchase' | 'loan_disbursement' | 'loan_repayment' | undefined,
+        type: typeFilter as 'deposit' | 'withdrawal' | 'share_purchase' | 'loan_disbursement' | 'loan_repayment' | undefined,
         page: filters.page,
         per_page: filters.per_page,
-      }) as any);
+    }) as any);
+
+      // Check if the fetch was successful
+      if (fetchTransactionHistory.rejected.match(result)) {
+        toast({
+          title: "Error",
+          description: result.payload as string || "Failed to load transaction history",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -68,10 +117,10 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
   const loadSummary = async () => {
     try {
       await dispatch(fetchTransactionSummary({
-        member_id: memberId,
+      member_id: memberId,
         start_date: filters.start_date || undefined,
         end_date: filters.end_date || undefined,
-      }) as any);
+    }) as any);
     } catch (error) {
       // Summary loading failure is not critical
     }
@@ -174,7 +223,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
               </div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -188,7 +237,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
               </div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -202,7 +251,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
               </div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -223,10 +272,10 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Transaction History
-            </CardTitle>
+            Transaction History
+          </CardTitle>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -250,52 +299,62 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
         </CardHeader>
 
         {showFilters && (
-          <CardContent>
+        <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+            <div>
                 <Label htmlFor="start_date">From Date</Label>
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={filters.start_date}
-                  onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                />
-              </div>
-              <div>
+              <Input
+                id="start_date"
+                type="date"
+                value={filters.start_date}
+                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+              />
+            </div>
+            <div>
                 <Label htmlFor="end_date">To Date</Label>
-                <Input
-                  id="end_date"
-                  type="date"
-                  value={filters.end_date}
-                  onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="type">Transaction Type</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={filters.end_date}
+                onChange={(e) => handleFilterChange('end_date', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="type">Transaction Type</Label>
                 <Select
                   value={filters.type}
                   onValueChange={(value) => handleFilterChange('type', value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <SelectTrigger>
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
                     <SelectItem value="">All Types</SelectItem>
-                    <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    <SelectItem value="share_purchase">Share Purchase</SelectItem>
-                    <SelectItem value="loan_disbursement">Loan Disbursement</SelectItem>
-                    <SelectItem value="loan_repayment">Loan Repayment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    {context === 'savings' || context === 'all' ? (
+                      <>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                      </>
+                    ) : null}
+                    {context === 'loans' || context === 'all' ? (
+                      <>
+                  <SelectItem value="loan_disbursement">Loan Disbursement</SelectItem>
+                  <SelectItem value="loan_repayment">Loan Repayment</SelectItem>
+                      </>
+                    ) : null}
+                    {context === 'shares' || context === 'all' ? (
+                      <SelectItem value="share_purchase">Share Purchase</SelectItem>
+                    ) : null}
+                </SelectContent>
+              </Select>
+            </div>
               <div className="flex items-end">
                 <Button variant="outline" onClick={clearFilters} className="w-full">
                   Clear Filters
                 </Button>
               </div>
-            </div>
-          </CardContent>
+          </div>
+        </CardContent>
         )}
       </Card>
 
@@ -315,7 +374,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
                 </div>
               ))}
             </div>
-          ) : transactions?.length > 0 ? (
+          ) : transactions.length > 0 ? (
             <div className="divide-y">
               {transactions.map((transaction) => (
                 <div key={transaction.id} className="p-4 hover:bg-muted/50 transition-colors">
@@ -325,7 +384,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
                         {getTransactionIcon(transaction.type)}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                           <p className="font-medium">
                             {transaction.transaction_number}
                           </p>
@@ -346,7 +405,7 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
                           : 'text-red-600'
                       }`}>
                         {transaction.type === 'deposit' || transaction.type === 'loan_disbursement' ? '+' : '-'}
-                        {formatCurrency(transaction.amount)}
+                    {formatCurrency(transaction.amount)}
                       </p>
                       {transaction.fee_amount > 0 && (
                         <p className="text-xs text-muted-foreground">
@@ -364,12 +423,36 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
               <h3 className="text-lg font-medium text-muted-foreground mb-2">
                 No transactions found
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 {Object.values(filters).some(f => f) 
                   ? 'Try adjusting your filters to see more transactions.'
-                  : 'You haven\'t made any transactions yet.'
+                  : getEmptyStateMessage()
                 }
               </p>
+              {!Object.values(filters).some(f => f) && (
+                <div>
+                  {context === 'savings' && (
+                    <div className="flex gap-2 justify-center">
+                      <Button size="sm" variant="outline">
+                        Make Deposit
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        Make Withdrawal
+                      </Button>
+                    </div>
+                  )}
+                  {context === 'loans' && (
+                    <Button size="sm" variant="outline">
+                      Apply for Loan
+                    </Button>
+                  )}
+                  {context === 'shares' && (
+                    <Button size="sm" variant="outline">
+                      Buy Shares
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -379,22 +462,22 @@ export function TransactionHistory({ memberId }: TransactionHistoryProps) {
       {transactions.length > 0 && (
         <div className="flex justify-center">
           <div className="flex gap-2">
-            <Button
-              variant="outline"
+          <Button
+            variant="outline"
               size="sm"
               onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
               disabled={filters.page <= 1 || loading}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
               size="sm"
               onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
               disabled={transactions.length < filters.per_page || loading}
-            >
-              Next
-            </Button>
+          >
+            Next
+          </Button>
           </div>
         </div>
       )}

@@ -11,6 +11,8 @@ import { WithdrawalForm } from '@/components/savings/WithdrawalForm';
 import { AccountsList } from '@/components/savings/AccountsList';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
 import { SavingsProgress } from '@/components/savings/SavingsProgress';
+import { SavingsGoalManager } from '@/components/savings/SavingsGoalManager';
+import { MobileToolbar } from '@/components/layout/MobileToolbar';
 import { 
   Plus, 
   Minus, 
@@ -23,8 +25,8 @@ import {
 
 export default function Savings() {
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => (state.auth as any));
-  const { accounts, loading } = useSelector((state: RootState) => state.savings);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { accounts = [], loading } = useSelector((state: RootState) => state.savings);
   
   const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
   
@@ -48,14 +50,23 @@ export default function Savings() {
   const totalAvailableBalance = accounts.reduce((sum, account) => sum + account.available_balance, 0);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">Savings</h1>
-          <p className="text-muted-foreground">Manage your savings accounts and transactions</p>
-        </div>
-        <div className="flex gap-2">
+    <>
+      {/* Mobile Toolbar */}
+      <MobileToolbar 
+        title="Savings" 
+        user={user}
+        showNotifications={true}
+      />
+
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">Savings</h1>
+              <p className="text-muted-foreground">Manage your savings accounts and transactions</p>
+            </div>
+            <div className="flex gap-2">
           <Button 
             onClick={() => setDepositModalOpen(true)}
             className="bg-green-600 hover:bg-green-700"
@@ -70,8 +81,9 @@ export default function Savings() {
             <Minus className="w-4 h-4 mr-2" />
             Withdraw
           </Button>
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -165,15 +177,11 @@ export default function Savings() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-4">
-          <TransactionHistory memberId={user?.id || 0} />
+          <TransactionHistory memberId={user?.id || 0} context="savings" />
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-4">
-          <SavingsProgress 
-            currentAmount={totalSavings}
-            targetAmount={100000}
-            progressPercentage={Math.min((totalSavings / 100000) * 100, 100)}
-          />
+          <SavingsGoalManager memberId={user?.id || 0} />
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
@@ -255,6 +263,7 @@ export default function Savings() {
         onClose={() => setWithdrawalModalOpen(false)}
         account={selectedAccount}
       />
-    </div>
+      </div>
+    </>
   );
 }

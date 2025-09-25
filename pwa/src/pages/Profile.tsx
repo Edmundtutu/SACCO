@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ProfileEdit } from '@/components/profile/ProfileEdit';
 import { PasswordChange } from '@/components/profile/PasswordChange';
 import { KYCInformation } from '@/components/profile/KYCInformation';
+import { MobileToolbar } from '@/components/layout/MobileToolbar';
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -24,7 +25,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('overview');
 
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch(logoutUser() as any);
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
@@ -41,13 +42,24 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-4 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Profile</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
+    <>
+      {/* Mobile Toolbar */}
+      <MobileToolbar 
+        title="Profile" 
+        user={user}
+        showNotifications={true}
+      />
+
+      <div className="p-4 space-y-6 max-w-4xl mx-auto">
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-heading font-bold text-foreground">Profile</h1>
+              <p className="text-muted-foreground">Manage your account and preferences</p>
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Profile Header */}
       <Card>
@@ -55,7 +67,7 @@ export default function Profile() {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Avatar className="w-20 h-20">
-                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarImage src={(user as any)?.avatar} alt={user?.name} />
                 <AvatarFallback className="text-lg font-medium">
                   {user?.name ? getInitials(user.name) : 'U'}
                 </AvatarFallback>
@@ -73,8 +85,8 @@ export default function Profile() {
               <h2 className="text-xl font-semibold">{user?.name || 'User Name'}</h2>
               <p className="text-muted-foreground">{user?.email}</p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge variant={user?.email_verified_at ? 'default' : 'secondary'}>
-                  {user?.email_verified_at ? 'Verified' : 'Unverified'}
+                <Badge variant={(user as any)?.email_verified_at ? 'default' : 'secondary'}>
+                  {(user as any)?.email_verified_at ? 'Verified' : 'Unverified'}
                 </Badge>
                 {user?.membership && (
                   <Badge variant={user.membership.approval_status === 'approved' ? 'default' : 'secondary'}>
@@ -126,26 +138,26 @@ export default function Profile() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                    <p className="mt-1">{user?.profile?.phone || 'Not provided'}</p>
+                    <p className="mt-1">{(user?.profile as any)?.phone || 'Not provided'}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">National ID</Label>
-                    <p className="mt-1">{user?.profile?.national_id || 'Not provided'}</p>
+                    <p className="mt-1">{(user?.profile as any)?.national_id || 'Not provided'}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Occupation</Label>
-                    <p className="mt-1">{user?.profile?.occupation || 'Not provided'}</p>
+                    <p className="mt-1">{(user?.profile as any)?.occupation || 'Not provided'}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Monthly Income</Label>
-                    <p className="mt-1">{user?.profile?.monthly_income ? `UGX ${Number(user.profile.monthly_income).toLocaleString()}` : 'Not provided'}</p>
+                    <p className="mt-1">{(user?.profile as any)?.monthly_income ? `UGX ${Number((user.profile as any).monthly_income).toLocaleString()}` : 'Not provided'}</p>
                   </div>
                 </div>
                 
-                {user?.profile?.address && (
+                {(user?.profile as any)?.address && (
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Address</Label>
-                    <p className="mt-1">{user.profile.address}</p>
+                    <p className="mt-1">{(user.profile as any).address}</p>
                   </div>
                 )}
 
@@ -236,6 +248,7 @@ export default function Profile() {
           <KYCInformation user={user} />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </>
   );
 }

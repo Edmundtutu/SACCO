@@ -20,8 +20,7 @@ class LoansController extends Controller
             $search = $request->search;
             $query->whereHas('member', function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('member_number', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%");
             })->orWhere('loan_number', 'like', "%{$search}%");
         }
 

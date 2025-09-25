@@ -12,6 +12,7 @@ import { LoanTracker } from '@/components/loans/LoanTracker';
 import { LoanRepaymentForm } from '@/components/loans/LoanRepaymentForm';
 import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
+import { MobileToolbar } from '@/components/layout/MobileToolbar';
 import { 
   Plus, 
   CreditCard, 
@@ -25,8 +26,8 @@ import {
 
 export default function Loans() {
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => (state.auth as any));
-  const { loans, products: loanProducts, loading } = useSelector((state: RootState) => state.loans);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { loans = [], products: loanProducts = [], loading } = useSelector((state: RootState) => state.loans);
   
   const [applicationModalOpen, setApplicationModalOpen] = useState(false);
   const [repaymentModalOpen, setRepaymentModalOpen] = useState(false);
@@ -79,20 +80,34 @@ export default function Loans() {
     }
   };
 
-  const activeLoans = loans.filter(loan => loan.status === 'active');
-  const pendingLoans = loans.filter(loan => loan.status === 'pending');
+  // Include loans that are disbursed, active, or approved as "active" loans
+  const activeLoans = loans.filter(loan => 
+    ['active', 'disbursed', 'approved'].includes(loan.status)
+  );
+  const pendingLoans = loans.filter(loan => 
+    ['pending', 'under_review'].includes(loan.status)
+  );
   const totalOutstanding = activeLoans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
   const totalPrincipal = loans.reduce((sum, loan) => sum + loan.principal_amount, 0);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">Loans</h1>
-          <p className="text-muted-foreground">Manage your loans and applications</p>
-        </div>
-        <div className="flex gap-2">
+    <>
+      {/* Mobile Toolbar */}
+      <MobileToolbar 
+        title="Loans" 
+        user={user}
+        showNotifications={true}
+      />
+
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">Loans</h1>
+              <p className="text-muted-foreground">Manage your loans and applications</p>
+            </div>
+            <div className="flex gap-2">
           <Button 
             onClick={() => setApplicationModalOpen(true)}
             className="bg-primary hover:bg-primary/90"
@@ -109,8 +124,9 @@ export default function Loans() {
               Make Payment
             </Button>
           )}
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -291,7 +307,7 @@ export default function Loans() {
         </TabsContent>
 
         <TabsContent value="applications" className="space-y-4">
-          <LoanApplicationStatus loan={null} />
+          <LoanApplicationStatus loan={pendingLoans.length > 0 ? pendingLoans[0] : null} />
         </TabsContent>
 
         <TabsContent value="repayment" className="space-y-4">
@@ -316,7 +332,7 @@ export default function Loans() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-4">
-          <TransactionHistory memberId={user?.id || 0} />
+          <TransactionHistory memberId={user?.id || 0} context="loans" />
         </TabsContent>
 
         <TabsContent value="products" className="space-y-4">
@@ -376,6 +392,7 @@ export default function Loans() {
         onClose={() => setRepaymentModalOpen(false)}
         loan={selectedLoan}
       />
-    </div>
+      </div>
+    </>
   );
 }

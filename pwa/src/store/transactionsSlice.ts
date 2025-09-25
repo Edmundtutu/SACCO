@@ -257,7 +257,8 @@ const transactionsSlice = createSlice({
       })
       .addCase(fetchTransactionHistory.fulfilled, (state, action) => {
         state.loading = false;
-        state.transactions = action.payload.data;
+        // The payload is already the transactions array, not wrapped in a data property
+        state.transactions = action.payload || [];
       })
       .addCase(fetchTransactionHistory.rejected, (state, action) => {
         state.loading = false;

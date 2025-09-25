@@ -4,6 +4,7 @@ import savingsSlice from './savingsSlice';
 import loansSlice from './loansSlice';
 import sharesSlice from './sharesSlice';
 import transactionsSlice from './transactionsSlice';
+import savingsGoalsSlice from './savingsGoalsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     loans: loansSlice,
     shares: sharesSlice,
     transactions: transactionsSlice,
+    savingsGoals: savingsGoalsSlice,
   },
 });
 

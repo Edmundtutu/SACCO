@@ -115,6 +115,22 @@ export function LoanApplicationStatus({ loan }: LoanApplicationStatusProps) {
     });
   };
 
+  // Handle null loan case
+  if (!loan) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-muted-foreground">
+              <p>No loan application found.</p>
+              <p className="text-sm mt-2">Apply for a loan to see your application status here.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const statusSteps = getStatusSteps(loan.status);
   const progressPercentage = getProgressPercentage(loan.status);
 

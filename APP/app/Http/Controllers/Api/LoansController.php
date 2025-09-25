@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Loan;
+use App\Models\User;
+use App\Models\LoanProduct;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\LoanResource;
-use App\Models\Loan;
-use App\Models\LoanProduct;
-use App\Models\User;
-use Illuminate\Http\Request;
 
 /**
  * This controller handles all endpoint requests related to loans.
@@ -44,9 +45,9 @@ class LoansController extends Controller
     public function apply(Request $request){
         // Validate the request
         $request->validate([
-            'product_id' => 'required|exists:loan_products,id',
-            'amount' => 'required|numeric|min:0',
-            'term_months' => 'required|integer|min:1',
+            'loan_product_id' => 'required|exists:loan_products,id',
+            'principal_amount' => 'required|numeric|min:0',
+            'repayment_period_months' => 'required|integer|min:1',
             'purpose' => 'required|string',
             'guarantor_ids' => 'sometimes|array',
             'guarantor_ids.*' => 'exists:users,id'
@@ -56,17 +57,17 @@ class LoansController extends Controller
         $user = auth()->user();
 
         // Get the loan product
-        $loanProduct = LoanProduct::findOrFail($request->product_id);
+        $loanProduct = LoanProduct::findOrFail($request->loan_product_id);
 
         // Calculate loan details
-        $principalAmount = $request->amount;
+        $principalAmount = $request->principal_amount;
         $interestRate = $loanProduct->interest_rate;
         $processingFee = $principalAmount * ($loanProduct->processing_fee_rate / 100);
         $insuranceFee = $principalAmount * ($loanProduct->insurance_rate / 100);
-        $totalAmount = $principalAmount + ($principalAmount * $interestRate / 100 * $request->term_months / 12);
+        $totalAmount = $principalAmount + ($principalAmount * $interestRate / 100 * $request->repayment_period_months / 12);
 
         // Calculate monthly payment (simple interest)
-        $monthlyPayment = $totalAmount / $request->term_months;
+        $monthlyPayment = $totalAmount / $request->repayment_period_months;
 
         // Create the loan
         $loan = Loan::create([
@@ -77,7 +78,7 @@ class LoansController extends Controller
             'processing_fee' => $processingFee,
             'insurance_fee' => $insuranceFee,
             'total_amount' => $totalAmount,
-            'repayment_period_months' => $request->term_months,
+            'repayment_period_months' => $request->repayment_period_months,
             'monthly_payment' => $monthlyPayment,
             'application_date' => now(),
             'status' => 'pending',
@@ -190,9 +191,19 @@ class LoansController extends Controller
      * Function to get loan products
      *
      * */
-    public function getLoanProducts(Request $request){
+    public function getLoanProducts(): JsonResponse
+    {
         // Get all active loan products
         $products = LoanProduct::where('is_active', true)->get();
+        
+        if($products->isEmpty())
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'No loan products found',
+                'data' => null
+            ], 404);
+        }
 
         // Return the products data
         return response()->json([
