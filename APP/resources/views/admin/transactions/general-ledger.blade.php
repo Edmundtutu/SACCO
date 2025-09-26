@@ -98,8 +98,8 @@
                         <tr>
                             <td>
                                 <div>
-                                    <strong class="text-nowrap">{{ $entry->posted_at->format('M d, Y') }}</strong><br>
-                                    <small class="text-muted">{{ $entry->posted_at->format('H:i') }}</small>
+                                    <strong class="text-nowrap">{{ $entry->posted_at ? $entry->posted_at->format('M d, Y') : 'N/A' }}</strong><br>
+                                    <small class="text-muted">{{ $entry->posted_at ? $entry->posted_at->format('H:i') : 'N/A' }}</small>
                                 </div>
                             </td>
                             <td>

@@ -398,3 +398,414 @@ body {
         display: none !important;
     }
 }
+
+/* Enhanced Sidebar Responsive Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    color: var(--sidebar-text);
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .components {
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar .components li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar .components li a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.sidebar .components li a:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text);
+}
+
+.sidebar .components li.active > a {
+    background: var(--primary-color);
+    color: white;
+}
+
+.sidebar .components li a i {
+    margin-right: 0.75rem;
+    width: 1.2rem;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.sidebar .components li a span {
+    flex: 1;
+}
+
+.submenu-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.has-submenu.active .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.submenu {
+    background: rgba(0, 0, 0, 0.2);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.has-submenu.active .submenu {
+    max-height: 500px;
+}
+
+.submenu li {
+    border-bottom: none;
+}
+
+.submenu li a {
+    padding-left: 2.5rem;
+    font-size: 0.9rem;
+    border-left: 3px solid transparent;
+}
+
+.submenu li.active a {
+    border-left-color: var(--primary-color);
+    background: rgba(51, 153, 204, 0.1);
+}
+
+.submenu li a i {
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    #content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    body.sidebar-open {
+        overflow: hidden;
+    }
+    
+    body.sidebar-open::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .sidebar-header {
+        padding: 1rem 1rem 1rem 1rem;
+    }
+    
+    .sidebar-toggle {
+        display: block;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar-toggle {
+        display: none;
+    }
+    
+    body.sidebar-open::before {
+        display: none;
+    }
+}
+
+/* Sidebar Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Animation for smooth transitions */
+.sidebar .components li a,
+.submenu li a {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles for accessibility */
+.sidebar .components li a:focus,
+.submenu li a:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+
+/* Loading state */
+.sidebar.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Collapsed Sidebar Styles */
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar.collapsed .sidebar-header h4,
+.sidebar.collapsed .sidebar-header small {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 1rem 0.5rem;
+    text-align: center;
+}
+
+.sidebar.collapsed .sidebar-logo {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.sidebar.collapsed .components li a span {
+    display: none;
+}
+
+.sidebar.collapsed .components li a {
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+}
+
+.sidebar.collapsed .components li a i {
+    margin-right: 0;
+    font-size: 1.2rem;
+}
+
+.sidebar.collapsed .submenu-arrow {
+    display: none;
+}
+
+.sidebar.collapsed .submenu {
+    display: none !important;
+}
+
+.sidebar.collapsed .has-submenu > a {
+    position: relative;
+}
+
+.sidebar.collapsed .has-submenu > a::after {
+    content: '';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
+/* Body adjustments for collapsed sidebar */
+body.sidebar-collapsed #content {
+    margin-left: 70px;
+}
+
+/* Top Navigation Enhancements */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+}
+
+.avatar-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Notification Badge */
+.position-relative .badge {
+    font-size: 0.6rem;
+    padding: 0.25em 0.4em;
+}
+
+/* Dropdown Enhancements */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+
+.dropdown-header {
+    padding: 0.75rem 1rem 0.5rem;
+    font-weight: 600;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+}
+
+/* Mobile Navigation Improvements */
+@media (max-width: 991.98px) {
+    .navbar-brand {
+        display: none !important;
+    }
+    
+    .btn-outline-secondary {
+        display: none !important;
+    }
+    
+    .navbar .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Button Hover Effects */
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Smooth Transitions */
+.navbar,
+.sidebar,
+#content {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Tooltip for collapsed sidebar items */
+.sidebar.collapsed .components li a {
+    position: relative;
+}
+
+.sidebar.collapsed .components li a:hover::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #333;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 1001;
+    margin-left: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.sidebar.collapsed .components li a:hover::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right: 5px solid #333;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    margin-left: -0.25rem;
+}

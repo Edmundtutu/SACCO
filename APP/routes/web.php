@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MembersController;
 use App\Http\Controllers\Admin\SavingsController as AdminSavingsController;
 use App\Http\Controllers\Admin\LoansController as AdminLoansController;
+use App\Http\Controllers\Admin\LoanProductController as AdminLoanProductController;
 use App\Http\Controllers\Admin\SharesController as AdminSharesController;
 use App\Http\Controllers\Admin\ReportsController as AdminReportsController;
 
@@ -93,12 +94,27 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         // Loans Management
         Route::group(['prefix' => 'loans', 'as' => 'loans.'], function () {
             Route::get('/', [AdminLoansController::class, 'index'])->name('index');
+            Route::get('create', [AdminLoansController::class, 'create'])->name('create');
+            Route::post('/', [AdminLoansController::class, 'store'])->name('store');
+            Route::get('applications', [AdminLoansController::class, 'applications'])->name('applications');
+            Route::get('products', [AdminLoansController::class, 'products'])->name('products');
             Route::get('{id}', [AdminLoansController::class, 'show'])->name('show');
             Route::post('{id}/approve', [AdminLoansController::class, 'approve'])->name('approve');
             Route::post('{id}/reject', [AdminLoansController::class, 'reject'])->name('reject');
             Route::post('{id}/disburse', [AdminLoansController::class, 'disburse'])->name('disburse');
-            Route::get('applications', [AdminLoansController::class, 'applications'])->name('applications');
-            Route::get('products', [AdminLoansController::class, 'products'])->name('products');
+            Route::get('{id}/repayments', [AdminLoansController::class, 'repayments'])->name('repayments');
+            Route::post('{id}/add-repayment', [AdminLoansController::class, 'addRepayment'])->name('add-repayment');
+            Route::get('{id}/schedule', [AdminLoansController::class, 'getSchedule'])->name('schedule');
+            Route::get('{id}/history', [AdminLoansController::class, 'getHistory'])->name('history');
+            Route::get('{id}/summary', [AdminLoansController::class, 'getSummary'])->name('summary');
+        });
+
+        // Loan Products Management
+        Route::group(['prefix' => 'loan-products', 'as' => 'loan-products.'], function () {
+            Route::post('/', [AdminLoanProductController::class, 'store'])->name('store');
+            Route::put('{id}', [AdminLoanProductController::class, 'update'])->name('update');
+            Route::post('{id}/activate', [AdminLoanProductController::class, 'activate'])->name('activate');
+            Route::post('{id}/deactivate', [AdminLoanProductController::class, 'deactivate'])->name('deactivate');
         });
 
         // Shares Management
