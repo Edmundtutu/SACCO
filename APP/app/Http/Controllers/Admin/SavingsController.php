@@ -19,7 +19,7 @@ class SavingsController extends Controller
             'total_balance' => Account::where('account_type', 'savings')->sum('balance'),
             'active_accounts' => Account::where('account_type', 'savings')->where('status', 'active')->count(),
             'recent_transactions' => Transaction::with(['account.member'])
-                ->whereHas('account', function($q) {
+                ->whereHas('account', function ($q) {
                     $q->where('account_type', 'savings');
                 })
                 ->orderBy('created_at', 'desc')
@@ -42,10 +42,9 @@ class SavingsController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
+            $query->whereHas('member', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('member_number', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             })->orWhere('account_number', 'like', "%{$search}%");
         }
 
@@ -53,7 +52,7 @@ class SavingsController extends Controller
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
-
+        
         $accounts = $query->orderBy('created_at', 'desc')->paginate(20);
 
         $breadcrumbs = [
@@ -68,7 +67,7 @@ class SavingsController extends Controller
     public function showAccount($id)
     {
         $account = Account::where('account_type', 'savings')
-            ->with(['member', 'transactions' => function($q) {
+            ->with(['member', 'transactions' => function ($q) {
                 $q->orderBy('created_at', 'desc');
             }, 'savingsProduct'])
             ->findOrFail($id);
@@ -80,13 +79,13 @@ class SavingsController extends Controller
             ['text' => $account->account_number, 'url' => '']
         ];
 
-        return view('admin.savings.show-account', compact('account', 'breadcrumbs'));
+        return view('admin.savings.show', compact('account', 'breadcrumbs'));
     }
 
     public function transactions(Request $request)
     {
         $query = Transaction::with(['account.member'])
-            ->whereHas('account', function($q) {
+            ->whereHas('account', function ($q) {
                 $q->where('account_type', 'savings');
             });
 
@@ -131,6 +130,174 @@ class SavingsController extends Controller
         ];
 
         return view('admin.savings.products', compact('products', 'breadcrumbs'));
+    }
+
+    public function createProduct()
+    {
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Savings', 'url' => route('admin.savings.index')],
+            ['text' => 'Products', 'url' => route('admin.savings.products')],
+            ['text' => 'Create', 'url' => '']
+        ];
+
+        return view('admin.savings.partials.create-product', compact('breadcrumbs'));
+    }
+
+    public function storeProduct(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:savings_products,code',
+            'description' => 'nullable|string',
+            'type' => 'required|in:wallet,compulsory,voluntary,fixed_deposit,special',
+            'minimum_balance' => 'required|numeric|min:0',
+            'maximum_balance' => 'nullable|numeric|min:0',
+            'interest_rate' => 'required|numeric|min:0|max:100',
+            'interest_calculation' => 'required|in:simple,compound',
+            'interest_payment_frequency' => 'required|in:daily,weekly,monthly,quarterly,annually',
+            'minimum_monthly_contribution' => 'nullable|numeric|min:0',
+            'maturity_period_months' => 'nullable|integer|min:0',
+            'withdrawal_fee' => 'required|numeric|min:0',
+            'allow_partial_withdrawals' => 'boolean',
+            'minimum_notice_days' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            $product = SavingsProduct::create([
+                'name' => $request->name,
+                'code' => $request->code,
+                'description' => $request->description,
+                'type' => $request->type,
+                'minimum_balance' => $request->minimum_balance,
+                'maximum_balance' => $request->maximum_balance,
+                'interest_rate' => $request->interest_rate,
+                'interest_calculation' => $request->interest_calculation,
+                'interest_payment_frequency' => $request->interest_payment_frequency,
+                'minimum_monthly_contribution' => $request->minimum_monthly_contribution,
+                'maturity_period_months' => $request->maturity_period_months,
+                'withdrawal_fee' => $request->withdrawal_fee,
+                'allow_partial_withdrawals' => $request->has('allow_partial_withdrawals'),
+                'minimum_notice_days' => $request->minimum_notice_days,
+                'is_active' => $request->has('is_active'),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.savings.products')
+                ->with('success', 'Savings product created successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Failed to create product: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function editProduct($id)
+    {
+        $product = SavingsProduct::findOrFail($id);
+
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Savings', 'url' => route('admin.savings.index')],
+            ['text' => 'Products', 'url' => route('admin.savings.products')],
+            ['text' => 'Edit', 'url' => '']
+        ];
+
+        return view('admin.savings.partials.edit-product', compact('product', 'breadcrumbs'));
+    }
+
+    public function updateProduct(Request $request, $id)
+    {
+        $product = SavingsProduct::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:savings_products,code,' . $id,
+            'description' => 'nullable|string',
+            'type' => 'required|in:wallet,compulsory,voluntary,fixed_deposit,special',
+            'minimum_balance' => 'required|numeric|min:0',
+            'maximum_balance' => 'nullable|numeric|min:0',
+            'interest_rate' => 'required|numeric|min:0|max:100',
+            'interest_calculation' => 'required|in:simple,compound',
+            'interest_payment_frequency' => 'required|in:daily,weekly,monthly,quarterly,annually',
+            'minimum_monthly_contribution' => 'nullable|numeric|min:0',
+            'maturity_period_months' => 'nullable|integer|min:0',
+            'withdrawal_fee' => 'required|numeric|min:0',
+            'allow_partial_withdrawals' => 'boolean',
+            'minimum_notice_days' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            $product->update([
+                'name' => $request->name,
+                'code' => $request->code,
+                'description' => $request->description,
+                'type' => $request->type,
+                'minimum_balance' => $request->minimum_balance,
+                'maximum_balance' => $request->maximum_balance,
+                'interest_rate' => $request->interest_rate,
+                'interest_calculation' => $request->interest_calculation,
+                'interest_payment_frequency' => $request->interest_payment_frequency,
+                'minimum_monthly_contribution' => $request->minimum_monthly_contribution,
+                'maturity_period_months' => $request->maturity_period_months,
+                'withdrawal_fee' => $request->withdrawal_fee,
+                'allow_partial_withdrawals' => $request->has('allow_partial_withdrawals'),
+                'minimum_notice_days' => $request->minimum_notice_days,
+                'is_active' => $request->has('is_active'),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.savings.products')
+                ->with('success', 'Savings product updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Failed to update product: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function deleteProduct($id)
+    {
+        $product = SavingsProduct::findOrFail($id);
+
+        // Check if product has active accounts
+        if ($product->accounts()->count() > 0) {
+            return redirect()->back()
+                ->with('error', 'Cannot delete product with active accounts. Please deactivate it instead.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $product->delete();
+            DB::commit();
+
+            return redirect()->route('admin.savings.products')
+                ->with('success', 'Savings product deleted successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()
+                ->with('error', 'Failed to delete product: ' . $e->getMessage());
+        }
     }
 
     public function manualTransaction(Request $request)
@@ -181,7 +348,6 @@ class SavingsController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Manual transaction completed successfully.');
-
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()

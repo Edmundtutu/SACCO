@@ -88,6 +88,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('accounts/{id}', [AdminSavingsController::class, 'showAccount'])->name('accounts.show');
             Route::get('transactions', [AdminSavingsController::class, 'transactions'])->name('transactions');
             Route::get('products', [AdminSavingsController::class, 'products'])->name('products');
+            Route::get('products/create', [AdminSavingsController::class, 'createProduct'])->name('products.create');
+            Route::post('products', [AdminSavingsController::class, 'storeProduct'])->name('products.store');
+            Route::get('products/{id}/edit', [AdminSavingsController::class, 'editProduct'])->name('products.edit');
+            Route::put('products/{id}', [AdminSavingsController::class, 'updateProduct'])->name('products.update');
+            Route::delete('products/{id}', [AdminSavingsController::class, 'deleteProduct'])->name('products.delete');
             Route::post('manual-transaction', [AdminSavingsController::class, 'manualTransaction'])->name('manual-transaction');
         });
 
