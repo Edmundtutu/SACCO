@@ -3,7 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\User;
-use App\Models\SavingsProduct;
+use App\Models\SavingsAccount;
+use App\Models\LoanAccount;
+use App\Models\ShareAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,47 +22,63 @@ class AccountFactory extends Factory
     {
         $status = $this->faker->randomElement(['active', 'inactive', 'dormant', 'closed']);
 
-        // Try to pick an existing savings product, otherwise create a minimal one
-        $savingsProductId = SavingsProduct::query()->inRandomOrder()->value('id');
-        if (!$savingsProductId) {
-            $savingsProductId = SavingsProduct::create([
-                'name' => 'Voluntary Savings',
-                'code' => 'VS' . $this->faker->unique()->numerify('###'),
-                'description' => 'Autocreated by factory',
-                'type' => 'voluntary',
-                'minimum_balance' => 0,
-                'maximum_balance' => null,
-                'interest_rate' => 3.0,
-                'interest_calculation' => 'simple',
-                'interest_payment_frequency' => 'annually',
-                'minimum_monthly_contribution' => null,
-                'maturity_period_months' => null,
-                'withdrawal_fee' => 0,
-                'allow_partial_withdrawals' => true,
-                'minimum_notice_days' => 0,
-                'is_active' => true,
-            ])->id;
-        }
-
-        $balance = $this->faker->randomFloat(2, 0, 50000);
-        $available = $this->faker->boolean(90) ? $balance : max(0, $balance - $this->faker->randomFloat(2, 0, 1000));
+        // By default, create a savings account (most common type)
+        $savingsAccount = SavingsAccount::factory()->create();
 
         return [
             'account_number' => 'ACC' . str_pad((string)$this->faker->unique()->numberBetween(1, 99999999), 8, '0', STR_PAD_LEFT),
             'member_id' => User::factory(),
-            'account_type' => $this->faker->randomElement(['savings', 'save_for_target']),
-            'savings_product_id' => $savingsProductId,
-            'balance' => $balance,
-            'available_balance' => $available,
-            'minimum_balance' => $this->faker->randomElement([0, 1000, 5000]),
-            'interest_earned' => $this->faker->randomFloat(2, 0, 2000),
-            'last_interest_calculation' => $this->faker->optional()->date(),
-            'maturity_date' => $this->faker->optional()->date(),
+            'accountable_type' => SavingsAccount::class,
+            'accountable_id' => $savingsAccount->id,
             'status' => $status,
-            'last_transaction_date' => $this->faker->optional()->dateTimeThisYear(),
             'closure_reason' => $status === 'closed' ? $this->faker->sentence() : null,
             'closed_at' => $status === 'closed' ? now() : null,
             'closed_by' => $status === 'closed' ? User::factory() : null,
         ];
+    }
+
+    /**
+     * Create account with a savings account
+     */
+    public function withSavingsAccount(?SavingsAccount $savingsAccount = null): static
+    {
+        return $this->state(function (array $attributes) use ($savingsAccount) {
+            $savings = $savingsAccount ?? SavingsAccount::factory()->create();
+            
+            return [
+                'accountable_type' => SavingsAccount::class,
+                'accountable_id' => $savings->id,
+            ];
+        });
+    }
+
+    /**
+     * Create account with a loan account
+     */
+    public function withLoanAccount(?LoanAccount $loanAccount = null): static
+    {
+        return $this->state(function (array $attributes) use ($loanAccount) {
+            $loan = $loanAccount ?? LoanAccount::factory()->create();
+            
+            return [
+                'accountable_type' => LoanAccount::class,
+                'accountable_id' => $loan->id,
+            ];
+        });
+    }
+
+    /**
+     * Create account with a share account
+     */
+    public function withShareAccount(?ShareAccount $shareAccount = null): static
+    {
+        return $this->state(function (array $attributes) use ($shareAccount) {
+            $share = $shareAccount ?? ShareAccount::factory()->create();
+            
+            return [
+                'accountable_type' => ShareAccount::class,
+                'accountable_id' => $share->id,
+            ];
+        });
     }
 }

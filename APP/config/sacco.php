@@ -62,4 +62,15 @@ return [
     */
     'withdrawal_approval_threshold' => env('SACCO_WITHDRAWAL_APPROVAL_THRESHOLD', 100000),
     'loan_approval_threshold' => env('SACCO_LOAN_APPROVAL_THRESHOLD', 500000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet Configuration
+    |--------------------------------------------------------------------------
+    */
+    'wallet_minimum_transaction' => env('WALLET_MIN_TRANSACTION', 500),
+    'wallet_daily_limit' => env('WALLET_DAILY_LIMIT', 5000000),
+    'wallet_transaction_limit' => env('WALLET_TRANSACTION_LIMIT', 1000000),
+    'wallet_minimum_balance' => env('WALLET_MIN_BALANCE', 0),
+    'wallet_transfer_fee' => env('WALLET_TRANSFER_FEE', 0),
 ];

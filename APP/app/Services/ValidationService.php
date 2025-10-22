@@ -50,7 +50,11 @@ class ValidationService
             'share_purchase',
             'loan_disbursement',
             'loan_repayment',
-            'reversal'
+            'reversal',
+            'wallet_topup',
+            'wallet_withdrawal',
+            'wallet_to_savings',
+            'wallet_to_loan',
         ];
 
         if (!in_array($type, $allowedTypes)) {
@@ -128,6 +132,10 @@ class ValidationService
             'deposit' => config('sacco.daily_deposit_limit', 1000000),
             'withdrawal' => config('sacco.daily_withdrawal_limit', 500000),
             'share_purchase' => config('sacco.daily_share_purchase_limit', 1000000),
+            'wallet_topup' => config('sacco.wallet_daily_limit', 5000000),
+            'wallet_withdrawal' => config('sacco.wallet_daily_limit', 5000000),
+            'wallet_to_savings' => config('sacco.wallet_daily_limit', 5000000),
+            'wallet_to_loan' => config('sacco.wallet_daily_limit', 5000000),
         ];
 
         if (!isset($limits[$transactionData->type])) {

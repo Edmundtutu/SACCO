@@ -27,16 +27,16 @@ class MembersController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('membership', function($membershipQuery) use ($search) {
-                      $membershipQuery->where('id', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('membership.profile', function($profileQuery) use ($search) {
-                      $profileQuery->where('phone', 'like', "%{$search}%")
-                               ->orWhere('national_id', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('membership', function ($membershipQuery) use ($search) {
+                        $membershipQuery->where('id', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('membership.profile', function ($profileQuery) use ($search) {
+                        $profileQuery->where('phone', 'like', "%{$search}%")
+                            ->orWhere('national_id', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -47,7 +47,7 @@ class MembersController extends Controller
 
         // Membership approval status filter
         if ($request->has('approval_status') && $request->approval_status) {
-            $query->whereHas('membership', function($membershipQuery) use ($request) {
+            $query->whereHas('membership', function ($membershipQuery) use ($request) {
                 $membershipQuery->where('approval_status', $request->approval_status);
             });
         }
@@ -69,23 +69,23 @@ class MembersController extends Controller
     {
         $query = User::where('role', 'member')
             ->with(['accounts', 'loans', 'membership.profile'])
-            ->whereHas('membership', function($membershipQuery) {
+            ->whereHas('membership', function ($membershipQuery) {
                 $membershipQuery->where('approval_status', 'pending');
             });
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('membership', function($membershipQuery) use ($search) {
-                      $membershipQuery->where('id', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('membership.profile', function($profileQuery) use ($search) {
-                      $profileQuery->where('phone', 'like', "%{$search}%")
-                               ->orWhere('national_id', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('membership', function ($membershipQuery) use ($search) {
+                        $membershipQuery->where('id', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('membership.profile', function ($profileQuery) use ($search) {
+                        $profileQuery->where('phone', 'like', "%{$search}%")
+                            ->orWhere('national_id', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -96,7 +96,7 @@ class MembersController extends Controller
 
         // Membership approval status filter (if user wants to override the default 'pending')
         if ($request->has('approval_status') && $request->approval_status) {
-            $query->whereHas('membership', function($membershipQuery) use ($request) {
+            $query->whereHas('membership', function ($membershipQuery) use ($request) {
                 $membershipQuery->where('approval_status', $request->approval_status);
             });
         }
@@ -111,7 +111,7 @@ class MembersController extends Controller
                 default => null,
             };
             if ($fullType) {
-                $query->whereHas('membership', function($q) use ($fullType) {
+                $query->whereHas('membership', function ($q) use ($fullType) {
                     $q->where('profile_type', $fullType);
                 });
             }
@@ -120,15 +120,15 @@ class MembersController extends Controller
         // Stage filter: level1, level2, level3, approved
         if ($request->has('stage') && $request->stage) {
             $stage = $request->stage;
-            $query->whereHas('membership', function($q) use ($stage) {
+            $query->whereHas('membership', function ($q) use ($stage) {
                 if ($stage === 'level1') {
                     $q->whereNull('approved_by_level_1');
                 } elseif ($stage === 'level2') {
                     $q->whereNotNull('approved_by_level_1')
-                      ->whereNull('approved_by_level_2');
+                        ->whereNull('approved_by_level_2');
                 } elseif ($stage === 'level3') {
                     $q->whereNotNull('approved_by_level_2')
-                      ->whereNull('approved_by_level_3');
+                        ->whereNull('approved_by_level_3');
                 } elseif ($stage === 'approved') {
                     $q->where('approval_status', 'approved');
                 }
@@ -274,7 +274,6 @@ class MembersController extends Controller
 
             return redirect()->route('admin.members.show', $user->id)
                 ->with('success', ucfirst($memberType) . ' member created successfully. Membership ID: ' . $membership->id);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -398,7 +397,6 @@ class MembersController extends Controller
 
             return redirect()->route('admin.members.show', $member->id)
                 ->with('success', 'Member information updated successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -433,7 +431,7 @@ class MembersController extends Controller
             'additional_notes' => $request->input('additional_notes'),
         ];
 
-        $profile->update(array_filter($profileData, function($value) {
+        $profile->update(array_filter($profileData, function ($value) {
             return $value !== null;
         }));
     }
@@ -456,7 +454,7 @@ class MembersController extends Controller
             'recommendation_cdo' => $request->input('recommendation_cdo'),
         ];
 
-        $profile->update(array_filter($profileData, function($value) {
+        $profile->update(array_filter($profileData, function ($value) {
             return $value !== null;
         }));
     }
@@ -478,7 +476,7 @@ class MembersController extends Controller
             'operating_license' => $request->input('operating_license'),
         ];
 
-        $profile->update(array_filter($profileData, function($value) {
+        $profile->update(array_filter($profileData, function ($value) {
             return $value !== null;
         }));
     }
@@ -528,14 +526,14 @@ class MembersController extends Controller
             'balance' => 0,
             'status' => 'active',
         ]);
-
+        
         // now update the status of the user.
         $member->update([
-           'status' => 'active',
-           'account_verified_at'=> now(),
+            'status' => 'active',
+            'account_verified_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Membership fully approved with account number: '.$new_account->account_number]);
+        return response()->json(['message' => 'Membership fully approved with account number: ' . $new_account->account_number]);
     }
 
     public function suspend($id)

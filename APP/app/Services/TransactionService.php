@@ -10,6 +10,7 @@ use App\Services\Transactions\WithdrawalHandler;
 use App\Services\Transactions\SharePurchaseHandler;
 use App\Services\Transactions\LoanDisbursementHandler;
 use App\Services\Transactions\LoanRepaymentHandler;
+use App\Services\Transactions\WalletTransactionHandler;
 use App\DTOs\TransactionDTO;
 use App\Events\TransactionProcessed;
 use App\Events\TransactionFailed;
@@ -51,6 +52,12 @@ class TransactionService
             'share_purchase' => app(SharePurchaseHandler::class),
             'loan_disbursement' => app(LoanDisbursementHandler::class),
             'loan_repayment' => app(LoanRepaymentHandler::class),
+            
+            // Wallet transaction handlers
+            'wallet_topup' => app(WalletTransactionHandler::class),
+            'wallet_withdrawal' => app(WalletTransactionHandler::class),
+            'wallet_to_savings' => app(WalletTransactionHandler::class),
+            'wallet_to_loan' => app(WalletTransactionHandler::class),
         ];
     }
 
@@ -225,6 +232,10 @@ class TransactionService
             'share_purchase' => 'share',
             'loan_disbursement' => 'loan',
             'loan_repayment' => 'loan',
+            'wallet_topup' => 'savings',
+            'wallet_withdrawal' => 'savings',
+            'wallet_to_savings' => 'savings',
+            'wallet_to_loan' => 'loan',
         ];
 
         return $categoryMap[$type] ?? 'general';

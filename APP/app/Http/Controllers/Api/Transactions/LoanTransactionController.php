@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Api\Transactions;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\LoanDisbursementRequest;
-use App\Http\Requests\LoanRepaymentRequest;
-use App\Http\Resources\TransactionResource;
-use App\Services\TransactionService;
-use App\Services\LoanCalculationService;
-use App\DTOs\TransactionDTO;
 use App\Models\Loan;
 use App\Models\Transaction;
-use Illuminate\Http\JsonResponse;
+use App\DTOs\TransactionDTO;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Services\TransactionService;
 use Illuminate\Support\Facades\Gate;
+use App\Services\LoanCalculationService;
+use App\Http\Requests\LoanRepaymentRequest;
+use App\Http\Resources\TransactionResource;
+use App\Http\Requests\LoanDisbursementRequest;
 
 class LoanTransactionController extends Controller
 {
@@ -59,6 +60,7 @@ class LoanTransactionController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            Log::error('Disbursement failed due to : '.$e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Loan disbursement failed',

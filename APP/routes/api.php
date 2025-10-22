@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Transactions\LoanTransactionController;
 use App\Http\Controllers\Api\Transactions\SavingsTransactionController;
 use App\Http\Controllers\Api\Transactions\ShareTransactionController;
 use App\Http\Controllers\Api\Transactions\TransactionController;
+use App\Http\Controllers\Api\Transactions\WalletTransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
@@ -126,6 +127,16 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('schedule/{loan}', [LoanTransactionController::class, 'schedule']);
         Route::get('history/{loan}', [LoanTransactionController::class, 'history']);
         Route::get('summary/{loan}', [LoanTransactionController::class, 'summary']);
+    });
+
+    // Wallet Transactions
+    Route::prefix('wallet')->group(function () {
+        Route::post('topup', [WalletTransactionController::class, 'topup']);
+        Route::post('withdrawal', [WalletTransactionController::class, 'withdrawal']);
+        Route::post('transfer-to-savings', [WalletTransactionController::class, 'transferToSavings']);
+        Route::post('repay-loan', [WalletTransactionController::class, 'repayLoan']);
+        Route::get('balance/{account}', [WalletTransactionController::class, 'balance']);
+        Route::get('history/{account}', [WalletTransactionController::class, 'history']);
     });
 
     // General Transaction Routes

@@ -13,6 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { WalletCard } from '@/components/wallet/WalletCard';
+import { WalletTopupForm } from '@/components/wallet/WalletTopupForm';
+import { WalletWithdrawalForm } from '@/components/wallet/WalletWithdrawalForm';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock, PieChart, User } from 'lucide-react';
 
 export function Dashboard() {
@@ -23,9 +26,15 @@ export function Dashboard() {
   const { account: sharesAccount } = useSelector((state: RootState) => state.shares);
   const { transactions } = useSelector((state: RootState) => state.transactions);
   const { activeGoal, goals } = useSelector((state: RootState) => state.savingsGoals);
+  const { balance: walletBalance } = useSelector((state: RootState) => state.wallet);
 
   // Add responsive state
   const [isMobile, setIsMobile] = useState(false);
+  const [walletTopupOpen, setWalletTopupOpen] = useState(false);
+  const [walletWithdrawOpen, setWalletWithdrawOpen] = useState(false);
+
+  // Find wallet account
+  const walletAccount = accounts.find(acc => acc.savings_product?.type === 'wallet');
 
   useEffect(() => {
     dispatch(fetchSavingsAccounts());
@@ -95,8 +104,6 @@ export function Dashboard() {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
-
-
 
   // Transform transactions into recent activities
   const getTransactionIcon = (type: string) => {
@@ -238,6 +245,18 @@ export function Dashboard() {
             </div>
         )}
 
+        {/* Wallet Card - Show prominently if exists */}
+        {walletAccount && (
+          <div className="animate-fade-in">
+            <WalletCard
+              accountId={walletAccount.id}
+              onTopup={() => setWalletTopupOpen(true)}
+              onWithdraw={() => setWalletWithdrawOpen(true)}
+              compact={true}
+            />
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 space-y-6">
@@ -340,6 +359,25 @@ export function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Wallet Modals */}
+        {walletAccount && (
+          <>
+            <WalletTopupForm
+              isOpen={walletTopupOpen}
+              onClose={() => setWalletTopupOpen(false)}
+              walletAccountId={walletAccount.id}
+              memberId={user?.id || 0}
+            />
+            <WalletWithdrawalForm
+              isOpen={walletWithdrawOpen}
+              onClose={() => setWalletWithdrawOpen(false)}
+              walletAccountId={walletAccount.id}
+              memberId={user?.id || 0}
+              currentBalance={walletBalance?.balance || walletAccount.balance}
+            />
+          </>
+        )}
       </div>
     </>
   );

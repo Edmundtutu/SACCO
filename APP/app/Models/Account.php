@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Account extends Model
 {
@@ -14,29 +15,15 @@ class Account extends Model
     protected $fillable = [
         'account_number',
         'member_id',
-        'account_type',
-        'savings_product_id',
-        'balance',
-        'available_balance',
-        'minimum_balance',
-        'interest_earned',
-        'last_interest_calculation',
-        'maturity_date',
+        'accountable_type',
+        'accountable_id',
         'status',
-        'last_transaction_date',
         'closure_reason',
         'closed_at',
         'closed_by',
     ];
 
     protected $casts = [
-        'balance' => 'decimal:2',
-        'available_balance' => 'decimal:2',
-        'minimum_balance' => 'decimal:2',
-        'interest_earned' => 'decimal:2',
-        'last_interest_calculation' => 'date',
-        'maturity_date' => 'date',
-        'last_transaction_date' => 'datetime',
         'closed_at' => 'datetime',
     ];
 
@@ -68,11 +55,11 @@ class Account extends Model
     }
 
     /**
-     * Savings product for this account
+     * Get the underlying accountable model (SavingsAccount, LoanAccount, or ShareAccount)
      */
-    public function savingsProduct(): BelongsTo
+    public function accountable(): MorphTo
     {
-        return $this->belongsTo(SavingsProduct::class);
+        return $this->morphTo();
     }
 
     /**
@@ -100,24 +87,54 @@ class Account extends Model
     }
 
     /**
-     * Update balances after transaction
+     * Helper: Check if this is a savings account
      */
-    public function updateBalance(float $amount, string $type = 'credit'): void
+    public function isSavingsAccount(): bool
     {
-        if ($type === 'credit') {
-            $this->balance += $amount;
-            $this->available_balance += $amount;
-        } else {
-            $this->balance -= $amount;
-            $this->available_balance -= $amount;
-        }
-
-        $this->last_transaction_date = now();
-        $this->save();
+        return $this->accountable_type === SavingsAccount::class;
     }
 
     /**
-     * Check if withdrawal is allowed
+     * Helper: Check if this is a loan account
+     */
+    public function isLoanAccount(): bool
+    {
+        return $this->accountable_type === LoanAccount::class;
+    }
+
+    /**
+     * Helper: Check if this is a share account
+     */
+    public function isShareAccount(): bool
+    {
+        return $this->accountable_type === ShareAccount::class;
+    }
+
+    /**
+     * Helper: Get the account type as a string
+     */
+    public function getAccountTypeAttribute(): string
+    {
+        return match($this->accountable_type) {
+            SavingsAccount::class => 'savings',
+            LoanAccount::class => 'loan',
+            ShareAccount::class => 'share',
+            default => 'unknown',
+        };
+    }
+
+    /**
+     * Helper: Delegate balance updates to accountable model
+     */
+    public function updateBalance(float $amount, string $type = 'credit'): void
+    {
+        if ($this->accountable && method_exists($this->accountable, 'updateBalance')) {
+            $this->accountable->updateBalance($amount, $type);
+        }
+    }
+
+    /**
+     * Helper: Delegate withdrawal check to accountable model
      */
     public function canWithdraw(float $amount): bool
     {
@@ -125,12 +142,29 @@ class Account extends Model
             return false;
         }
 
-        // Check if savings product allows partial withdrawals
-        if ($this->savingsProduct && !$this->savingsProduct->allow_partial_withdrawals) {
-            return false;
+        if ($this->accountable && method_exists($this->accountable, 'canWithdraw')) {
+            return $this->accountable->canWithdraw($amount);
         }
 
-        $remainingBalance = $this->available_balance - $amount;
-        return $remainingBalance >= $this->minimum_balance;
+        return false;
+    }
+
+    /**
+     * Scope: Get accounts by type
+     */
+    public function scopeOfType($query, string $type)
+    {
+        $modelClass = match($type) {
+            'savings' => SavingsAccount::class,
+            'loan' => LoanAccount::class,
+            'share' => ShareAccount::class,
+            default => null,
+        };
+
+        if ($modelClass) {
+            return $query->where('accountable_type', $modelClass);
+        }
+
+        return $query;
     }
 }
