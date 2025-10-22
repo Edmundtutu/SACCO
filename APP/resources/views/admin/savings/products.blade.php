@@ -194,7 +194,7 @@
 
 <!-- Wallet Product Highlight (if exists) -->
 @php
-    $walletProduct = $products->firstWhere('type', 'wallet');
+    $walletProduct = $products->firstWhere('name', 'Wallet Account');
 @endphp
 
 @if($walletProduct)
@@ -233,7 +233,7 @@
             <div class="card-body position-relative">
                 <!-- Product Type Badge -->
                 <span class="badge product-type-badge 
-                    {{ $product->type == 'wallet' ? 'bg-warning' : '' }}
+                    {{ $product->type == 'special' ? 'bg-warning' : '' }}
                     {{ $product->type == 'compulsory' ? 'bg-primary' : '' }}
                     {{ $product->type == 'voluntary' ? 'bg-success' : '' }}
                     {{ $product->type == 'fixed_deposit' ? 'bg-info' : '' }}
@@ -243,17 +243,17 @@
 
                 <!-- Product Icon -->
                 <div class="product-image">
-                    @switch($product->type)
-                        @case('wallet')
+                    @switch($product->name)
+                        @case('Wallet Account')
                             <i class="bi bi-wallet2"></i>
                             @break
-                        @case('compulsory')
+                        @case('Compulsory Savings')
                             <i class="bi bi-piggy-bank"></i>
                             @break
-                        @case('voluntary')
+                        @case('Voluntary Savings')
                             <i class="bi bi-hand-thumbs-up"></i>
                             @break
-                        @case('fixed_deposit')
+                        @case('Fixed Deposit')
                             <i class="bi bi-lock"></i>
                             @break
                         @default

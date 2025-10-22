@@ -72,7 +72,6 @@
                             <select class="form-select @error('type') is-invalid @enderror" id="type"
                                 name="type" required>
                                 <option value="">Select Type</option>
-                                <option value="wallet" {{ old('type') == 'wallet' ? 'selected' : '' }}>Wallet</option>
                                 <option value="compulsory" {{ old('type') == 'compulsory' ? 'selected' : '' }}>
                                     Compulsory</option>
                                 <option value="voluntary" {{ old('type') == 'voluntary' ? 'selected' : '' }}>Voluntary

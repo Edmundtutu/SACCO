@@ -121,7 +121,7 @@ class SavingsController extends Controller
 
     public function products()
     {
-        $products = SavingsProduct::orderBy('name')->get();
+        $products = SavingsProduct::orderBy('created_at', 'desc')->get();
 
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],

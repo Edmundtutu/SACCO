@@ -58,10 +58,10 @@
 
     .transaction-row {
         background: white;
-        border-radius: 10px;
+        border-radius: 4px;
         padding: 1rem;
         margin-bottom: 0.75rem;
-        border-left: 4px solid;
+        border-left: 2px solid;
         transition: all 0.3s;
     }
 
@@ -119,7 +119,7 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #2980b9, #1a3a6e);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -171,14 +171,14 @@
         <div class="icon text-success">
             <i class="bi bi-arrow-down-circle"></i>
         </div>
-        <div class="value">{{ $transactions->where('transaction_type', 'deposit')->count() }}</div>
+        <div class="value">{{ $transactions->where('type', 'deposit')->count() }}</div>
         <div class="label">Deposits</div>
     </div>
     <div class="stat-card">
         <div class="icon text-danger">
             <i class="bi bi-arrow-up-circle"></i>
         </div>
-        <div class="value">{{ $transactions->where('transaction_type', 'withdrawal')->count() }}</div>
+        <div class="value">{{ $transactions->where('type', 'withdrawal')->count() }}</div>
         <div class="label">Withdrawals</div>
     </div>
     <div class="stat-card">
@@ -297,7 +297,7 @@
 <div class="row">
     <div class="col-12">
         @foreach($transactions as $transaction)
-        <div class="transaction-row {{ $transaction->transaction_type }}">
+        <div class="transaction-row {{ $transaction->type }}">
             <div class="row align-items-center">
                 <!-- Member Info -->
                 <div class="col-md-4">
@@ -317,7 +317,7 @@
                 <!-- Transaction Details -->
                 <div class="col-md-3">
                     <div>
-                        <strong>{{ ucfirst(str_replace('_', ' ', $transaction->transaction_type)) }}</strong>
+                        <strong>{{ ucfirst(str_replace('_', ' ', $transaction->type)) }}</strong>
                         <p class="text-muted small mb-0">{{ $transaction->description ?? 'No description' }}</p>
                         <small class="text-muted">
                             <i class="bi bi-calendar"></i> {{ $transaction->created_at->format('M d, Y H:i') }}
@@ -327,8 +327,8 @@
 
                 <!-- Amount -->
                 <div class="col-md-2 text-center">
-                    <h5 class="mb-0 {{ in_array($transaction->transaction_type, ['deposit', 'loan_disbursement']) ? 'amount-positive' : 'amount-negative' }}">
-                        {{ in_array($transaction->transaction_type, ['deposit', 'loan_disbursement']) ? '+' : '-' }}UGX {{ number_format($transaction->amount, 0) }}
+                    <h5 class="mb-0 {{ in_array($transaction->type, ['deposit', 'loan_disbursement']) ? 'amount-positive' : 'amount-negative' }}">
+                        {{ in_array($transaction->type, ['deposit', 'loan_disbursement']) ? '+' : '-' }}UGX {{ number_format($transaction->amount, 0) }}
                     </h5>
                 </div>
 
@@ -354,16 +354,15 @@
 </div>
 
 <!-- Pagination -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="text-muted">
-                Showing {{ $transactions->firstItem() ?? 0 }} to {{ $transactions->lastItem() ?? 0 }} of {{ $transactions->total() }} transactions
-            </div>
-            <div>
-                {{ $transactions->appends(request()->query())->links() }}
-            </div>
-        </div>
+<div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+    <div class="pagination-info">
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Showing {{ $transactions->firstItem() }} to {{ $transactions->lastItem() }} of {{ $transactions->total() }} results
+        </small>
+    </div>
+    <div>
+        {{ $transactions->appends(request()->query())->links('pagination.bootstrap-5') }}
     </div>
 </div>
 
@@ -375,7 +374,7 @@
             <div class="col-md-4">
                 <div class="text-center p-3 border-end">
                     <h4 class="text-success mb-2">
-                        UGX {{ number_format($transactions->whereIn('transaction_type', ['deposit', 'loan_disbursement'])->sum('amount'), 0) }}
+                        UGX {{ number_format($transactions->whereIn('type', ['deposit', 'loan_disbursement'])->sum('amount'), 0) }}
                     </h4>
                     <p class="text-muted mb-0">Total Credits</p>
                 </div>
@@ -383,7 +382,7 @@
             <div class="col-md-4">
                 <div class="text-center p-3 border-end">
                     <h4 class="text-danger mb-2">
-                        UGX {{ number_format($transactions->whereIn('transaction_type', ['withdrawal', 'loan_repayment', 'transfer'])->sum('amount'), 0) }}
+                        UGX {{ number_format($transactions->whereIn('type', ['withdrawal', 'loan_repayment', 'transfer'])->sum('amount'), 0) }}
                     </h4>
                     <p class="text-muted mb-0">Total Debits</p>
                 </div>
@@ -392,8 +391,8 @@
                 <div class="text-center p-3">
                     <h4 class="text-primary mb-2">
                         UGX {{ number_format(
-                            $transactions->whereIn('transaction_type', ['deposit', 'loan_disbursement'])->sum('amount') - 
-                            $transactions->whereIn('transaction_type', ['withdrawal', 'loan_repayment', 'transfer'])->sum('amount'), 
+                            $transactions->whereIn('type', ['deposit', 'loan_disbursement'])->sum('amount') - 
+                            $transactions->whereIn('type', ['withdrawal', 'loan_repayment', 'transfer'])->sum('amount'), 
                             0
                         ) }}
                     </h4>

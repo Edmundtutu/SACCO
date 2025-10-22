@@ -5,7 +5,7 @@
 @push('styles')
 <style>
     .account-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #2980b9 0%, #1a3a6e 100%);
         border-radius: 15px;
         padding: 2rem;
         color: white;
@@ -23,7 +23,7 @@
         width: 100px;
         height: 100px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #2980b9, #1a3a6e);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -237,11 +237,11 @@
         <!-- Account Statistics -->
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-value text-success">{{ $account->transactions->where('transaction_type', 'deposit')->count() }}</div>
+                <div class="stat-value text-success">{{ $account->transactions->where('type', 'deposit')->count() }}</div>
                 <div class="stat-label">Total Deposits</div>
             </div>
             <div class="stat-box">
-                <div class="stat-value text-danger">{{ $account->transactions->where('transaction_type', 'withdrawal')->count() }}</div>
+                <div class="stat-value text-danger">{{ $account->transactions->where('type', 'withdrawal')->count() }}</div>
                 <div class="stat-label">Total Withdrawals</div>
             </div>
             <div class="stat-box">
@@ -325,29 +325,29 @@
             <div class="timeline">
                 @foreach($account->transactions->take(10) as $transaction)
                 <div class="timeline-item">
-                    <div class="transaction-item {{ $transaction->transaction_type }}">
+                    <div class="transaction-item {{ $transaction->type }}">
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center">
                                     <div class="me-3">
-                                        @if($transaction->transaction_type == 'deposit')
+                                        @if($transaction->type == 'deposit')
                                             <i class="bi bi-arrow-down-circle text-success fs-3"></i>
-                                        @elseif($transaction->transaction_type == 'withdrawal')
+                                        @elseif($transaction->type == 'withdrawal')
                                             <i class="bi bi-arrow-up-circle text-danger fs-3"></i>
                                         @else
                                             <i class="bi bi-arrow-left-right text-info fs-3"></i>
                                         @endif
                                     </div>
                                     <div>
-                                        <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $transaction->transaction_type)) }}</h6>
+                                        <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $transaction->type)) }}</h6>
                                         <p class="text-muted small mb-0">{{ $transaction->description ?? 'No description' }}</p>
                                         <small class="text-muted">{{ $transaction->created_at->format('M d, Y H:i') }}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4 text-md-end">
-                                <h5 class="mb-1 {{ $transaction->transaction_type == 'deposit' ? 'text-success' : 'text-danger' }}">
-                                    {{ $transaction->transaction_type == 'deposit' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 0) }}
+                                <h5 class="mb-1 {{ $transaction->type == 'deposit' ? 'text-success' : 'text-danger' }}">
+                                    {{ $transaction->type == 'deposit' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 0) }}
                                 </h5>
                                 <span class="badge bg-{{ $transaction->status == 'completed' ? 'success' : ($transaction->status == 'pending' ? 'warning' : 'danger') }}">
                                     {{ ucfirst($transaction->status) }}
@@ -382,7 +382,7 @@
             <form action="{{ route('admin.savings.manual-transaction') }}" method="POST">
                 @csrf
                 <input type="hidden" name="account_id" value="{{ $account->id }}">
-                <input type="hidden" name="transaction_type" value="deposit">
+                <input type="hidden" name="type" value="deposit">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Amount (UGX)</label>
@@ -413,7 +413,7 @@
             <form action="{{ route('admin.savings.manual-transaction') }}" method="POST">
                 @csrf
                 <input type="hidden" name="account_id" value="{{ $account->id }}">
-                <input type="hidden" name="transaction_type" value="withdrawal">
+                <input type="hidden" name="type" value="withdrawal">
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i> Available Balance: <strong>UGX {{ number_format($account->balance, 0) }}</strong>
