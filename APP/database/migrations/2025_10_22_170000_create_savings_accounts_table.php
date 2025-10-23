@@ -21,12 +21,10 @@ return new class extends Migration
             $table->decimal('interest_rate', 5, 2)->default(0); // Annual interest rate
             $table->date('last_interest_calculation')->nullable();
             $table->date('maturity_date')->nullable(); // For fixed deposits
-            $table->timestamp('last_transaction_date')->nullable();
             $table->timestamps();
 
             // Indexes
             $table->index('savings_product_id');
-            $table->index('last_transaction_date');
         });
     }
 

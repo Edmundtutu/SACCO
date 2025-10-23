@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\ShareAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,6 +26,7 @@ class ShareFactory extends Factory
         
         return [
             'member_id' => User::factory(),
+            'share_account_id' => null, // Can be set via state or manually
             'certificate_number' => 'SHR' . now()->format('Y') . str_pad(
                 $this->faker->unique()->numberBetween(1, 999999),
                 6,
@@ -86,5 +88,34 @@ class ShareFactory extends Factory
             'transfer_date' => null,
             'transferred_to' => null,
         ]);
+    }
+
+    /**
+     * Link share certificate to a share account
+     */
+    public function forShareAccount(?ShareAccount $shareAccount = null): static
+    {
+        return $this->state(function (array $attributes) use ($shareAccount) {
+            $account = $shareAccount ?? ShareAccount::factory()->create();
+            
+            return [
+                'share_account_id' => $account->id,
+            ];
+        });
+    }
+
+    /**
+     * Create share certificate with specific number of shares
+     */
+    public function withShares(int $count): static
+    {
+        return $this->state(function (array $attributes) use ($count) {
+            $shareValue = $attributes['share_value'] ?? 1000;
+            
+            return [
+                'shares_count' => $count,
+                'total_value' => $count * $shareValue,
+            ];
+        });
     }
 }

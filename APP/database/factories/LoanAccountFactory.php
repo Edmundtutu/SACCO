@@ -3,73 +3,101 @@
 namespace Database\Factories;
 
 use App\Models\LoanAccount;
-use App\Models\LoanProduct;
-use App\Models\User;
+use App\Models\SavingsAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * LoanAccount Factory - Creates account-level tracking
+ * (NOT individual loan details - those are in Loan model)
+ */
 class LoanAccountFactory extends Factory
 {
     protected $model = LoanAccount::class;
 
     public function definition(): array
     {
-        $principal = $this->faker->randomFloat(2, 50000, 5000000);
-        $interestRate = $this->faker->randomFloat(2, 10, 25);
-        $processingFee = $principal * 0.02; // 2% processing fee
-        $insuranceFee = $principal * 0.01; // 1% insurance
-        $months = $this->faker->randomElement([6, 12, 18, 24, 36]);
-        
-        // Calculate total with simple interest
-        $interest = ($principal * $interestRate * $months) / (100 * 12);
-        $totalAmount = $principal + $interest + $processingFee + $insuranceFee;
-        $monthlyPayment = $totalAmount / $months;
-        
-        $totalPaid = $this->faker->randomFloat(2, 0, $totalAmount * 0.5);
-        $outstanding = $totalAmount - $totalPaid;
+        // Account-level aggregate data
+        $totalDisbursed = $this->faker->randomFloat(2, 100000, 5000000);
+        $repaymentProgress = $this->faker->randomFloat(1, 0.2, 0.8); // 20% to 80% repaid
+        $totalRepaid = $totalDisbursed * $repaymentProgress;
+        $currentOutstanding = $totalDisbursed - $totalRepaid;
         
         return [
-            'loan_product_id' => LoanProduct::factory(),
-            'principal_amount' => $principal,
-            'interest_rate' => $interestRate,
-            'processing_fee' => $processingFee,
-            'insurance_fee' => $insuranceFee,
-            'total_amount' => $totalAmount,
-            'repayment_period_months' => $months,
-            'monthly_payment' => $monthlyPayment,
-            'outstanding_balance' => $outstanding,
-            'principal_balance' => $principal * ($outstanding / $totalAmount),
-            'interest_balance' => $interest * ($outstanding / $totalAmount),
-            'penalty_balance' => 0,
-            'total_paid' => $totalPaid,
-            'application_date' => $this->faker->dateTimeBetween('-1 year', '-6 months'),
-            'approval_date' => $this->faker->dateTimeBetween('-6 months', '-3 months'),
-            'disbursement_date' => $this->faker->dateTimeBetween('-3 months', '-1 month'),
-            'first_payment_date' => $this->faker->dateTimeBetween('-2 months'),
-            'maturity_date' => $this->faker->dateTimeBetween('+6 months', '+2 years'),
-            'purpose' => $this->faker->sentence(),
-            'collateral_description' => $this->faker->optional()->sentence(),
-            'collateral_value' => $this->faker->optional()->randomFloat(2, 50000, 10000000),
-            'approved_by' => User::factory(),
-            'disbursed_by' => User::factory(),
+            // Account-level totals (aggregates from all loans)
+            'total_disbursed_amount' => $totalDisbursed,
+            'total_repaid_amount' => $totalRepaid,
+            'current_outstanding' => $currentOutstanding,
+            
+            // Account configuration
+            'linked_savings_account' => null, // Can be set with state
+            'min_loan_limit' => $this->faker->randomElement([10000, 20000, 50000]),
+            'max_loan_limit' => $this->faker->randomElement([500000, 1000000, 2000000, 5000000]),
+            'repayment_frequency_type' => $this->faker->randomElement(['weekly', 'biweekly', 'monthly', 'quarterly']),
+            
+            // Status and tracking
+            'status_notes' => $this->faker->optional(0.3)->sentence(),
+            'last_activity_date' => $this->faker->dateTimeBetween('-1 month', 'now'),
+            
+            // Flexible features
+            'account_features' => [
+                'auto_deduct_from_savings' => $this->faker->boolean(70),
+                'sms_notifications' => $this->faker->boolean(80),
+                'email_statements' => $this->faker->boolean(60),
+            ],
+            'audit_trail' => [
+                [
+                    'action' => 'account_created',
+                    'date' => $this->faker->dateTimeBetween('-2 years', '-1 year')->format('Y-m-d H:i:s'),
+                    'by' => 'System',
+                ],
+            ],
+            'remarks' => $this->faker->optional(0.2)->sentence(),
         ];
     }
 
-    public function pending(): static
+    /**
+     * State: New loan account with no loans yet
+     */
+    public function fresh(): static
     {
         return $this->state(fn (array $attributes) => [
-            'approval_date' => null,
-            'disbursement_date' => null,
-            'first_payment_date' => null,
-            'maturity_date' => null,
-            'approved_by' => null,
-            'disbursed_by' => null,
+            'total_disbursed_amount' => 0,
+            'total_repaid_amount' => 0,
+            'current_outstanding' => 0,
+            'last_activity_date' => null,
+            'status_notes' => 'Account opened, no loans disbursed yet',
         ]);
     }
 
-    public function disbursed(): static
+    /**
+     * State: Account with active loans
+     */
+    public function withActiveLoans(): static
     {
         return $this->state(fn (array $attributes) => [
-            'disbursement_date' => now()->subMonths(rand(1, 6)),
+            'current_outstanding' => $this->faker->randomFloat(2, 50000, 1000000),
+            'last_activity_date' => $this->faker->dateTimeBetween('-1 week', 'now'),
+        ]);
+    }
+
+    /**
+     * State: Link to a savings account
+     */
+    public function linkedToSavings(?SavingsAccount $savings = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'linked_savings_account' => $savings?->id ?? SavingsAccount::factory()->create()->id,
+        ]);
+    }
+
+    /**
+     * State: High limit account
+     */
+    public function highLimit(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'min_loan_limit' => 100000,
+            'max_loan_limit' => 10000000,
         ]);
     }
 }

@@ -14,6 +14,7 @@ class Loan extends Model
     protected $fillable = [
         'loan_number',
         'member_id',
+        'loan_account_id',
         'loan_product_id',
         'principal_amount',
         'interest_rate',
@@ -87,6 +88,14 @@ class Loan extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(User::class, 'member_id');
+    }
+
+    /**
+     * Parent loan account for this loan
+     */
+    public function loanAccount(): BelongsTo
+    {
+        return $this->belongsTo(LoanAccount::class);
     }
 
     /**

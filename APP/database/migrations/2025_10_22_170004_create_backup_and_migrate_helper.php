@@ -16,9 +16,11 @@ return new class extends Migration
         // Create backup table if it doesn't exist
         if (!Schema::hasTable('accounts_backup')) {
             DB::statement('CREATE TABLE accounts_backup AS SELECT * FROM accounts');
-            
-            $this->command->info('✅ Backup table created: accounts_backup');
-            $this->command->info('📊 Backed up ' . DB::table('accounts_backup')->count() . ' accounts');
+
+            if (isset($this->command)) {
+                $this->command->info('✅ Backup table created: accounts_backup');
+                $this->command->info('📊 Backed up ' . DB::table('accounts_backup')->count() . ' accounts');
+            }
         }
     }
 

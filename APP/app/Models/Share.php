@@ -13,6 +13,7 @@ class Share extends Model
 
     protected $fillable = [
         'member_id',
+        'share_account_id',
         'certificate_number',
         'shares_count',
         'share_value',
@@ -63,11 +64,19 @@ class Share extends Model
     }
 
     /**
-     * User who issued these shares
+     * Parent share account for this certificate
      */
-    public function issuedBy(): BelongsTo
+    public function shareAccount(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'issued_by');
+        return $this->belongsTo(ShareAccount::class);
+    }
+
+    /**
+     * User who processed this share transaction
+     */
+    public function processedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     /**

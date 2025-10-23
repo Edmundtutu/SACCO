@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class ShareAccount extends Model
@@ -12,20 +12,36 @@ class ShareAccount extends Model
     use HasFactory;
 
     protected $fillable = [
-        'certificate_number',
-        'shares_count',
-        'share_value',
-        'total_value',
-        'purchase_date',
-        'notes',
-        'issued_by',
+        'share_units',
+        'share_price',
+        'total_share_value',
+        'dividends_earned',
+        'dividends_pending',
+        'dividends_paid',
+        'account_class',
+        'locked_shares',
+        'membership_fee_paid',
+        'bonus_shares_earned',
+        'min_balance_required',
+        'max_balance_limit',
+        'account_features',
+        'audit_trail',
+        'remarks',
+        'last_activity_date',
     ];
 
     protected $casts = [
-        'shares_count' => 'integer',
-        'share_value' => 'decimal:2',
-        'total_value' => 'decimal:2',
-        'purchase_date' => 'date',
+        'share_units' => 'integer',
+        'share_price' => 'decimal:2',
+        'total_share_value' => 'decimal:2',
+        'dividends_earned' => 'decimal:2',
+        'dividends_pending' => 'decimal:2',
+        'dividends_paid' => 'decimal:2',
+        'locked_shares' => 'integer',
+        'bonus_shares_earned' => 'integer',
+        'min_balance_required' => 'integer',
+        'max_balance_limit' => 'integer',
+        'last_activity_date' => 'date',
     ];
 
     /**
@@ -36,24 +52,15 @@ class ShareAccount extends Model
         parent::boot();
 
         static::creating(function ($share) {
-            if (empty($share->certificate_number)) {
-                $share->certificate_number = 'SHR' . now()->format('Y') . str_pad(
-                    (static::max('id') ?? 0) + 1,
-                    6,
-                    '0',
-                    STR_PAD_LEFT
-                );
-            }
-
             // Calculate total value
-            if (empty($share->total_value)) {
-                $share->total_value = $share->shares_count * $share->share_value;
+            if (empty($share->total_share_value)) {
+                $share->total_share_value = $share->share_units * $share->share_price;
             }
         });
     }
 
     /**
-     * Get the parent account record
+     * Get the polymorphic account record
      */
     public function account(): MorphOne
     {
@@ -61,11 +68,19 @@ class ShareAccount extends Model
     }
 
     /**
-     * User who issued these shares
+     * Get all share certificates under this account
      */
-    public function issuedBy(): BelongsTo
+    public function shares(): HasMany
     {
-        return $this->belongsTo(User::class, 'issued_by');
+        return $this->hasMany(Share::class, 'share_account_id');
+    }
+
+    /**
+     * Get active share certificates
+     */
+    public function activeShares(): HasMany
+    {
+        return $this->shares()->where('status', 'active');
     }
 
     /**
@@ -77,40 +92,86 @@ class ShareAccount extends Model
     }
 
     /**
-     * Add more shares to this account
+     * Record share purchase
      */
-    public function addShares(int $count, float $value): void
+    public function recordSharePurchase(int $units, float $pricePerShare): void
     {
-        $this->shares_count += $count;
-        $this->share_value = $value; // Update to latest share value
-        $this->total_value = $this->shares_count * $this->share_value;
+        $this->share_units += $units;
+        $this->share_price = $pricePerShare; // Update to latest price
+        $this->total_share_value = $this->share_units * $this->share_price;
+        $this->last_activity_date = now();
         $this->save();
     }
 
     /**
-     * Remove shares from this account (e.g., for transfer or sale)
+     * Record share transfer/redemption
      */
-    public function removeShares(int $count): bool
+    public function recordShareRemoval(int $units): bool
     {
-        if ($count > $this->shares_count) {
+        $availableShares = $this->share_units - $this->locked_shares;
+        
+        if ($units > $availableShares) {
             return false;
         }
-
-        $this->shares_count -= $count;
-        $this->total_value = $this->shares_count * $this->share_value;
+        
+        $this->share_units -= $units;
+        $this->total_share_value = $this->share_units * $this->share_price;
+        $this->last_activity_date = now();
         $this->save();
         
         return true;
     }
 
     /**
-     * Scope to get active shares
+     * Record dividend earned
      */
-    public function scopeActive($query)
+    public function recordDividend(float $amount): void
     {
-        return $query->whereHas('account', function ($q) {
-            $q->where('status', 'active');
-        });
+        $this->dividends_earned += $amount;
+        $this->dividends_pending += $amount;
+        $this->save();
+    }
+
+    /**
+     * Record dividend payment
+     */
+    public function recordDividendPayment(float $amount): void
+    {
+        $this->dividends_pending -= $amount;
+        $this->dividends_paid += $amount;
+        
+        if ($this->dividends_pending < 0) {
+            $this->dividends_pending = 0;
+        }
+        
+        $this->save();
+    }
+
+    /**
+     * Add bonus shares
+     */
+    public function addBonusShares(int $units): void
+    {
+        $this->share_units += $units;
+        $this->bonus_shares_earned += $units;
+        $this->total_share_value = $this->share_units * $this->share_price;
+        $this->save();
+    }
+
+    /**
+     * Get available (unlocked) shares
+     */
+    public function getAvailableSharesAttribute(): int
+    {
+        return max(0, $this->share_units - $this->locked_shares);
+    }
+
+    /**
+     * Check if account meets minimum balance requirement
+     */
+    public function meetsMinimumRequirement(): bool
+    {
+        return $this->share_units >= $this->min_balance_required;
     }
 
     /**
@@ -120,7 +181,7 @@ class ShareAccount extends Model
     {
         return static::whereHas('account', function ($q) use ($memberId) {
             $q->where('member_id', $memberId)->where('status', 'active');
-        })->sum('shares_count');
+        })->sum('share_units');
     }
 
     /**
@@ -130,6 +191,6 @@ class ShareAccount extends Model
     {
         return static::whereHas('account', function ($q) use ($memberId) {
             $q->where('member_id', $memberId)->where('status', 'active');
-        })->sum('total_value');
+        })->sum('total_share_value');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class LoanAccount extends Model
@@ -12,55 +13,33 @@ class LoanAccount extends Model
     use HasFactory;
 
     protected $fillable = [
-        'loan_product_id',
-        'principal_amount',
-        'interest_rate',
-        'processing_fee',
-        'insurance_fee',
-        'total_amount',
-        'repayment_period_months',
-        'monthly_payment',
-        'outstanding_balance',
-        'principal_balance',
-        'interest_balance',
-        'penalty_balance',
-        'total_paid',
-        'application_date',
-        'approval_date',
-        'disbursement_date',
-        'first_payment_date',
-        'maturity_date',
-        'purpose',
-        'collateral_description',
-        'collateral_value',
-        'rejection_reason',
-        'approved_by',
-        'disbursed_by',
-        'disbursement_account_id',
+        'total_disbursed_amount',
+        'total_repaid_amount',
+        'current_outstanding',
+        'linked_savings_account',
+        'min_loan_limit',
+        'max_loan_limit',
+        'repayment_frequency_type',
+        'status_notes',
+        'last_activity_date',
+        'account_features',
+        'audit_trail',
+        'remarks',
     ];
 
     protected $casts = [
-        'principal_amount' => 'decimal:2',
-        'interest_rate' => 'decimal:2',
-        'processing_fee' => 'decimal:2',
-        'insurance_fee' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'monthly_payment' => 'decimal:2',
-        'outstanding_balance' => 'decimal:2',
-        'principal_balance' => 'decimal:2',
-        'interest_balance' => 'decimal:2',
-        'penalty_balance' => 'decimal:2',
-        'total_paid' => 'decimal:2',
-        'collateral_value' => 'decimal:2',
-        'application_date' => 'date',
-        'approval_date' => 'date',
-        'disbursement_date' => 'date',
-        'first_payment_date' => 'date',
-        'maturity_date' => 'date',
+        'total_disbursed_amount' => 'decimal:2',
+        'total_repaid_amount' => 'decimal:2',
+        'current_outstanding' => 'decimal:2',
+        'min_loan_limit' => 'decimal:2',
+        'max_loan_limit' => 'decimal:2',
+        'account_features' => 'array',
+        'audit_trail' => 'array',
+        'last_activity_date' => 'datetime',
     ];
 
     /**
-     * Get the parent account record
+     * Get the polymorphic account record
      */
     public function account(): MorphOne
     {
@@ -68,102 +47,85 @@ class LoanAccount extends Model
     }
 
     /**
-     * Loan product for this loan
+     * Get all loans under this loan account
      */
-    public function loanProduct(): BelongsTo
+    public function loans(): HasMany
     {
-        return $this->belongsTo(LoanProduct::class);
+        return $this->hasMany(Loan::class, 'loan_account_id');
     }
 
     /**
-     * User who approved this loan
+     * Get active loans
      */
-    public function approvedBy(): BelongsTo
+    public function activeLoans(): HasMany
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->loans()->whereIn('status', ['disbursed', 'active']);
     }
 
     /**
-     * User who disbursed this loan
+     * Get linked savings account
      */
-    public function disbursedBy(): BelongsTo
+    public function linkedSavingsAccount(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'disbursed_by');
+        return $this->belongsTo(SavingsAccount::class, 'linked_savings_account');
     }
 
     /**
-     * Account where loan was disbursed
+     * Record a new loan disbursement
      */
-    public function disbursementAccount(): BelongsTo
+    public function recordDisbursement(float $amount): void
     {
-        return $this->belongsTo(Account::class, 'disbursement_account_id');
-    }
-
-    /**
-     * Get member through account relationship
-     */
-    public function getMemberAttribute()
-    {
-        return $this->account?->member;
-    }
-
-    /**
-     * Update outstanding balance after payment
-     */
-    public function recordPayment(float $amount, array $breakdown = []): void
-    {
-        $this->total_paid += $amount;
-        
-        // Apply payment: penalties first, then interest, then principal
-        if (isset($breakdown['penalty'])) {
-            $this->penalty_balance -= $breakdown['penalty'];
-        }
-        if (isset($breakdown['interest'])) {
-            $this->interest_balance -= $breakdown['interest'];
-        }
-        if (isset($breakdown['principal'])) {
-            $this->principal_balance -= $breakdown['principal'];
-        }
-        
-        $this->outstanding_balance = $this->principal_balance + $this->interest_balance + $this->penalty_balance;
+        $this->total_disbursed_amount += $amount;
+        $this->current_outstanding += $amount;
+        $this->last_activity_date = now();
         $this->save();
     }
 
     /**
-     * Check if loan is fully paid
+     * Record a loan repayment
      */
-    public function isFullyPaid(): bool
+    public function recordRepayment(float $amount): void
     {
-        return $this->outstanding_balance <= 0;
+        $this->total_repaid_amount += $amount;
+        $this->current_outstanding -= $amount;
+        
+        if ($this->current_outstanding < 0) {
+            $this->current_outstanding = 0;
+        }
+        
+        $this->last_activity_date = now();
+        $this->save();
     }
 
     /**
-     * Check if loan is overdue
+     * Check if new loan can be approved based on limits
      */
-    public function isOverdue(): bool
+    public function canAccommodateNewLoan(float $amount): bool
     {
-        if (!$this->first_payment_date) {
+        if ($this->max_loan_limit && $amount > $this->max_loan_limit) {
             return false;
         }
         
-        return now()->greaterThan($this->first_payment_date) && $this->outstanding_balance > 0;
+        if ($amount < $this->min_loan_limit) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
-     * Scope to get active loans
+     * Get total number of loans
      */
-    public function scopeActive($query)
+    public function getTotalLoansAttribute(): int
     {
-        return $query->whereHas('account', function ($q) {
-            $q->where('status', 'active');
-        });
+        return $this->loans()->count();
     }
 
     /**
-     * Scope to get disbursed loans
+     * Get number of active loans
      */
-    public function scopeDisbursed($query)
+    public function getActiveLoansCountAttribute(): int
     {
-        return $query->whereNotNull('disbursement_date');
+        return $this->activeLoans()->count();
     }
 }

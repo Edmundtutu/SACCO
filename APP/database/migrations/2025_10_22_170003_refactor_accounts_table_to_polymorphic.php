@@ -23,7 +23,6 @@ return new class extends Migration
                 'interest_earned',
                 'last_interest_calculation',
                 'maturity_date',
-                'last_transaction_date',
             ]);
             
             // Drop old account_type enum (we'll use accountable_type instead)
@@ -57,7 +56,6 @@ return new class extends Migration
             $table->decimal('interest_earned', 15, 2)->default(0);
             $table->date('last_interest_calculation')->nullable();
             $table->date('maturity_date')->nullable();
-            $table->timestamp('last_transaction_date')->nullable();
         });
     }
 };

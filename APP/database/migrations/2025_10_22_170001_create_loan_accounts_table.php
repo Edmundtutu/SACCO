@@ -13,44 +13,35 @@ return new class extends Migration
     {
         Schema::create('loan_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('loan_product_id')->constrained('loan_products')->cascadeOnDelete();
-            $table->decimal('principal_amount', 15, 2);
-            $table->decimal('interest_rate', 5, 2);
-            $table->decimal('processing_fee', 15, 2)->default(0);
-            $table->decimal('insurance_fee', 15, 2)->default(0);
-            $table->decimal('total_amount', 15, 2); // Principal + interest + fees
-            $table->integer('repayment_period_months');
-            $table->decimal('monthly_payment', 15, 2);
-            $table->decimal('outstanding_balance', 15, 2);
-            $table->decimal('principal_balance', 15, 2);
-            $table->decimal('interest_balance', 15, 2);
-            $table->decimal('penalty_balance', 15, 2)->default(0);
-            $table->decimal('total_paid', 15, 2)->default(0);
             
-            // Dates
-            $table->date('application_date');
-            $table->date('approval_date')->nullable();
-            $table->date('disbursement_date')->nullable();
-            $table->date('first_payment_date')->nullable();
-            $table->date('maturity_date')->nullable();
+            // Account-level tracking fields (NOT individual loan details)
+            $table->decimal('total_disbursed_amount', 15, 2)->default(0)->comment('Total of all loans disbursed');
+            $table->decimal('total_repaid_amount', 15, 2)->default(0)->comment('Total of all repayments');
+            $table->decimal('current_outstanding', 15, 2)->default(0)->comment('Current total outstanding across all loans');
             
-            // Additional info
-            $table->text('purpose')->nullable();
-            $table->text('collateral_description')->nullable();
-            $table->decimal('collateral_value', 15, 2)->nullable();
-            $table->text('rejection_reason')->nullable();
+            // Linked accounts
+            $table->foreignId('linked_savings_account')->nullable()->constrained('savings_accounts')->comment('Default savings account for repayments');
             
-            // Approval/disbursement tracking
-            $table->foreignId('approved_by')->nullable()->constrained('users');
-            $table->foreignId('disbursed_by')->nullable()->constrained('users');
-            $table->foreignId('disbursement_account_id')->nullable()->constrained('accounts');
+            // Account limits and configuration
+            $table->decimal('min_loan_limit', 15, 2)->default(0)->comment('Minimum loan amount allowed');
+            $table->decimal('max_loan_limit', 15, 2)->nullable()->comment('Maximum loan amount allowed');
+            $table->enum('repayment_frequency_type', ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly'])->default('monthly');
+            
+            // Account status and tracking
+            $table->text('status_notes')->nullable()->comment('Internal notes about account status');
+            $table->timestamp('last_activity_date')->nullable()->comment('Last loan or repayment activity');
+            
+            // Flexible features and audit
+            $table->json('account_features')->nullable()->comment('Account-specific features/settings');
+            $table->json('audit_trail')->nullable()->comment('Track account-level changes');
+            $table->text('remarks')->nullable()->comment('General account remarks');
             
             $table->timestamps();
-
+            
             // Indexes
-            $table->index('loan_product_id');
-            $table->index(['disbursement_date', 'maturity_date']);
-            $table->index('outstanding_balance');
+            $table->index('linked_savings_account');
+            $table->index('last_activity_date');
+            $table->index('current_outstanding');
         });
     }
 

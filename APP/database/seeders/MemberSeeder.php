@@ -5,8 +5,10 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Loan;
+use App\Models\LoanAccount;
 use App\Models\Transaction;
 use App\Models\Share;
+use App\Models\ShareAccount;
 use App\Models\LoanGuarantor;
 use App\Models\LoanRepayment;
 use App\Models\Membership\Membership;
@@ -55,17 +57,41 @@ class MemberSeeder extends Seeder
                     ]);
                 }
 
-                // Create loans
-                $loans = Loan::factory()->count(2)->create(['member_id' => $user->id]);
+                // Create loan account with loans
+                $loanAccount = LoanAccount::factory()->fresh()->create();
+                Account::create([
+                    'account_number' => 'LN' . str_pad($user->id, 8, '0', STR_PAD_LEFT),
+                    'member_id' => $user->id,
+                    'accountable_type' => LoanAccount::class,
+                    'accountable_id' => $loanAccount->id,
+                    'status' => 'active',
+                ]);
                 
-                // Create guarantors for loans
+                $loans = Loan::factory()->count(2)->create([
+                    'member_id' => $user->id,
+                    'loan_account_id' => $loanAccount->id,
+                ]);
+                
+                // Create guarantors and repayments for loans
                 foreach ($loans as $loan) {
                     LoanGuarantor::factory()->count(2)->create(['loan_id' => $loan->id]);
                     LoanRepayment::factory()->count(5)->create(['loan_id' => $loan->id]);
                 }
 
-                // Create shares
-                Share::factory()->count(3)->create(['member_id' => $user->id]);
+                // Create share account with certificates
+                $shareAccount = ShareAccount::factory()->fresh()->create();
+                Account::create([
+                    'account_number' => 'SHR' . str_pad($user->id, 8, '0', STR_PAD_LEFT),
+                    'member_id' => $user->id,
+                    'accountable_type' => ShareAccount::class,
+                    'accountable_id' => $shareAccount->id,
+                    'status' => 'active',
+                ]);
+                
+                Share::factory()->count(3)->create([
+                    'member_id' => $user->id,
+                    'share_account_id' => $shareAccount->id,
+                ]);
             });
 
         User::factory()
@@ -93,15 +119,40 @@ class MemberSeeder extends Seeder
                     ]);
                 }
 
-                // Create loans
-                $loans = Loan::factory()->count(1)->create(['member_id' => $user->id]);
+                // Create loan account with loans
+                $loanAccount = LoanAccount::factory()->fresh()->create();
+                Account::create([
+                    'account_number' => 'LN' . str_pad($user->id, 8, '0', STR_PAD_LEFT),
+                    'member_id' => $user->id,
+                    'accountable_type' => LoanAccount::class,
+                    'accountable_id' => $loanAccount->id,
+                    'status' => 'active',
+                ]);
+                
+                $loans = Loan::factory()->count(1)->create([
+                    'member_id' => $user->id,
+                    'loan_account_id' => $loanAccount->id,
+                ]);
+                
                 foreach ($loans as $loan) {
                     LoanGuarantor::factory()->count(1)->create(['loan_id' => $loan->id]);
                     LoanRepayment::factory()->count(3)->create(['loan_id' => $loan->id]);
                 }
 
-                // Create shares
-                Share::factory()->count(2)->create(['member_id' => $user->id]);
+                // Create share account with certificates
+                $shareAccount = ShareAccount::factory()->fresh()->create();
+                Account::create([
+                    'account_number' => 'SHR' . str_pad($user->id, 8, '0', STR_PAD_LEFT),
+                    'member_id' => $user->id,
+                    'accountable_type' => ShareAccount::class,
+                    'accountable_id' => $shareAccount->id,
+                    'status' => 'active',
+                ]);
+                
+                Share::factory()->count(2)->create([
+                    'member_id' => $user->id,
+                    'share_account_id' => $shareAccount->id,
+                ]);
             });
 
         // Create some members with minimal data
@@ -125,8 +176,20 @@ class MemberSeeder extends Seeder
                     'account_id' => $account->id,
                 ]);
 
-                // Create shares
-                Share::factory()->count(1)->create(['member_id' => $user->id]);
+                // Create share account with certificate
+                $shareAccount = ShareAccount::factory()->fresh()->create();
+                Account::create([
+                    'account_number' => 'SHR' . str_pad($user->id, 8, '0', STR_PAD_LEFT),
+                    'member_id' => $user->id,
+                    'accountable_type' => ShareAccount::class,
+                    'accountable_id' => $shareAccount->id,
+                    'status' => 'active',
+                ]);
+                
+                Share::factory()->count(1)->create([
+                    'member_id' => $user->id,
+                    'share_account_id' => $shareAccount->id,
+                ]);
             });
     }
 }

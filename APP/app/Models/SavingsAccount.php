@@ -20,7 +20,6 @@ class SavingsAccount extends Model
         'interest_rate',
         'last_interest_calculation',
         'maturity_date',
-        'last_transaction_date',
     ];
 
     protected $casts = [
@@ -31,7 +30,6 @@ class SavingsAccount extends Model
         'interest_rate' => 'decimal:2',
         'last_interest_calculation' => 'date',
         'maturity_date' => 'date',
-        'last_transaction_date' => 'datetime',
     ];
 
     /**

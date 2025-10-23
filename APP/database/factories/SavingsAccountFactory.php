@@ -23,7 +23,6 @@ class SavingsAccountFactory extends Factory
             'interest_rate' => $this->faker->randomFloat(2, 5, 15),
             'last_interest_calculation' => $this->faker->optional()->dateTimeBetween('-1 year'),
             'maturity_date' => $this->faker->optional()->dateTimeBetween('+1 month', '+2 years'),
-            'last_transaction_date' => $this->faker->optional()->dateTimeBetween('-3 months'),
         ];
     }
 

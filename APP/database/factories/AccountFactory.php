@@ -34,6 +34,7 @@ class AccountFactory extends Factory
             'closure_reason' => $status === 'closed' ? $this->faker->sentence() : null,
             'closed_at' => $status === 'closed' ? now() : null,
             'closed_by' => $status === 'closed' ? User::factory() : null,
+            'last_transaction_date' => $this->faker->optional()->dateTimeBetween('-3 months'),
         ];
     }
 
