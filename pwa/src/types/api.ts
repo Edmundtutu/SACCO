@@ -171,8 +171,9 @@ export interface SavingsAccount {
 export interface SavingsProduct {
   id: number;
   name: string;
+  code: string;
   description: string;
-  type: 'compulsory' | 'voluntary' | 'fixed_deposit' | 'target';
+  type: 'compulsory' | 'voluntary' | 'fixed_deposit' | 'special';
   minimum_balance: number;
   maximum_balance?: number;
   interest_rate: number;

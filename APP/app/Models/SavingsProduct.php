@@ -45,7 +45,7 @@ class SavingsProduct extends Model
      */
     public function accounts(): HasMany
     {
-        return $this->hasMany(Account::class);
+        return $this->hasMany(SavingsAccount::class);
     }
 
     /**

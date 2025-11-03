@@ -244,7 +244,7 @@
                                         </div>
                                         <div class="col-6 text-end">
                                             <small class="text-muted d-block">Product</small>
-                                            <strong>{{ $account->savingsProduct->name ?? 'N/A' }}</strong>
+                                            <strong>{{ $account->accountable->savingsProduct->name ?? 'N/A' }}</strong>
                                         </div>
                                     </div>
                                 </div>

@@ -48,7 +48,7 @@
                                 Total Savings
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                UGX {{ number_format(\App\Models\Account::sum('balance')) }}
+                                UGX {{ number_format(\App\Models\SavingsAccount::sum('balance')) }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -277,10 +277,10 @@
                 </div>
                 <div class="card-body">
                     @php
-                        $totalSavings = \App\Models\Account::sum('balance');
-                        $totalLoans = \App\Models\Loan::where('status', 'active')->sum('outstanding_balance');
-                        $totalShares = \App\Models\Share::sum('total_value');
-                        $todayTransactions = \App\Models\Transaction::whereDate('created_at', today())->sum('amount');
+                        $totalSavings = $stats['total_savings'];
+                        $totalLoans = $stats['total_loans'];
+                        $totalShares = $stats['total_shares'];
+                        $todayTransactions = $stats['today_transactions'];
                     @endphp
                     
                     <div class="mb-3">

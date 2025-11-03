@@ -1,8 +1,0 @@
->>Accounts type enhancement: 
-  Due to variations in the types of accounts (savings, loans, shares),
-  we need to adapt the accounts creation to a robust way of handling different account types.
->> Aproach: 
-    1. Create migrations for the different indiviaul type entities i.e. savings_account table, loan_account table, share_account table, etc.
-    2. Add a morphmany relationship on the account model to be linked to the different account types.
-    3. Make sure to update the account creation process to handle the different account types.
-    4. Apprehend the changes through out all dependencies including the factories and seeders!

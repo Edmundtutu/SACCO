@@ -28,7 +28,7 @@ class SavingsController extends Controller
     {
         try {
             $user = auth()->user();
-            $accounts = $user->accounts()->with('savingsProduct')->get();
+            $accounts = $user->accounts()->with('accountable')->get();
 
             return response()->json([
                 'success' => true,

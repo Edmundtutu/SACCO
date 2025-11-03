@@ -34,12 +34,16 @@ export function Dashboard() {
   const [walletWithdrawOpen, setWalletWithdrawOpen] = useState(false);
 
   // Find wallet account
-  const walletAccount = accounts.find(acc => acc.savings_product?.type === 'wallet');
+  const walletAccount = accounts.find(acc => acc.savings_product?.code === 'WL001'); // wallet product code
 
   useEffect(() => {
     dispatch(fetchSavingsAccounts());
     dispatch(fetchLoans());
     dispatch(fetchShares());
+    // if wallet account is not found, log console error
+    if (!walletAccount) {
+      console.error('Wallet account not found');
+    }
     // Fetch recent transactions for dashboard
     if (user?.id) {
       dispatch(fetchTransactionHistory({

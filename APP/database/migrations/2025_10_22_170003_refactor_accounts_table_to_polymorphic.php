@@ -15,6 +15,11 @@ return new class extends Migration
     {
         Schema::table('accounts', function (Blueprint $table) {
             // Drop old savings-specific fields (we'll move these to savings_accounts)
+             // 1. Drop the foreign key constraint
+            $table->dropForeign(['savings_product_id']); 
+
+            // 2. Drop the index
+            $table->dropIndex('accounts_savings_product_id_status_index');
             $table->dropColumn([
                 'savings_product_id',
                 'balance',

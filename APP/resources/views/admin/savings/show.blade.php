@@ -168,7 +168,7 @@
                     <h1 class="mb-1">
                         <i class="bi bi-bank2"></i> {{ $account->account_number }}
                     </h1>
-                    <p class="mb-0 opacity-75">{{ $account->savingsProduct->name ?? 'Savings Account' }}</p>
+                    <p class="mb-0 opacity-75">{{ $account->accountable->savingsProduct->name ?? 'Savings Account' }}</p>
                 </div>
             </div>
         </div>
@@ -261,26 +261,26 @@
             </div>
             <div class="info-row">
                 <div class="row">
-                    <div class="col-6"><strong>Account Type:</strong></div>
-                    <div class="col-6 text-end">{{ ucfirst($account->account_type) }}</div>
+                    <div class="col-6 text-nowrap"><strong>Account Type:</strong></div>
+                <div class="col-6 text-end">{{ ucfirst($account->getAccountTypeAttribute()) }}</div>
                 </div>
             </div>
             <div class="info-row">
                 <div class="row">
                     <div class="col-6"><strong>Savings Product:</strong></div>
-                    <div class="col-6 text-end">{{ $account->savingsProduct->name ?? 'N/A' }}</div>
+                    <div class="col-6 text-nowrap">{{ $account->accountable->savingsProduct->name ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="info-row">
                 <div class="row">
                     <div class="col-6"><strong>Product Code:</strong></div>
-                    <div class="col-6 text-end">{{ $account->savingsProduct->code ?? 'N/A' }}</div>
+                    <div class="col-6 text-end">{{ $account->accountable->savingsProduct->code ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="info-row">
                 <div class="row">
                     <div class="col-6"><strong>Interest Rate:</strong></div>
-                    <div class="col-6 text-end text-success fw-bold">{{ number_format($account->savingsProduct->interest_rate ?? 0, 2) }}%</div>
+                    <div class="col-6 text-end text-success fw-bold">{{ number_format($account->accountable->savingsProduct->interest_rate ?? 0, 2) }}%</div>
                 </div>
             </div>
             <div class="info-row">

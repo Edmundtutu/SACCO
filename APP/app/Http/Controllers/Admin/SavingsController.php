@@ -2,25 +2,28 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Transaction;
-use App\Models\SavingsProduct;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\SavingsAccount;
+use App\Models\SavingsProduct;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class SavingsController extends Controller
 {
     public function index()
     {
         $stats = [
-            'total_accounts' => Account::where('account_type', 'savings')->count(),
-            'total_balance' => Account::where('account_type', 'savings')->sum('balance'),
-            'active_accounts' => Account::where('account_type', 'savings')->where('status', 'active')->count(),
+            'total_accounts' => Account::where('accountable_type', SavingsAccount::class)->count(), // returns all account with in all saving products type [wallet, compulsory, voluntary, fixed_deposit, special]
+            'total_balance' => SavingsAccount::whereHas('savingsProduct', function ($qn) {
+                $qn->whereIn('type', ['compulsory', 'voluntary', 'fixed_deposit']);
+            })->sum('balance'),
+            'active_accounts' => Account::where('accountable_type', SavingsAccount::class)->where('status', 'active')->count(),
             'recent_transactions' => Transaction::with(['account.member'])
                 ->whereHas('account', function ($q) {
-                    $q->where('account_type', 'savings');
+                    $q->where('accountable_type', SavingsAccount::class);
                 })
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
@@ -37,8 +40,14 @@ class SavingsController extends Controller
 
     public function accounts(Request $request)
     {
-        $query = Account::where('account_type', 'savings')->with(['member', 'savingsProduct']);
-
+        // $query = Account::where('accountable_type', SavingsAccount::class)->with(['member', 'accountable.savingsProduct']); // this query extrats even Wallet accounts.
+        $query = Account::where('accountable_type', SavingsAccount::class)
+            ->whereHasMorph('accountable', [SavingsAccount::class], function ($query) {
+                $query->whereHas('savingsProduct', function ($q) {
+                    $q->where('code', '!=', 'WL001');
+                });
+            })
+            ->with(['member', 'accountable.savingsProduct']);
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -52,7 +61,7 @@ class SavingsController extends Controller
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
-        
+
         $accounts = $query->orderBy('created_at', 'desc')->paginate(20);
 
         $breadcrumbs = [
@@ -66,11 +75,16 @@ class SavingsController extends Controller
 
     public function showAccount($id)
     {
-        $account = Account::where('account_type', 'savings')
-            ->with(['member', 'transactions' => function ($q) {
-                $q->orderBy('created_at', 'desc');
-            }, 'savingsProduct'])
+        $account = Account::where('accountable_type', SavingsAccount::class)
+            ->with([
+                'member',
+                'transactions' => function ($q) {
+                    $q->orderBy('created_at', 'desc');
+                },
+                'accountable.savingsProduct'
+            ])
             ->findOrFail($id);
+
 
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
@@ -84,9 +98,20 @@ class SavingsController extends Controller
 
     public function transactions(Request $request)
     {
+        // $query = Transaction::with(['account.member'])
+        //     ->whereHas('account', function ($q) {
+        //         $q->where('accountable_type', SavingsAccount::class); // this query extrats even Wallet accounts.
+        //     });
+        
+        // Tis query version excludes tranasctions made for the wallet accounts.
         $query = Transaction::with(['account.member'])
             ->whereHas('account', function ($q) {
-                $q->where('account_type', 'savings');
+                $q->where('accountable_type', SavingsAccount::class)
+                    ->whereHasMorph('accountable', [SavingsAccount::class], function ($sq) {
+                        $sq->whereHas('savingsProduct', function ($p) {
+                            $p->where('code', '!=', 'WL001');
+                        });
+                    });
             });
 
         // Date filter
