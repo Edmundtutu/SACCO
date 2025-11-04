@@ -18,7 +18,13 @@ class MemberSavingsAccountsSeeder extends Seeder
      */
     public function run()
     {
-        $wallet = SavingsProduct::where(['type' => 'special', 'code' => 'WL001'])->first(); // wallet produt
+        // Find wallet product - supports both 'wallet' and 'special' types for backward compatibility
+        $wallet = SavingsProduct::where('code', 'WL001')
+            ->where(function($q) {
+                $q->where('type', 'wallet')
+                  ->orWhere('type', 'special');
+            })
+            ->first(); // wallet product
         $members = User::where('role', 'member')->get();
 
         if (!$wallet || !$members) {

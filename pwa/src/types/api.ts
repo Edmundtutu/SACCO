@@ -197,7 +197,7 @@ export interface SavingsProduct {
   name: string;
   code: string;
   description: string;
-  type: 'compulsory' | 'voluntary' | 'fixed_deposit' | 'special';
+  type: 'compulsory' | 'voluntary' | 'fixed_deposit' | 'wallet' | 'special';
   minimum_balance: number;
   maximum_balance?: number;
   interest_rate: number;

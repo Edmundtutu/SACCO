@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Models\SavingsAccount;
 use App\Models\LoanAccount;
 use App\Models\ShareAccount;
 use Illuminate\Http\Request;
+use App\Models\SavingsAccount;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 /**
  * Handles polymorphic Account operations
@@ -27,7 +28,10 @@ class AccountsController extends Controller
             $type = $request->query('type'); // savings, loan, share
             $status = $request->query('status'); // active, dormant, closed, suspended
 
-            $query = $user->accounts()->with('accountable');
+            $query = Account::where('member_id', $user->id)->with([
+                'accountable',
+                'accountable.savingsProduct' // Eager load savings product for wallet detection
+            ]);
 
             // Filter by accountable type
             if ($type) {
@@ -57,7 +61,7 @@ class AccountsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error fetching accounts: ' . $e->getMessage());
+            Log::error('Error fetching accounts: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -75,7 +79,10 @@ class AccountsController extends Controller
         try {
             $user = auth()->user();
             
-            $account = Account::with('accountable')
+            $account = Account::with([
+                'accountable',
+                'accountable.savingsProduct' // Eager load savings product for wallet detection
+            ])
                 ->where('member_id', $user->id)
                 ->findOrFail($accountId);
 
@@ -102,7 +109,10 @@ class AccountsController extends Controller
             $user = auth()->user();
             
             // Get all accounts with their accountable relationships
-            $savingsAccounts = Account::with('accountable')
+            $savingsAccounts = Account::with([
+                'accountable',
+                'accountable.savingsProduct' // Eager load savings product for wallet detection
+            ])
                 ->where('member_id', $user->id)
                 ->where('accountable_type', SavingsAccount::class)
                 ->get();
@@ -137,7 +147,7 @@ class AccountsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error fetching account summary: ' . $e->getMessage());
+            Log::error('Error fetching account summary: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,

@@ -217,10 +217,10 @@ class WalletTransactionController extends Controller
     public function balance(Request $request, int $accountId): JsonResponse
     {
         try {
-            $account = Account::with('savingsProduct')->findOrFail($accountId);
+            $account = Account::with('accountable.savingsProduct')->findOrFail($accountId);
 
             // Verify it's a wallet account
-            if ($account->savingsProduct && $account->savingsProduct->type !== 'wallet') {
+            if (!$account->isWalletAccount()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This is not a wallet account',
@@ -242,7 +242,7 @@ class WalletTransactionController extends Controller
                 'data' => [
                     'account_id' => $account->id,
                     'account_number' => $account->account_number,
-                    'balance' => $account->balance,
+                    'balance' => $account->accountable->balance ?? 0,
                     'available_balance' => $availableBalance,
                     'last_transaction_date' => $account->last_transaction_date,
                 ],
@@ -263,10 +263,10 @@ class WalletTransactionController extends Controller
     public function history(Request $request, int $accountId): JsonResponse
     {
         try {
-            $account = Account::with('savingsProduct')->findOrFail($accountId);
+            $account = Account::with('accountable.savingsProduct')->findOrFail($accountId);
 
             // Verify it's a wallet account
-            if ($account->savingsProduct && $account->savingsProduct->type !== 'wallet') {
+            if (!$account->isWalletAccount()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This is not a wallet account',

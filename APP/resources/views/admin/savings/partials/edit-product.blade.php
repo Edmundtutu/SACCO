@@ -88,8 +88,9 @@
                                     <option value="fixed_deposit"
                                         {{ old('type', $product->type) == 'fixed_deposit' ? 'selected' : '' }}>Fixed
                                         Deposit</option>
+                                    {{-- 'special' kept for backward compatibility only - use 'wallet' for new products --}}
                                     <option value="special"
-                                        {{ old('type', $product->type) == 'special' ? 'selected' : '' }}>Special</option>
+                                        {{ old('type', $product->type) == 'special' ? 'selected' : '' }}>Special (Deprecated - Use Wallet)</option>
                                 </select>
                                 @error('type')
                                     <div class="invalid-feedback">{{ $message }}</div>

@@ -612,6 +612,68 @@ class MembersController extends Controller
                 'opening_date' => now(),
             ]);
 
+            // 4. CREATE WALLET ACCOUNT (Digital wallet for transactions)
+            // Check if member already has a wallet account
+            $existingWalletAccount = Account::where('member_id', $member->id)
+                ->where('accountable_type', SavingsAccount::class)
+                ->whereHasMorph('accountable', [SavingsAccount::class], function($q) {
+                    $q->whereHas('savingsProduct', function($q2) {
+                        $q2->where('code', 'WL001');
+                    });
+                })
+                ->first();
+
+            if (!$existingWalletAccount) {
+                // Find or create wallet product (WL001)
+                $walletProduct = SavingsProduct::where('code', 'WL001')
+                    ->where(function($q) {
+                        $q->where('type', 'wallet')
+                          ->orWhere('type', 'special');
+                    })
+                    ->first();
+
+                if (!$walletProduct) {
+                    // Create wallet product if it doesn't exist
+                    $walletProduct = SavingsProduct::create([
+                        'name' => 'Member Wallet',
+                        'code' => 'WL001',
+                        'description' => 'Digital wallet for member transactions',
+                        'type' => 'wallet',
+                        'minimum_balance' => 0,
+                        'maximum_balance' => null,
+                        'interest_rate' => 0.00,
+                        'interest_calculation' => 'simple',
+                        'interest_payment_frequency' => 'annually',
+                        'minimum_monthly_contribution' => null,
+                        'maturity_period_months' => null,
+                        'withdrawal_fee' => 0,
+                        'allow_partial_withdrawals' => true,
+                        'minimum_notice_days' => 0,
+                        'is_active' => true,
+                    ]);
+                }
+
+                $walletSavingsAccount = SavingsAccount::create([
+                    'savings_product_id' => $walletProduct->id,
+                    'balance' => 0,
+                    'available_balance' => 0,
+                    'minimum_balance' => 0,
+                    'interest_earned' => 0,
+                    'interest_rate' => 0,
+                ]);
+
+                $walletAccountRecord = Account::create([
+                    'member_id' => $member->id,
+                    'accountable_type' => SavingsAccount::class,
+                    'accountable_id' => $walletSavingsAccount->id,
+                    'status' => 'active',
+                    'opening_date' => now(),
+                ]);
+            } else {
+                // Use existing wallet account
+                $walletAccountRecord = $existingWalletAccount;
+            }
+
             // Update user status
             $member->update([
                 'status' => 'active',
@@ -626,6 +688,7 @@ class MembersController extends Controller
                     'savings' => $savingsAccountRecord->account_number,
                     'loan' => $loanAccountRecord->account_number,
                     'share' => $shareAccountRecord->account_number,
+                    'wallet' => $walletAccountRecord->account_number,
                 ]
             ]);
 

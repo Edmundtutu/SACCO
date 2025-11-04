@@ -169,4 +169,59 @@ class Account extends Model
 
         return $query;
     }
+
+    /**
+     * Check if this is a wallet account
+     */
+    public function isWalletAccount(): bool
+    {
+        if (!$this->isSavingsAccount()) {
+            return false;
+        }
+        
+        $savingsAccount = $this->accountable;
+        if (!$savingsAccount || !$savingsAccount->savingsProduct) {
+            return false;
+        }
+        
+        return $savingsAccount->savingsProduct->code === 'WL001' || 
+               $savingsAccount->savingsProduct->type === 'wallet';
+    }
+
+    /**
+     * Get wallet balance (if wallet account)
+     */
+    public function getWalletBalance(): ?float
+    {
+        if (!$this->isWalletAccount()) {
+            return null;
+        }
+        
+        return $this->accountable->balance ?? 0;
+    }
+
+    /**
+     * Get savings product (if savings account)
+     */
+    public function getSavingsProduct()
+    {
+        if (!$this->isSavingsAccount()) {
+            return null;
+        }
+        
+        return $this->accountable->savingsProduct ?? null;
+    }
+
+    /**
+     * Scope: Get wallet accounts only
+     */
+    public function scopeWalletAccounts($query)
+    {
+        return $query->whereHasMorph('accountable', [SavingsAccount::class], function($q) {
+            $q->whereHas('savingsProduct', function($q2) {
+                $q2->where('code', 'WL001')
+                   ->orWhere('type', 'wallet');
+            });
+        });
+    }
 }

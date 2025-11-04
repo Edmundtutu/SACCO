@@ -233,11 +233,11 @@
             <div class="card-body position-relative">
                 <!-- Product Type Badge -->
                 <span class="badge product-type-badge 
-                    {{ $product->type == 'special' ? 'bg-warning' : '' }}
+                    {{ ($product->code === 'WL001' || $product->type === 'wallet' || $product->type === 'special') ? 'bg-warning' : '' }}
                     {{ $product->type == 'compulsory' ? 'bg-primary' : '' }}
                     {{ $product->type == 'voluntary' ? 'bg-success' : '' }}
                     {{ $product->type == 'fixed_deposit' ? 'bg-info' : '' }}
-                    {{ !in_array($product->type, ['wallet', 'compulsory', 'voluntary', 'fixed_deposit']) ? 'bg-secondary' : '' }}">
+                    {{ !in_array($product->type, ['wallet', 'special', 'compulsory', 'voluntary', 'fixed_deposit']) ? 'bg-secondary' : '' }}">
                     {{ ucfirst(str_replace('_', ' ', $product->type)) }}
                 </span>
 

@@ -28,7 +28,10 @@ class SavingsController extends Controller
     {
         try {
             $user = auth()->user();
-            $accounts = $user->accounts()->with('accountable')->get();
+            $accounts = Account::where('member_id', $user->id)->with([
+                'accountable',
+                'accountable.savingsProduct' // Eager load savings product for wallet detection
+            ])->get();
 
             return response()->json([
                 'success' => true,

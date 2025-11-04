@@ -18,7 +18,7 @@ class WalletTransactionHandler implements TransactionHandlerInterface
     public function validate(TransactionDTO $transactionData): void
     {
         // Verify account exists and is a wallet account
-        $account = Account::find($transactionData->accountId);
+        $account = Account::with('accountable.savingsProduct')->find($transactionData->accountId);
         
         if (!$account) {
             throw new InvalidTransactionException("Account not found");
@@ -28,16 +28,22 @@ class WalletTransactionHandler implements TransactionHandlerInterface
             throw new InvalidTransactionException("Account is not active");
         }
 
+        // Verify it's a savings account first
+        if (!$account->isSavingsAccount()) {
+            throw new InvalidTransactionException("Account is not a savings account");
+        }
+
         // Verify it's a wallet account
-        if ($account->savingsProduct && $account->savingsProduct->type !== 'wallet') {
+        if (!$account->isWalletAccount()) {
             throw new InvalidTransactionException("This is not a wallet account");
         }
 
         // For withdrawals and transfers, check sufficient balance
         if (in_array($transactionData->type, ['wallet_withdrawal', 'wallet_to_savings', 'wallet_to_loan'])) {
-            if ($account->balance < $transactionData->amount) {
+            $walletBalance = $account->accountable->balance ?? 0;
+            if ($walletBalance < $transactionData->amount) {
                 throw new InsufficientBalanceException(
-                    "Insufficient wallet balance. Available: {$account->balance}, Requested: {$transactionData->amount}"
+                    "Insufficient wallet balance. Available: {$walletBalance}, Requested: {$transactionData->amount}"
                 );
             }
         }

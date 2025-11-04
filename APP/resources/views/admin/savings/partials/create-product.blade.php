@@ -72,13 +72,16 @@
                             <select class="form-select @error('type') is-invalid @enderror" id="type"
                                 name="type" required>
                                 <option value="">Select Type</option>
+                                <option value="wallet" {{ old('type') == 'wallet' ? 'selected' : '' }}>
+                                    Wallet</option>
                                 <option value="compulsory" {{ old('type') == 'compulsory' ? 'selected' : '' }}>
                                     Compulsory</option>
                                 <option value="voluntary" {{ old('type') == 'voluntary' ? 'selected' : '' }}>Voluntary
                                 </option>
                                 <option value="fixed_deposit" {{ old('type') == 'fixed_deposit' ? 'selected' : '' }}>
                                     Fixed Deposit</option>
-                                <option value="special" {{ old('type') == 'special' ? 'selected' : '' }}>Special
+                                {{-- 'special' kept for backward compatibility only - use 'wallet' for new products --}}
+                                <option value="special" {{ old('type') == 'special' ? 'selected' : '' }}>Special (Deprecated - Use Wallet)
                                 </option>
                             </select>
                             @error('type')

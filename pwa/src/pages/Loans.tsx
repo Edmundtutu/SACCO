@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchLoans, fetchLoanProducts } from '@/store/loansSlice';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
+import { findWalletAccount } from '@/utils/accountHelpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,8 +38,8 @@ export default function Loans() {
   const [walletPaymentModalOpen, setWalletPaymentModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<any>(null);
 
-  // Find wallet account
-  const walletAccount = accounts.find(acc => acc.savings_product?.type === 'wallet');
+  // Find wallet account using standardized helper
+  const walletAccount = findWalletAccount(accounts);
 
   useEffect(() => {
     dispatch(fetchLoans());
