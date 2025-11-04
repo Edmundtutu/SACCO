@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
+import type { Account } from '@/types/api';
+import { 
+  getTotalSavingsBalance, 
+  getTotalAvailableBalance, 
+  getTotalInterestEarned
+} from '@/utils/accountHelpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,16 +34,6 @@ export default function Savings() {
   const { user } = useSelector((state: RootState) => state.auth);
   const { accounts = [], loading } = useSelector((state: RootState) => state.savings);
   
-  const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
-  
-  const [depositModalOpen, setDepositModalOpen] = useState(false);
-  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<any>(null);
-
-  useEffect(() => {
-    dispatch(fetchSavingsAccounts());
-  }, [dispatch]);
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
       style: 'currency',
@@ -46,9 +42,18 @@ export default function Savings() {
     }).format(amount);
   };
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
-  const totalAvailableBalance = accounts.reduce((sum, account) => sum + account.available_balance, 0);
-  const totalInterestEarned = accounts.reduce((sum, account) => sum + (account.interest_earned || 0), 0);
+  // Use helper functions to calculate totals from polymorphic accounts
+  const totalBalance = getTotalSavingsBalance(accounts);
+  const totalAvailableBalance = getTotalAvailableBalance(accounts);
+  const totalInterestEarned = getTotalInterestEarned(accounts);
+
+  const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchSavingsAccounts());
+  }, [dispatch]);
 
   return (
     <>

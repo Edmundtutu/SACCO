@@ -13,6 +13,10 @@ use App\Models\Membership\IndividualProfile;
 use App\Models\User;
 use App\Models\Membership\VslaProfile;
 use App\Models\Account;
+use App\Models\SavingsAccount;
+use App\Models\LoanAccount;
+use App\Models\ShareAccount;
+use App\Models\SavingsProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -511,29 +515,126 @@ class MembersController extends Controller
 
         $member = $membership->user;
 
-        $membership->update([
-            'approved_by_level_3' => auth()->id(),
-            'approved_at_level_3' => now(),
-            'approval_status' => 'approved', // Final approval
-        ]);
+        DB::beginTransaction();
+        try {
+            // Update membership status
+            $membership->update([
+                'approved_by_level_3' => auth()->id(),
+                'approved_at_level_3' => now(),
+                'approval_status' => 'approved', // Final approval
+            ]);
 
-        // assign user an account
-        $new_account = Account::create([
-            'member_id' => $member->id, // Use member_id instead of user_id
-            'account_number' => 'SAV' . str_pad($member->id, 6, '0', STR_PAD_LEFT),
-            'account_type' => 'savings',
-            'savings_product_id' => 1, // Default savings product
-            'balance' => 0,
-            'status' => 'active',
-        ]);
-        
-        // now update the status of the user.
-        $member->update([
-            'status' => 'active',
-            'account_verified_at' => now(),
-        ]);
+            // Get default savings product (or create one if none exists)
+            $defaultSavingsProduct = SavingsProduct::where('type', 'compulsory')
+                ->where('is_active', true)
+                ->first();
 
-        return response()->json(['message' => 'Membership fully approved with account number: ' . $new_account->account_number]);
+            if (!$defaultSavingsProduct) {
+                // Create a default compulsory savings product if none exists
+                $defaultSavingsProduct = SavingsProduct::create([
+                    'name' => 'Compulsory Savings',
+                    'type' => 'compulsory',
+                    'minimum_balance' => 10000,
+                    'interest_rate' => 5.0,
+                    'is_active' => true,
+                ]);
+            }
+
+            // ==========================================
+            // CREATE POLYMORPHIC ACCOUNTS (New Architecture)
+            // ==========================================
+
+            // 1. CREATE SAVINGS ACCOUNT (Compulsory)
+            $savingsAccount = SavingsAccount::create([
+                'savings_product_id' => $defaultSavingsProduct->id,
+                'balance' => 0,
+                'available_balance' => 0,
+                'minimum_balance' => $defaultSavingsProduct->minimum_balance ?? 0,
+                'interest_earned' => 0,
+                'interest_rate' => $defaultSavingsProduct->interest_rate ?? 0,
+            ]);
+
+            $savingsAccountRecord = Account::create([
+                'member_id' => $member->id,
+                'accountable_type' => SavingsAccount::class,
+                'accountable_id' => $savingsAccount->id,
+                'status' => 'active',
+                'opening_date' => now(),
+            ]);
+
+            // 2. CREATE LOAN ACCOUNT (Pre-configured for future loans)
+            $loanAccount = LoanAccount::create([
+                'total_disbursed_amount' => 0,
+                'total_repaid_amount' => 0,
+                'current_outstanding' => 0,
+                'min_loan_limit' => 10000,
+                'max_loan_limit' => 500000,
+                'repayment_frequency_type' => 'monthly',
+                'account_features' => [
+                    'auto_debit' => false,
+                    'sms_alerts' => true,
+                ],
+            ]);
+
+            $loanAccountRecord = Account::create([
+                'member_id' => $member->id,
+                'accountable_type' => LoanAccount::class,
+                'accountable_id' => $loanAccount->id,
+                'status' => 'active',
+                'opening_date' => now(),
+            ]);
+
+            // 3. CREATE SHARE ACCOUNT (Pre-configured for share purchases)
+            $shareAccount = ShareAccount::create([
+                'share_units' => 0,
+                'share_price' => config('sacco.share_value', 1000),
+                'total_share_value' => 0,
+                'dividends_earned' => 0,
+                'dividends_pending' => 0,
+                'dividends_paid' => 0,
+                'account_class' => 'ordinary',
+                'locked_shares' => 0,
+                'membership_fee_paid' => false,
+                'bonus_shares_earned' => 0,
+                'min_balance_required' => 1,
+                'max_balance_limit' => null,
+                'account_features' => [
+                    'dividend_reinvestment' => false,
+                    'transfer_allowed' => true,
+                ],
+            ]);
+
+            $shareAccountRecord = Account::create([
+                'member_id' => $member->id,
+                'accountable_type' => ShareAccount::class,
+                'accountable_id' => $shareAccount->id,
+                'status' => 'active',
+                'opening_date' => now(),
+            ]);
+
+            // Update user status
+            $member->update([
+                'status' => 'active',
+                'account_verified_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Membership fully approved. All accounts created successfully.',
+                'accounts' => [
+                    'savings' => $savingsAccountRecord->account_number,
+                    'loan' => $loanAccountRecord->account_number,
+                    'share' => $shareAccountRecord->account_number,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to approve membership: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function suspend($id)

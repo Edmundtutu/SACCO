@@ -6,6 +6,7 @@ use App\DTOs\LedgerEntryDTO;
 use App\DTOs\TransactionDTO;
 use App\Exceptions\InvalidTransactionException;
 use App\Models\Loan;
+use App\Models\LoanAccount;
 use App\Models\Transaction;
 
 class LoanDisbursementHandler implements TransactionHandlerInterface
@@ -13,9 +14,17 @@ class LoanDisbursementHandler implements TransactionHandlerInterface
     public function validate(TransactionDTO $transactionData): void
     {
         // Verify loan exists and is approved
-        $loan = Loan::find($transactionData->relatedLoanId);
+        $loan = Loan::with('loanAccount')->find($transactionData->relatedLoanId);
         if (!$loan) {
             throw new InvalidTransactionException("Loan not found");
+        }
+
+        // ✅ ENFORCE: Loan must have a LoanAccount
+        if (!$loan->loan_account_id || !$loan->loanAccount) {
+            throw new InvalidTransactionException(
+                "Loan #{$loan->id} is not linked to a loan account. "
+                . "This loan was created incorrectly. Please contact administrator."
+            );
         }
 
         if ($loan->status !== 'approved') {
@@ -35,13 +44,22 @@ class LoanDisbursementHandler implements TransactionHandlerInterface
 
     public function execute(Transaction $transaction, TransactionDTO $transactionData): void
     {
+        // Get loan with account relationship
+        $loan = Loan::with('loanAccount')->find($transactionData->relatedLoanId);
+        
         // Update loan status to disbursed
-        $loan = Loan::find($transactionData->relatedLoanId);
         $loan->update([
             'status' => 'disbursed',
             'disbursement_date' => now(),
-            'outstanding_balance' => $loan->principal_amount
+            'outstanding_balance' => $loan->principal_amount,
+            'principal_balance' => $loan->principal_amount,
+            'disbursed_by' => auth()->id() ?? null,
         ]);
+
+        // ✅ UPDATE LOAN ACCOUNT AGGREGATES
+        if ($loan->loanAccount) {
+            $loan->loanAccount->recordDisbursement($loan->principal_amount);
+        }
     }
 
     public function getAccountingEntries(Transaction $transaction, TransactionDTO $transactionData): array

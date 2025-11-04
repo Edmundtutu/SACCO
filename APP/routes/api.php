@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Transactions\WalletTransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AccountsController;
 use App\Http\Controllers\Api\SavingsController;
 use App\Http\Controllers\Api\LoansController;
 use App\Http\Controllers\Api\SharesController;
@@ -41,6 +42,14 @@ Route::group(['prefix' => 'auth'], function () {
 
 // Protected routes (require authentication)
 Route::group(['middleware' => 'auth:api'], function () {
+
+    // Polymorphic Accounts (supports ?type=savings|loan|share)
+    Route::group(['prefix' => 'accounts'], function () {
+        Route::get('/', [AccountsController::class, 'index']);
+        Route::get('summary', [AccountsController::class, 'summary']);
+        Route::get('{accountId}', [AccountsController::class, 'show']);
+        Route::get('{accountId}/transactions', [AccountsController::class, 'transactions']);
+    });
 
     // Savings & Accounts
     Route::group(['prefix' => 'savings'], function () {

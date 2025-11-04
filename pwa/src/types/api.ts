@@ -19,6 +19,8 @@ export interface User {
   updated_at?: string;
   membership?: Membership;
   profile?: IndividualProfile | VslaProfile | MfiProfile;
+  // Computed/derived fields (may be added by backend)
+  member_number?: string;
 }
 
 export interface Membership {
@@ -152,20 +154,42 @@ export interface ProfileUpdateData {
   bank_account_number?: string;
 }
 
+// Account Types (Polymorphic Structure)
+export interface Account {
+  id: number;
+  member_id: number;
+  account_number: string;
+  accountable_type: 'App\\Models\\SavingsAccount' | 'App\\Models\\LoanAccount' | 'App\\Models\\ShareAccount';
+  accountable_id: number;
+  status: 'active' | 'dormant' | 'closed' | 'suspended';
+  opening_date: string;
+  closing_date?: string;
+  created_at: string;
+  updated_at?: string;
+  accountable?: SavingsAccount | LoanAccount | ShareAccount;
+  member?: User;
+}
+
 // Savings Types
 export interface SavingsAccount {
   id: number;
-  account_number: string;
+  savings_product_id: number;
   balance: number;
   available_balance: number;
   minimum_balance: number;
+  maximum_balance?: number;
   interest_earned: number;
-  interest_rate: number;
-  status: 'active' | 'dormant' | 'closed';
   last_transaction_date?: string;
+  last_interest_date?: string;
   maturity_date?: string;
+  withdrawal_limit_daily?: number;
+  withdrawal_limit_monthly?: number;
+  overdraft_limit?: number;
+  account_features?: Record<string, any>;
   created_at: string;
-  savings_product: SavingsProduct;
+  updated_at?: string;
+  savings_product?: SavingsProduct;
+  account?: Account;
 }
 
 export interface SavingsProduct {
@@ -215,10 +239,27 @@ export interface Transaction {
   created_at: string;
   updated_at?: string;
   member?: User;
-  account?: SavingsAccount;
+  account?: Account;
   loan?: Loan;
   processedBy?: User;
   reversedBy?: User;
+}
+
+// Loan Account Type
+export interface LoanAccount {
+  id: number;
+  total_disbursed_amount: number;
+  total_repaid_amount: number;
+  current_outstanding: number;
+  min_loan_limit: number;
+  max_loan_limit: number;
+  last_activity_date?: string;
+  repayment_frequency_type?: string;
+  account_features?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  loans?: Loan[];
+  account?: Account;
 }
 
 // Loans Types
@@ -226,6 +267,7 @@ export interface Loan {
   id: number;
   loan_number: string;
   member_id: number;
+  loan_account_id: number;
   loan_product_id: number;
   principal_amount: number;
   interest_rate: number;
@@ -257,10 +299,14 @@ export interface Loan {
   guarantors?: LoanGuarantor[];
   repayments?: LoanRepayment[];
   loan_product?: LoanProduct;
+  loan_account?: LoanAccount;
   member?: User;
   approvedBy?: User;
   disbursedBy?: User;
   disbursementAccount?: SavingsAccount;
+  // Computed/derived fields (may be added by backend)
+  next_payment_date?: string;
+  next_payment_amount?: number;
 }
 
 export interface LoanProduct {
@@ -349,24 +395,59 @@ export interface RepaymentSchedule {
   status: 'pending' | 'paid' | 'overdue';
 }
 
-// Shares Types
-export interface SharesAccount {
+// Share Account Type
+export interface ShareAccount {
   id: number;
-  total_shares: number;
-  share_value: number;
-  total_value: number;
+  share_units: number;
+  share_price: number;
+  total_share_value: number;
   dividends_earned: number;
+  dividends_pending: number;
+  dividends_paid: number;
+  account_class: 'ordinary' | 'preferential';
+  locked_shares: number;
+  membership_fee_paid: boolean;
+  bonus_shares_earned: number;
+  min_balance_required: number;
+  max_balance_limit?: number;
   last_dividend_date?: string;
-  certificates: ShareCertificate[];
+  account_features?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  shares?: Share[];
+  account?: Account;
 }
 
-export interface ShareCertificate {
+// Individual Share Certificate
+export interface Share {
   id: number;
+  member_id: number;
+  share_account_id: number;
   certificate_number: string;
   shares_count: number;
+  share_value: number;
+  total_value: number;
   purchase_date: string;
-  purchase_price: number;
+  redemption_date?: string;
+  redemption_value?: number;
+  status: 'active' | 'transferred' | 'redeemed';
+  transfer_date?: string;
+  transferred_to?: number;
+  transfer_details?: string;
+  redemption_reason?: string;
+  notes?: string;
+  transaction_id?: number;
+  processed_by?: number;
+  created_at: string;
+  updated_at?: string;
+  member?: User;
+  share_account?: ShareAccount;
+  transaction?: Transaction;
+  processedBy?: User;
 }
+
+// Legacy type alias for backward compatibility
+export type ShareCertificate = Share;
 
 export interface Dividend {
   id: number;
@@ -406,7 +487,7 @@ export interface SavingsSummary {
   total_interest_earned: number;
   accounts_count: number;
   monthly_growth: number;
-  accounts: SavingsAccount[];
+  accounts: Account[];
 }
 
 export interface LoansSummary {

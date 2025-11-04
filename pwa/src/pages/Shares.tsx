@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchShares } from '@/store/sharesSlice';
+import { getShareAccount } from '@/utils/accountHelpers';
+import type { ShareAccount } from '@/types/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,7 +25,10 @@ import {
 export default function Shares() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { account: sharesAccount = null, loading } = useSelector((state: RootState) => state.shares);
+  const { account: sharesAccountWrapper = null, loading } = useSelector((state: RootState) => state.shares);
+  
+  // Extract ShareAccount from polymorphic wrapper
+  const sharesAccount: ShareAccount | null = sharesAccountWrapper ? getShareAccount(sharesAccountWrapper) : null;
   
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
 
@@ -39,9 +44,9 @@ export default function Shares() {
     }).format(amount);
   };
 
-  const totalShares = sharesAccount?.total_shares || 0;
-  const shareValue = sharesAccount?.share_value || 1000;
-  const totalValue = totalShares * shareValue;
+  const totalShares = sharesAccount?.share_units || 0;
+  const shareValue = sharesAccount?.share_price || 1000;
+  const totalValue = sharesAccount?.total_share_value || 0;
   const dividendsEarned = sharesAccount?.dividends_earned || 0;
 
   return (

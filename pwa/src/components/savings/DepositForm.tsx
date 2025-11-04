@@ -10,12 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
 import { makeDeposit } from '@/store/transactionsSlice';
 import { ArrowUpRight, CreditCard } from 'lucide-react';
-import type { SavingsAccount } from '@/types/api';
+import type { Account } from '@/types/api';
+import { getSavingsAccount } from '@/utils/accountHelpers';
 
 interface DepositFormProps {
   isOpen: boolean;
   onClose: () => void;
-  account?: SavingsAccount;
+  account?: Account;
 }
 
 export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
@@ -23,6 +24,9 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
   const { toast } = useToast();
   const { loading } = useSelector((state: RootState) => state.transactions);
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Extract savings account from wrapper
+  const savingsAccount = account ? getSavingsAccount(account) : null;
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -100,17 +104,17 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
           </DialogTitle>
         </DialogHeader>
 
-        {account && (
+        {account && savingsAccount && (
           <div className="bg-muted/50 p-4 rounded-lg mb-4">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-4 h-4" />
               <span className="font-medium">{account.account_number}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {account.savings_product.name}
+              {savingsAccount.savings_product?.name || 'Savings Account'}
             </p>
             <p className="text-lg font-semibold">
-              Current Balance: {formatCurrency(account.balance)}
+              Current Balance: {formatCurrency(savingsAccount.balance || 0)}
             </p>
           </div>
         )}
@@ -129,9 +133,9 @@ export function DepositForm({ isOpen, onClose, account }: DepositFormProps) {
               required
               disabled={loading}
             />
-            {account?.savings_product.minimum_deposit && (
+            {savingsAccount?.savings_product?.minimum_deposit && (
               <p className="text-xs text-muted-foreground mt-1">
-                Minimum deposit: {formatCurrency(account.savings_product.minimum_deposit)}
+                Minimum deposit: {formatCurrency(savingsAccount.savings_product.minimum_deposit)}
               </p>
             )}
           </div>

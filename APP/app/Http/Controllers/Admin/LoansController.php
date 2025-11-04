@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
+use App\Models\LoanAccount;
+use App\Models\Account;
 use App\Models\LoanProduct;
 use App\Models\LoanRepayment;
 use Illuminate\Http\Request;
@@ -222,10 +224,31 @@ class LoansController extends Controller
             'guarantors.*' => 'exists:users,id'
         ]);
 
+        // ✅ VERIFY: Member must have LoanAccount
+        $loanAccountRecord = Account::where('member_id', $request->member_id)
+            ->where('accountable_type', LoanAccount::class)
+            ->first();
+
+        if (!$loanAccountRecord) {
+            return redirect()->back()
+                ->with('error', 'Member does not have a loan account. Please ensure member is fully approved.')
+                ->withInput();
+        }
+
+        $loanAccount = $loanAccountRecord->accountable;
+
+        // ✅ CHECK: Validate against loan limits
+        if (!$loanAccount->canAccommodateNewLoan($request->principal_amount)) {
+            return redirect()->back()
+                ->with('error', "Loan amount exceeds member's limits. Min: {$loanAccount->min_loan_limit}, Max: {$loanAccount->max_loan_limit}")
+                ->withInput();
+        }
+
         DB::beginTransaction();
         try {
             $loan = Loan::create([
                 'member_id' => $request->member_id,
+                'loan_account_id' => $loanAccount->id,  // ✅ LINKED!
                 'loan_product_id' => $request->loan_product_id,
                 'principal_amount' => $request->principal_amount,
                 'purpose' => $request->purpose,

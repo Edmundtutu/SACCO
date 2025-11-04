@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->unique();
             $table->text('description')->nullable();
-            $table->enum('type', ['compulsory', 'voluntary', 'fixed_deposit', 'special']);
+            $table->enum('type', ['compulsory', 'voluntary', 'fixed_deposit', 'special', 'wallet']);
             $table->decimal('minimum_balance', 15, 2)->default(0);
             $table->decimal('maximum_balance', 15, 2)->nullable();
             $table->decimal('interest_rate', 5, 2)->default(0); // Annual interest rate percentage

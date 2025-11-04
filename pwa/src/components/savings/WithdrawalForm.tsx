@@ -10,12 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 import { RootState } from '@/store';
 import { makeWithdrawal } from '@/store/transactionsSlice';
 import { ArrowDownRight, CreditCard, AlertTriangle } from 'lucide-react';
-import type { SavingsAccount } from '@/types/api';
+import type { Account } from '@/types/api';
+import { getSavingsAccount } from '@/utils/accountHelpers';
 
 interface WithdrawalFormProps {
   isOpen: boolean;
   onClose: () => void;
-  account?: SavingsAccount;
+  account?: Account;
 }
 
 export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps) {
@@ -23,6 +24,9 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
   const { toast } = useToast();
   const { loading } = useSelector((state: RootState) => state.transactions);
   const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Extract savings account from wrapper
+  const savingsAccount = account ? getSavingsAccount(account) : null;
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -51,7 +55,16 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
       return;
     }
 
-    if (amount > account.available_balance) {
+    if (!savingsAccount) {
+      toast({
+        title: "Error",
+        description: "Invalid savings account",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (amount > (savingsAccount.available_balance || 0)) {
       toast({
         title: "Error",
         description: "Insufficient balance for this withdrawal",
@@ -60,11 +73,11 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
       return;
     }
 
-    const remainingBalance = account.available_balance - amount;
-    if (remainingBalance < account.minimum_balance) {
+    const remainingBalance = (savingsAccount.available_balance || 0) - amount;
+    if (remainingBalance < (savingsAccount.minimum_balance || 0)) {
       toast({
         title: "Error",
-        description: `Withdrawal would leave balance below minimum of ${formatCurrency(account.minimum_balance)}`,
+        description: `Withdrawal would leave balance below minimum of ${formatCurrency(savingsAccount.minimum_balance || 0)}`,
         variant: "destructive",
       });
       return;
@@ -104,8 +117,8 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
   };
 
   const amount = parseFloat(formData.amount) || 0;
-  const remainingBalance = account ? account.available_balance - amount : 0;
-  const belowMinimum = account ? remainingBalance < account.minimum_balance : false;
+  const remainingBalance = savingsAccount ? (savingsAccount.available_balance || 0) - amount : 0;
+  const belowMinimum = savingsAccount ? remainingBalance < (savingsAccount.minimum_balance || 0) : false;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -117,20 +130,20 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
           </DialogTitle>
         </DialogHeader>
 
-        {account && (
+        {account && savingsAccount && (
           <div className="bg-muted/50 p-4 rounded-lg mb-4">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-4 h-4" />
               <span className="font-medium">{account.account_number}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {account.savings_product.name}
+              {savingsAccount.savings_product?.name || 'Savings Account'}
             </p>
             <p className="text-lg font-semibold">
-              Available Balance: {formatCurrency(account.available_balance)}
+              Available Balance: {formatCurrency(savingsAccount.available_balance || 0)}
             </p>
             <p className="text-sm text-muted-foreground">
-              Minimum Balance: {formatCurrency(account.minimum_balance)}
+              Minimum Balance: {formatCurrency(savingsAccount.minimum_balance || 0)}
             </p>
           </div>
         )}
@@ -143,21 +156,21 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
               type="number"
               min="1"
               step="0.01"
-              max={account?.available_balance}
+              max={savingsAccount?.available_balance}
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               placeholder="Enter withdrawal amount"
               required
               disabled={loading}
             />
-            {amount > 0 && account && (
+            {amount > 0 && savingsAccount && (
               <div className="mt-2 space-y-1">
                 <p className="text-xs text-muted-foreground">
                   Remaining balance: {formatCurrency(remainingBalance)}
                 </p>
-                {account.savings_product.withdrawal_fee && (
+                {savingsAccount.savings_product?.withdrawal_fee && (
                   <p className="text-xs text-muted-foreground">
-                    Withdrawal fee: {formatCurrency(account.savings_product.withdrawal_fee)}
+                    Withdrawal fee: {formatCurrency(savingsAccount.savings_product.withdrawal_fee)}
                   </p>
                 )}
               </div>
@@ -168,7 +181,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                This withdrawal would leave your balance below the minimum required balance of {formatCurrency(account!.minimum_balance)}.
+                This withdrawal would leave your balance below the minimum required balance of {formatCurrency(savingsAccount!.minimum_balance || 0)}.
               </AlertDescription>
             </Alert>
           )}
@@ -188,7 +201,7 @@ export function WithdrawalForm({ isOpen, onClose, account }: WithdrawalFormProps
           <div className="flex gap-3 pt-4">
             <Button 
               type="submit" 
-              disabled={loading || belowMinimum || amount <= 0 || (account && amount > account.available_balance)} 
+              disabled={loading || belowMinimum || amount <= 0 || (savingsAccount && amount > (savingsAccount.available_balance || 0))} 
               className="flex-1"
               variant="destructive"
             >

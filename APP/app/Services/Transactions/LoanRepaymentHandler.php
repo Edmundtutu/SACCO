@@ -71,9 +71,17 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
         $newOutstandingBalance = $loan->outstanding_balance - $paymentAllocation['principal'];
         $loan->update([
             'outstanding_balance' => $newOutstandingBalance,
+            'principal_balance' => $loan->principal_balance - $paymentAllocation['principal'],
+            'interest_balance' => $loan->interest_balance - $paymentAllocation['interest'],
+            'penalty_balance' => $loan->penalty_balance - ($paymentAllocation['penalty'] ?? 0),
             'total_paid' => $loan->total_paid + $transactionData->amount,
             'status' => $newOutstandingBalance <= 0 ? 'completed' : 'active'
         ]);
+
+        // ✅ UPDATE LOAN ACCOUNT AGGREGATES
+        if ($loan->loanAccount) {
+            $loan->loanAccount->recordRepayment($transactionData->amount);
+        }
 
         // Store payment allocation in transaction metadata
         $transaction->update([

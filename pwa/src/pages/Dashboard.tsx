@@ -6,17 +6,22 @@ import { fetchLoans } from '@/store/loansSlice';
 import { fetchShares } from '@/store/sharesSlice';
 import { fetchTransactionHistory } from '@/store/transactionsSlice';
 import { fetchSavingsGoals, updateCurrentAmount } from '@/store/savingsGoalsSlice';
+import { 
+  getTotalSavingsBalance, 
+  getTotalLoanOutstanding,
+  findWalletAccount,
+  getShareAccount
+} from '@/utils/accountHelpers';
 import { OverviewChart } from '@/components/dashboard/OverviewChart';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { MobileToolbar } from '@/components/layout/MobileToolbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { WalletCard } from '@/components/wallet/WalletCard';
 import { WalletTopupForm } from '@/components/wallet/WalletTopupForm';
 import { WalletWithdrawalForm } from '@/components/wallet/WalletWithdrawalForm';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock, PieChart, User } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, Clock, PieChart } from 'lucide-react';
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -33,17 +38,13 @@ export function Dashboard() {
   const [walletTopupOpen, setWalletTopupOpen] = useState(false);
   const [walletWithdrawOpen, setWalletWithdrawOpen] = useState(false);
 
-  // Find wallet account
-  const walletAccount = accounts.find(acc => acc.savings_product?.code === 'WL001'); // wallet product code
+  // Find wallet account using helper
+  const walletAccount = findWalletAccount(accounts);
 
   useEffect(() => {
     dispatch(fetchSavingsAccounts());
     dispatch(fetchLoans());
     dispatch(fetchShares());
-    // if wallet account is not found, log console error
-    if (!walletAccount) {
-      console.error('Wallet account not found');
-    }
     // Fetch recent transactions for dashboard
     if (user?.id) {
       dispatch(fetchTransactionHistory({
@@ -52,15 +53,16 @@ export function Dashboard() {
       }));
       dispatch(fetchSavingsGoals(user.id));
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, walletAccount]);
 
-  // Calculate derived values
-  const totalSavings = accounts.reduce((sum, account) => sum + account.balance, 0);
-  const totalLoans = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
-  const totalShares = sharesAccount?.total_value || 0;
+  // Calculate derived values using helper functions
+  const totalSavings = getTotalSavingsBalance(accounts);
+  const totalLoans = getTotalLoanOutstanding(accounts);
+  const shareAccountData = sharesAccount ? getShareAccount(sharesAccount) : null;
+  const totalShares = shareAccountData?.total_share_value || 0;
   const activeLoan = loans.find(loan => ['active', 'disbursed', 'approved'].includes(loan.status));
-  const nextPayment = (activeLoan as any)?.next_payment_date;
-  const nextPaymentAmount = (activeLoan as any)?.next_payment_amount || 0;
+  const nextPayment = activeLoan?.next_payment_date;
+  const nextPaymentAmount = activeLoan?.next_payment_amount || 0;
 
   // Sync savings goals with actual savings balance
   useEffect(() => {
@@ -215,10 +217,10 @@ export function Dashboard() {
                       <PieChart className="h-6 w-6 text-blue-600" />
                     </div>
                   </div>
-                  {sharesAccount && (
+                  {shareAccountData && (
                       <div className="mt-4">
                         <p className="text-xs text-muted-foreground">
-                          {sharesAccount.total_shares} shares @ {formatCurrency(sharesAccount.share_value)} each
+                          {shareAccountData.share_units} shares @ {formatCurrency(shareAccountData.share_price)} each
                         </p>
                       </div>
                   )}
@@ -241,7 +243,7 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Member #</p>
-                      <p className="font-mono font-bold">{(user as any)?.member_number || 'Pending'}</p>
+                      <p className="font-mono font-bold">{user?.member_number || 'Pending'}</p>
                     </div>
                   </div>
                 </CardContent>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Loan;
+use App\Models\LoanAccount;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\LoanProduct;
 use Illuminate\Http\Request;
@@ -56,6 +58,21 @@ class LoansController extends Controller
         // Get the authenticated user
         $user = auth()->user();
 
+        // ✅ VERIFY: User must have a LoanAccount
+        $loanAccountRecord = Account::where('member_id', $user->id)
+            ->where('accountable_type', LoanAccount::class)
+            ->first();
+
+        if (!$loanAccountRecord) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have a loan account. Please contact administrator to complete your account setup.',
+                'error_code' => 'LOAN_ACCOUNT_NOT_FOUND'
+            ], 404);
+        }
+
+        $loanAccount = $loanAccountRecord->accountable;
+
         // Get the loan product
         $loanProduct = LoanProduct::findOrFail($request->loan_product_id);
 
@@ -69,9 +86,19 @@ class LoansController extends Controller
         // Calculate monthly payment (simple interest)
         $monthlyPayment = $totalAmount / $request->repayment_period_months;
 
-        // Create the loan
+        // ✅ CHECK: Validate against loan account limits
+        if (!$loanAccount->canAccommodateNewLoan($principalAmount)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Loan amount exceeds your limits. Min: {$loanAccount->min_loan_limit}, Max: {$loanAccount->max_loan_limit}",
+                'error_code' => 'AMOUNT_EXCEEDS_LIMITS'
+            ], 422);
+        }
+
+        // Create the loan linked to LoanAccount
         $loan = Loan::create([
             'member_id' => $user->id,
+            'loan_account_id' => $loanAccount->id,  // ✅ LINKED!
             'loan_product_id' => $loanProduct->id,
             'principal_amount' => $principalAmount,
             'interest_rate' => $interestRate,

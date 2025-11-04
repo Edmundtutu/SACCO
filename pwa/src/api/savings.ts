@@ -1,6 +1,6 @@
 import apiClient from './client';
 import type { 
-  SavingsAccount, 
+  Account,
   SavingsProduct, 
   Transaction, 
   ApiResponse 
@@ -24,8 +24,15 @@ export interface WithdrawalData {
 }
 
 export const savingsAPI = {
-  async getAccounts(): Promise<ApiResponse<SavingsAccount[]>> {
-    const response = await apiClient.get('/savings/accounts');
+  async getAccounts(): Promise<ApiResponse<Account[]>> {
+    const response = await apiClient.get('/accounts', {
+      params: { type: 'savings' }
+    });
+    return response.data;
+  },
+
+  async getAccount(accountId: number): Promise<ApiResponse<Account>> {
+    const response = await apiClient.get(`/accounts/${accountId}`);
     return response.data;
   },
 
@@ -35,7 +42,7 @@ export const savingsAPI = {
   },
 
   async getTransactions(accountId: number): Promise<ApiResponse<Transaction[]>> {
-    const response = await apiClient.get(`/savings/accounts/${accountId}/transactions`);
+    const response = await apiClient.get(`/accounts/${accountId}/transactions`);
     return response.data;
   },
 
@@ -61,8 +68,9 @@ export const savingsAPI = {
     return response.data;
   },
 
-  async openAccount(productId: number): Promise<ApiResponse<SavingsAccount>> {
-    const response = await apiClient.post('/savings/accounts', {
+  async openAccount(productId: number): Promise<ApiResponse<Account>> {
+    const response = await apiClient.post('/accounts', {
+      accountable_type: 'savings',
       savings_product_id: productId,
     });
     return response.data;

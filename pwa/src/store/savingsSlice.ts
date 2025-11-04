@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { savingsAPI, DepositData, WithdrawalData } from '../api/savings';
-import type { SavingsAccount, SavingsProduct, Transaction } from '@/types/api';
+import type { Account, SavingsProduct, Transaction } from '@/types/api';
+import { isSavingsAccount } from '@/utils/accountHelpers';
 
 interface SavingsState {
-  accounts: SavingsAccount[];
+  accounts: Account[];  // Polymorphic Account wrappers
   products: SavingsProduct[];
   transactions: Transaction[];
   loading: boolean;
@@ -118,12 +119,13 @@ const savingsSlice = createSlice({
       })
       .addCase(makeDeposit.fulfilled, (state, action) => {
         state.loading = false;
-        // Update account balance
+        // Update account balance in nested accountable
         const transaction = action.payload;
         const account = state.accounts.find(acc => acc.id === transaction.account_id);
-        if (account) {
-          account.balance = transaction.balance_after;
-          account.available_balance = transaction.balance_after;
+        if (account && isSavingsAccount(account) && account.accountable) {
+          account.accountable.balance = transaction.balance_after || account.accountable.balance;
+          account.accountable.available_balance = transaction.balance_after || account.accountable.available_balance;
+          account.accountable.last_transaction_date = transaction.transaction_date;
         }
         // Add transaction to the beginning of the list
         state.transactions.unshift(transaction);
@@ -138,12 +140,13 @@ const savingsSlice = createSlice({
       })
       .addCase(makeWithdrawal.fulfilled, (state, action) => {
         state.loading = false;
-        // Update account balance
+        // Update account balance in nested accountable
         const transaction = action.payload;
         const account = state.accounts.find(acc => acc.id === transaction.account_id);
-        if (account) {
-          account.balance = transaction.balance_after;
-          account.available_balance = transaction.balance_after;
+        if (account && isSavingsAccount(account) && account.accountable) {
+          account.accountable.balance = transaction.balance_after || account.accountable.balance;
+          account.accountable.available_balance = transaction.balance_after || account.accountable.available_balance;
+          account.accountable.last_transaction_date = transaction.transaction_date;
         }
         // Add transaction to the beginning of the list
         state.transactions.unshift(transaction);

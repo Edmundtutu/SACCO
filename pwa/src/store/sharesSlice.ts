@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { sharesAPI } from '../api/shares';
-import type { SharesAccount, Dividend, SharePurchase, ShareCertificate } from '@/types/api';
+import type { Account, Dividend, SharePurchase, Share } from '@/types/api';
 
 interface SharesState {
-  account: SharesAccount | null;
+  account: Account | null;  // Polymorphic Account wrapper with ShareAccount nested
   dividends: Dividend[];
-  certificates: ShareCertificate[];
+  certificates: Share[];  // Individual share certificates
   loading: boolean;
   error: string | null;
 }
@@ -19,7 +19,7 @@ const initialState: SharesState = {
 };
 
 export const fetchShares = createAsyncThunk('shares/fetchShares', async () => {
-  const response = await sharesAPI.getShares();
+  const response = await sharesAPI.getShareAccount();
   if (response.success && response.data) {
     return response.data;
   }
@@ -105,6 +105,7 @@ const sharesSlice = createSlice({
       })
       .addCase(purchaseShares.fulfilled, (state, action) => {
         state.loading = false;
+        // Update the share account with new data
         state.account = action.payload;
       })
       .addCase(purchaseShares.rejected, (state, action) => {
