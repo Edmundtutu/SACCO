@@ -52,11 +52,18 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
             $transactionData->amount
         );
 
+        // Determine installment number and due date
+        $installmentNumber = $this->getNextInstallmentNumber($loan->id);
+        $dueDate = $loan->first_payment_date
+            ? $loan->first_payment_date->copy()->addMonths($installmentNumber - 1)
+            : (($loan->disbursement_date ? $loan->disbursement_date->copy()->addMonths($installmentNumber) : now()));
+
         // Create loan repayment record
         $repayment = LoanRepayment::create([
             'loan_id' => $loan->id,
             'receipt_number' => $transaction->transaction_number,
-            'installment_number' => $this->getNextInstallmentNumber($loan->id),
+            'installment_number' => $installmentNumber,
+            'due_date' => $dueDate->toDateString(),
             'scheduled_amount' => $transactionData->amount,
             'principal_amount' => $paymentAllocation['principal'],
             'interest_amount' => $paymentAllocation['interest'],
@@ -64,7 +71,11 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
             'total_amount' => $transactionData->amount,
             'payment_date' => now(),
             'payment_method' => 'cash',
-            'status' => 'completed'
+            // Align with migration enum: pending, paid, partial, overdue, waived
+            'status' => 'paid',
+            'balance_after_payment' => max(0, ($loan->outstanding_balance - $paymentAllocation['principal'])),
+            'payment_reference' => $transactionData->metadata['payment_reference'] ?? null,
+            'notes' => $transactionData->metadata['notes'] ?? null,
         ]);
 
         // Update loan balance

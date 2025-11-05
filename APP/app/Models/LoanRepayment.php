@@ -14,6 +14,7 @@ class LoanRepayment extends Model
         'loan_id',
         'receipt_number',
         'installment_number',
+        'due_date',
         'scheduled_amount',
         'principal_amount',
         'interest_amount',
@@ -24,6 +25,10 @@ class LoanRepayment extends Model
         'payment_reference',
         'status',
         'notes',
+        'balance_after_payment',
+        'days_late',
+        'collected_by',
+        'approved_by',
         'processed_by',
     ];
 
@@ -33,6 +38,7 @@ class LoanRepayment extends Model
         'interest_amount' => 'decimal:2',
         'penalty_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'due_date' => 'date',
         'payment_date' => 'date',
     ];
 

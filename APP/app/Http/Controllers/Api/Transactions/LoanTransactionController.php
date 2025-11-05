@@ -87,6 +87,15 @@ class LoanTransactionController extends Controller
         try {
             $loan = Loan::findOrFail($request->loan_id);
 
+            // Resolve the account to associate with this loan repayment.
+            // Only use the LoanAccount's parent Account. If missing, throw.
+            $resolvedAccountId = $loan->loanAccount?->account?->id;
+            if (!$resolvedAccountId) {
+                throw new InvalidTransactionException(
+                    "Loan #{$loan->id} is not linked to a loan account. This loan was created incorrectly. Please contact administrator."
+                );
+            }
+
             // Calculate payment allocation
             $paymentAllocation = $this->loanCalculationService->calculatePaymentAllocation(
                 $loan,
@@ -97,6 +106,7 @@ class LoanTransactionController extends Controller
                 memberId: $loan->member_id,
                 type: 'loan_repayment',
                 amount: $request->amount,
+                accountId: $resolvedAccountId,
                 relatedLoanId: $loan->id,
                 description: "Loan repayment - {$loan->loan_number}",
                 processedBy: auth()->id(),

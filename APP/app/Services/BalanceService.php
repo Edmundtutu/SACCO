@@ -49,7 +49,6 @@ class BalanceService
                 break;
         }
 
-        $savingsAccount->last_transaction_date = now();
         $savingsAccount->save();
 
         // Update transaction with balance information
@@ -63,6 +62,10 @@ class BalanceService
 
         // Update interest earned if applicable
         $this->updateInterestEarned($account);
+
+        // Update parent account last transaction timestamp
+        $account->last_transaction_date = now();
+        $account->save();
     }
 
     /**

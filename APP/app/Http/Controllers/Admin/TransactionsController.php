@@ -91,7 +91,7 @@ class TransactionsController extends Controller
     {
         $transaction = Transaction::with([
             'member',
-            'account.savingsProduct',
+            'account.accountable.savingsProduct',
             'relatedLoan.loanProduct',
             'processedBy',
             'reversedBy',

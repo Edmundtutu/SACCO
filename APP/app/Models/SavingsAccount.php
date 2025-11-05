@@ -68,8 +68,6 @@ class SavingsAccount extends Model
             $this->balance -= $amount;
             $this->available_balance -= $amount;
         }
-
-        $this->last_transaction_date = now();
         $this->save();
     }
 
