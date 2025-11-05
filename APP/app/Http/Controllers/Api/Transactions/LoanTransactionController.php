@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Transactions;
 use App\Models\Loan;
 use App\Models\Transaction;
 use App\DTOs\TransactionDTO;
+use App\Exceptions\InvalidTransactionException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -37,11 +38,20 @@ class LoanTransactionController extends Controller
     {
         try {
             $loan = Loan::findOrFail($request->loan_id);
+            // Resolve the account to associate with this loan transaction.
+            // Only use the LoanAccount's parent Account. If missing, throw.
+            $resolvedAccountId = $loan->loanAccount?->account?->id;
+            if (!$resolvedAccountId) {
+                throw new InvalidTransactionException(
+                    "Loan #{$loan->id} is not linked to a loan account. This loan was created incorrectly. Please contact administrator."
+                );
+            }
 
             $transactionDTO = new TransactionDTO(
                 memberId: $loan->member_id,
                 type: 'loan_disbursement',
                 amount: $loan->principal_amount,
+                accountId: $resolvedAccountId,
                 relatedLoanId: $loan->id,
                 description: "Loan disbursement - {$loan->loan_number}",
                 processedBy: auth()->id(),

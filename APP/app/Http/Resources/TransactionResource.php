@@ -34,7 +34,9 @@ class TransactionResource extends JsonResource
             'value_date' => $this->value_date?->format('Y-m-d H:i:s'),
             'related_loan_id' => $this->related_loan_id,
             'processed_by' => $this->processedBy?->name ?? 'System',
-            'metadata' => $this->metadata ? json_decode($this->metadata, true) : null,
+            'metadata' =>  is_string($this->metadata)
+                ? json_decode($this->metadata, true)
+                : null,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
 
             // Include member details when needed
