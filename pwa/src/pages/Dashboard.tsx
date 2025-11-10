@@ -9,6 +9,7 @@ import { fetchSavingsGoals, updateCurrentAmount } from '@/store/savingsGoalsSlic
 import { 
   getTotalSavingsBalance, 
   getTotalLoanOutstanding,
+  getTotalLoanOutstandingFromLoans,
   findWalletAccount,
   getShareAccount
 } from '@/utils/accountHelpers';
@@ -57,7 +58,7 @@ export function Dashboard() {
 
   // Calculate derived values using helper functions
   const totalSavings = getTotalSavingsBalance(accounts);
-  const totalLoans = getTotalLoanOutstanding(accounts);
+  const totalLoans = getTotalLoanOutstanding(accounts) || getTotalLoanOutstandingFromLoans(loans);
   const shareAccountData = sharesAccount ? getShareAccount(sharesAccount) : null;
   const totalShares = shareAccountData?.total_share_value || 0;
   const activeLoan = loans.find(loan => ['active', 'disbursed', 'approved'].includes(loan.status));
@@ -380,7 +381,7 @@ export function Dashboard() {
               onClose={() => setWalletWithdrawOpen(false)}
               walletAccountId={walletAccount.id}
               memberId={user?.id || 0}
-              currentBalance={walletBalance?.balance || walletAccount.balance}
+              currentBalance={walletBalance?.balance || (walletAccount.accountable as any)?.balance || 0}
             />
           </>
         )}

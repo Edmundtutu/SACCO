@@ -76,9 +76,11 @@ class LoanAccount extends Model
     public function recordDisbursement(float $amount): void
     {
         $this->total_disbursed_amount += $amount;
-        $this->current_outstanding += $amount;
         $this->last_activity_date = now();
         $this->save();
+        
+        // Sync current_outstanding from actual loans
+        $this->syncCurrentOutstanding();
     }
 
     /**
@@ -87,14 +89,11 @@ class LoanAccount extends Model
     public function recordRepayment(float $amount): void
     {
         $this->total_repaid_amount += $amount;
-        $this->current_outstanding -= $amount;
-        
-        if ($this->current_outstanding < 0) {
-            $this->current_outstanding = 0;
-        }
-        
         $this->last_activity_date = now();
         $this->save();
+        
+        // Sync current_outstanding from actual loans (computed from Loan records)
+        $this->syncCurrentOutstanding();
     }
 
     /**
@@ -111,6 +110,35 @@ class LoanAccount extends Model
         }
         
         return true;
+    }
+
+    /**
+     * Get current outstanding as computed attribute (SINGLE SOURCE OF TRUTH)
+     * This ensures data is always accurate by calculating from actual loans
+     */
+    public function getCurrentOutstandingAttribute(): float
+    {
+        // If we're accessing the raw attribute (not through Eloquent), return it
+        if (array_key_exists('current_outstanding', $this->attributes)) {
+            // Calculate actual value from loans
+            $calculated = $this->activeLoans()->sum('outstanding_balance');
+            
+            // Return the calculated value (always accurate)
+            return (float) $calculated;
+        }
+        
+        return 0.0;
+    }
+
+    /**
+     * Recalculate and persist current_outstanding from actual loans
+     * Call this after loan updates to sync the stored value
+     */
+    public function syncCurrentOutstanding(): void
+    {
+        $calculated = $this->activeLoans()->sum('outstanding_balance');
+        $this->attributes['current_outstanding'] = $calculated;
+        $this->save();
     }
 
     /**

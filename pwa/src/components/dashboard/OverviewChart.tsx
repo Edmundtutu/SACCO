@@ -3,15 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { User } from 'lucide-react';
+import { 
+  getTotalSavingsBalance, 
+  getTotalLoanOutstanding,
+  getTotalLoanOutstandingFromLoans,
+  getTotalShareValue 
+} from '@/utils/accountHelpers';
 
 export function OverviewChart() {
-  const { accounts: savingsAccounts } = useSelector((state: RootState) => state.savings);
+  // Get polymorphic accounts (Account wrappers with accountable)
+  const { accounts } = useSelector((state: RootState) => state.savings);
   const { loans } = useSelector((state: RootState) => state.loans);
-  const { account: sharesAccount } = useSelector((state: RootState) => state.shares);
 
-  const totalSavings = savingsAccounts.reduce((sum, account) => sum + account.balance, 0);
-  const totalLoans = loans.reduce((sum, loan) => sum + loan.outstanding_balance, 0);
-  const totalShares = sharesAccount?.total_value || 0;
+  // Use helper functions to access polymorphic structure
+  // These automatically exclude wallet accounts from savings
+  const totalSavings = getTotalSavingsBalance(accounts);
+  
+  // Prefer LoanAccount.current_outstanding if available, fallback to summing loans
+  const totalLoans = getTotalLoanOutstanding(accounts) || getTotalLoanOutstandingFromLoans(loans);
+  // Get share value from polymorphic Account wrapper (finds share account in accounts array)
+  const totalShares = getTotalShareValue(accounts);
 
   const data = [
     {

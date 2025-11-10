@@ -1,4 +1,4 @@
-import type { Account, SavingsAccount, LoanAccount, ShareAccount } from '@/types/api';
+import type { Account, SavingsAccount, LoanAccount, ShareAccount, Loan } from '@/types/api';
 
 /**
  * Type guard to check if an account is a SavingsAccount
@@ -65,13 +65,23 @@ export function getShareAccount(account: Account | null | undefined): ShareAccou
  */
 export function getTotalSavingsBalance(accounts: Account[] | null | undefined): number {
   if (!accounts || !Array.isArray(accounts)) return 0;
+
   return accounts
     .filter(isSavingsAccount)
     .reduce((sum, acc) => {
-      const savings = acc.accountable;
-      return sum + (savings?.balance || 0);
+      const productType = acc.accountable?.savings_product?.type;
+      const balance = Number(acc.accountable?.balance) || 0;
+
+      // Include only if NOT a wallet-type savings account
+      if (productType !== 'wallet') {
+        return sum + balance;
+      }
+
+      // Skip wallet accounts (keep sum as is)
+      return sum;
     }, 0);
 }
+
 
 /**
  * Calculate total available savings balance
@@ -81,8 +91,12 @@ export function getTotalAvailableBalance(accounts: Account[] | null | undefined)
   return accounts
     .filter(isSavingsAccount)
     .reduce((sum, acc) => {
+      const productType = acc.accountable?.savings_product?.type;
       const savings = acc.accountable;
-      return sum + (savings?.available_balance || 0);
+      if(productType != 'wallet'){
+        return sum + (Number(savings?.available_balance) || 0);
+      }
+      return sum;
     }, 0);
 }
 
@@ -94,8 +108,12 @@ export function getTotalInterestEarned(accounts: Account[] | null | undefined): 
   return accounts
     .filter(isSavingsAccount)
     .reduce((sum, acc) => {
+      const productType = acc.accountable?.savings_product?.type;
       const savings = acc.accountable;
-      return sum + (savings?.interest_earned || 0);
+      if(productType != 'wallet'){
+        return sum + (Number(savings?.interest_earned) || 0);
+      }
+      return sum;
     }, 0);
 }
 
@@ -130,6 +148,41 @@ export function getTotalLoanRepaid(accounts: Account[]): number {
   if (loanAccount && loanAccount.accountable) {
     return loanAccount.accountable.total_repaid_amount || 0;
   }
+  return 0;
+}
+
+/**
+ * Get total outstanding from individual Loan records
+ * Use this when Loan data is fetched directly from /api/loans
+ */
+export function getTotalLoanOutstandingFromLoans(loans: Loan[] | null | undefined): number {
+  if (!loans || !Array.isArray(loans)) return 0;
+  
+  return loans
+    .filter(loan => ['active', 'disbursed', 'approved'].includes(loan.status))
+    .reduce((total, loan) => total + (Number(loan.outstanding_balance) || 0), 0);
+}
+
+/**
+ * Get total outstanding (smart function - uses best available source)
+ * Prefers LoanAccount.current_outstanding if available, falls back to summing Loan records
+ * 
+ * @param accounts - Account array with potential LoanAccount
+ * @param loans - Optional Loan array as fallback
+ */
+export function getSmartLoanOutstanding(
+  accounts: Account[] | null | undefined,
+  loans?: Loan[] | null | undefined
+): number {
+  // Prefer LoanAccount aggregate if available (SINGLE SOURCE OF TRUTH)
+  const fromAccount = getTotalLoanOutstanding(accounts);
+  if (fromAccount > 0) return fromAccount;
+  
+  // Fallback to summing individual loans if provided
+  if (loans) {
+    return getTotalLoanOutstandingFromLoans(loans);
+  }
+  
   return 0;
 }
 

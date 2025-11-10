@@ -189,7 +189,13 @@ class AuthController extends Controller
     {
         try {
             $user = auth()->user();
-            $user->load('membership.profile', 'accounts', 'loans', 'shares');
+            $user->load([
+                'membership.profile',
+                'accounts.accountable',  // Load accountable for polymorphic access
+                'accounts.accountable.savingsProduct',  // For wallet detection
+                'loans.loanAccount',  // Load loanAccount for current_outstanding
+                'shares'
+            ]);
 
             return response()->json([
                 'success' => true,

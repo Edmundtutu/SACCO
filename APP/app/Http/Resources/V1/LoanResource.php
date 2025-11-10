@@ -37,6 +37,7 @@ class LoanResource extends JsonResource
         return [
             'id' => $this->id,
             'loan_number' => $this->loan_number,
+            'loan_account_id' => $this->loan_account_id,
             'product_name' => $productName,
             'principal_amount' => $this->principal_amount,
             'outstanding_balance' => $this->outstanding_balance,
@@ -73,8 +74,8 @@ class LoanResource extends JsonResource
             'disbursement_account_id' => $this->disbursement_account_id,
 
             // Related data
-            'guarantors' => $this->whenLoaded('guarantors', function() {
-                return $this->guarantors->map(function($guarantor) {
+            'guarantors' => $this->whenLoaded('guarantors', function () {
+                return $this->guarantors->map(function ($guarantor) {
                     return [
                         'id' => $guarantor->id,
                         'guarantor_id' => $guarantor->guarantor_id,
@@ -86,8 +87,8 @@ class LoanResource extends JsonResource
                 });
             }),
 
-            'repayments' => $this->whenLoaded('repayments', function() {
-                return $this->repayments->map(function($repayment) {
+            'repayments' => $this->whenLoaded('repayments', function () {
+                return $this->repayments->map(function ($repayment) {
                     return [
                         'id' => $repayment->id,
                         'amount' => $repayment->amount,
@@ -100,7 +101,7 @@ class LoanResource extends JsonResource
                 });
             }),
 
-            'loan_product' => $this->whenLoaded('loanProduct', function() {
+            'loan_product' => $this->whenLoaded('loanProduct', function () {
                 return [
                     'id' => $this->loanProduct->id,
                     'name' => $this->loanProduct->name,
@@ -116,7 +117,24 @@ class LoanResource extends JsonResource
                     'requirements' => $this->loanProduct->requirements,
                     'is_active' => $this->loanProduct->is_active
                 ];
-            })
+            }),
+            'loan_account' => $this->whenLoaded('loanAccount', function () {
+                return [
+                    'id' => $this->loanAccount->id,
+                    'total_disbursed_amount'=>$this->loanAccount->total_disbursed_amount,
+                    'total_repaid_amount'=>$this->loanAccount->total_repaid_amount,
+                    'current_outstanding'=>$this->loanAccount->current_outstanding,
+                    'linked_savings_account'=>$this->loanAccount->linked_savings_account,
+                    'min_loan_limit'=>$this->loanAccount->min_loan_limit,
+                    'max_loan_limit'=>$this->loanAccount->max_loan_limit,
+                    'repayment_frequency_type'=>$this->loanAccount->repayment_frequency_type,
+                    'status_notes'=>$this->loanAccount->status_notes,
+                    'last_activity_date'=>$this->loanAccount->last_activity_date,
+                    'account_features'=>$this->loanAccount->account_features,
+                    'audit_trail'=>$this->loanAccount->audit_trail,
+                    'remarks'=>$this->loanAccount->remarks
+                ];
+            }),
         ];
     }
 }

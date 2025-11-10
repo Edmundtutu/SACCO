@@ -174,7 +174,8 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getTotalSavingsBalance(): float
     {
-        return $this->accounts()->sum('balance');
+        $saving_accounts = $this->accounts()->accountable_type(SavingsAccount::class)->get();
+        return $saving_accounts->sum('balance');
     }
 
     /**

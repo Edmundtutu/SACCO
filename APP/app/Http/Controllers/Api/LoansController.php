@@ -27,9 +27,9 @@ class LoansController extends Controller
         // Get the authenticated user
         $user = auth()->user();
 
-        // Get the user's loans
+        // Get the user's loans with loanAccount for consistent current_outstanding
         $loans = Loan::where('member_id', $user->id)
-            ->with(['loanProduct', 'guarantors', 'repayments'])
+            ->with(['loanProduct', 'guarantors', 'repayments', 'loanAccount'])
             ->get();
 
         // Return the loans data
@@ -144,10 +144,10 @@ class LoansController extends Controller
         // Get the authenticated user
         $user = auth()->user();
 
-        // Get the loan
+        // Get the loan with loanAccount for current_outstanding
         $loan = Loan::where('id', $loanId)
             ->where('member_id', $user->id)
-            ->with(['loanProduct', 'guarantors', 'repayments'])
+            ->with(['loanProduct', 'guarantors', 'repayments', 'loanAccount'])
             ->firstOrFail();
 
         // Return the loan data
