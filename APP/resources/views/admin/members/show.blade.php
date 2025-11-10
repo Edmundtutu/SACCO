@@ -405,7 +405,7 @@
         <!-- Accounts -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> Savings Accounts</h5>
+                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i>Accounts</h5>
             </div>
             <div class="card-body">
                 @if($member->accounts->count() > 0)
@@ -550,12 +550,12 @@
                     <div class="list-group-item px-0 py-2">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <small class="fw-bold">{{ ucfirst($transaction->transaction_type) }}</small><br>
+                                <small class="fw-bold">{{ ucfirst($transaction->type) }}</small><br>
                                 <small class="text-muted">{{ $transaction->created_at->format('M d, Y') }}</small>
                             </div>
                             <div class="text-end">
-                                <small class="fw-bold text-{{ $transaction->transaction_type == 'deposit' ? 'success' : 'warning' }}">
-                                    {{ $transaction->transaction_type == 'deposit' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 2) }}
+                                <small class="fw-bold text-{{ $transaction->type == 'deposit' ? 'success' : 'warning' }}">
+                                    {{ $transaction->type == 'deposit'|| $transaction->type == 'wallet_topup' ? '+' : '-' }}UGX {{ number_format($transaction->amount, 2) }}
                                 </small>
                             </div>
                         </div>
