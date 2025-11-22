@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('shares', function (Blueprint $table) {
             $table->id();
             $table->foreignId('member_id')->constrained('users'); // Reference to users table
+            $table->foreignId('share_account_id')->nullable()->constrained('share_accounts')->onDelete('cascade')->comment('Links share certificate to parent share account');
             $table->string('certificate_number')->unique();
             $table->integer('shares_count');
             $table->decimal('share_value', 10, 2); // Value per share at time of purchase
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['member_id', 'status']);
+            $table->index(['share_account_id']);
             $table->index('purchase_date');
             $table->index('certificate_number');
         });

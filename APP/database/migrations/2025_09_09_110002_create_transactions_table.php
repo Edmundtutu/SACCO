@@ -24,7 +24,8 @@ return new class extends Migration
                 'deposit', 'withdrawal', 'transfer',
                 'loan_disbursement', 'loan_repayment',
                 'fee', 'interest', 'dividend',
-                'share_purchase', 'share_redemption'
+                'share_purchase', 'share_redemption',
+                'wallet_topup', 'wallet_withdrawal', 'wallet_to_savings', 'wallet_to_loan'
             ]);
             $table->enum('category', ['savings', 'loan', 'share', 'fee', 'administrative']);
             $table->decimal('amount', 15, 2);

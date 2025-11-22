@@ -41,6 +41,9 @@ class ShareAccount extends Model
         'bonus_shares_earned' => 'integer',
         'min_balance_required' => 'integer',
         'max_balance_limit' => 'integer',
+        'membership_fee_paid' => 'boolean',
+        'account_features' => 'json',
+        'audit_trail' => 'json',
         'last_activity_date' => 'date',
     ];
 
@@ -109,16 +112,16 @@ class ShareAccount extends Model
     public function recordShareRemoval(int $units): bool
     {
         $availableShares = $this->share_units - $this->locked_shares;
-        
+
         if ($units > $availableShares) {
             return false;
         }
-        
+
         $this->share_units -= $units;
         $this->total_share_value = $this->share_units * $this->share_price;
         $this->last_activity_date = now();
         $this->save();
-        
+
         return true;
     }
 
@@ -139,11 +142,11 @@ class ShareAccount extends Model
     {
         $this->dividends_pending -= $amount;
         $this->dividends_paid += $amount;
-        
+
         if ($this->dividends_pending < 0) {
             $this->dividends_pending = 0;
         }
-        
+
         $this->save();
     }
 

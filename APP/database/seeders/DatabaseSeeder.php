@@ -16,7 +16,11 @@ class DatabaseSeeder extends Seeder
     {
          $this->call([
              SaccoDataSeeder::class,
-             MemberSeeder::class,
+             WalletProductSeeder::class,
+             MemberOnlySeeder::class,
+             UniversalAccountSeeder::class,
+             LoanDistributionSeeder::class,
+             TransactionSeeder::class
          ]);
     }
 }

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('loan_number')->unique();
             $table->foreignId('member_id')->constrained('users');
+            $table->foreignId('loan_account_id')->nullable()->constrained('loan_accounts')->onDelete('cascade')->comment('Links loan to parent loan account');
 
             // Enhanced columns in logical order
             $table->foreignId('loan_product_id')->constrained('loan_products');
@@ -53,6 +54,7 @@ return new class extends Migration
 
             // Indexes
             $table->index(['member_id', 'status']);
+            $table->index(['loan_account_id']);
             $table->index(['loan_product_id', 'status']);
             $table->index('loan_number');
             $table->index('application_date');

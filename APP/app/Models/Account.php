@@ -30,20 +30,45 @@ class Account extends Model
     ];
 
     /**
-     * Generate unique account number
+     * Generate unique account number with type-specific prefix
      */
     protected static function boot()
     {
         parent::boot();
 
+        // Set temporary unique placeholder to satisfy NOT NULL/UNIQUE constraints
         static::creating(function ($account) {
             if (empty($account->account_number)) {
-                $account->account_number = 'ACC' . str_pad(
-                    (static::max('id') ?? 0) + 1,
+                // Temporary UUID-based placeholder
+                $account->account_number = 'TMP-' . \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        // Replace with final account number after insert (using actual ID)
+        static::created(function ($account) {
+            if (str_starts_with($account->account_number, 'TMP-')) {
+                // Determine prefix based on accountable_type
+                $prefix = match($account->accountable_type) {
+                    SavingsAccount::class => 'SAV',
+                    LoanAccount::class => 'LN',
+                    ShareAccount::class => 'SHR',
+                    default => 'ACC',
+                };
+
+                $accountNumber = $prefix . '-' . str_pad(
+                    $account->id,
                     8,
                     '0',
                     STR_PAD_LEFT
                 );
+
+                // Direct DB update to avoid firing extra model events
+                \Illuminate\Support\Facades\DB::table($account->getTable())
+                    ->where('id', $account->id)
+                    ->update(['account_number' => $accountNumber]);
+
+                // Update in-memory model
+                $account->account_number = $accountNumber;
             }
         });
     }
@@ -178,13 +203,13 @@ class Account extends Model
         if (!$this->isSavingsAccount()) {
             return false;
         }
-        
+
         $savingsAccount = $this->accountable;
         if (!$savingsAccount || !$savingsAccount->savingsProduct) {
             return false;
         }
-        
-        return $savingsAccount->savingsProduct->code === 'WL001' || 
+
+        return $savingsAccount->savingsProduct->code === 'WL001' ||
                $savingsAccount->savingsProduct->type === 'wallet';
     }
 
@@ -196,7 +221,7 @@ class Account extends Model
         if (!$this->isWalletAccount()) {
             return null;
         }
-        
+
         return $this->accountable->balance ?? 0;
     }
 
@@ -208,7 +233,7 @@ class Account extends Model
         if (!$this->isSavingsAccount()) {
             return null;
         }
-        
+
         return $this->accountable->savingsProduct ?? null;
     }
 

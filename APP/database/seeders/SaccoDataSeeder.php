@@ -282,27 +282,6 @@ class SaccoDataSeeder extends Seeder
                 'approved_by_level_3' => null,
                 'approved_at_level_3' => null,
             ]);
-
-            // Create compulsory savings account for each member
-            $compulsorySavings = SavingsProduct::where('type', 'compulsory')->first();
-            if ($compulsorySavings) {
-                $accountNumber = 'SA' . str_pad($index + 1, 8, '0', STR_PAD_LEFT);
-                $balance = rand(5000, 50000);
-                $available = max(0, $balance - rand(0, 1000));
-
-                Account::create([
-                    'account_number' => $accountNumber,
-                    'member_id' => $member->id,
-                    'savings_product_id' => $compulsorySavings->id,
-                    'account_type' => 'savings',
-                    'balance' => $balance,
-                    'available_balance' => $available,
-                    'minimum_balance' => $compulsorySavings->minimum_balance,
-                    'interest_earned' => 0,
-                    'status' => 'active',
-                    'last_transaction_date' => now(),
-                ]);
-            }
         }
     }
 }
