@@ -21,12 +21,14 @@ class Account extends Model
         'closure_reason',
         'closed_at',
         'closed_by',
-        'last_transaction_date'
+        'last_transaction_date',
+        'opening_date'
     ];
 
     protected $casts = [
         'closed_at' => 'datetime',
         'last_transaction_date' => 'datetime',
+        'opening_date' => 'datetime',
     ];
 
     /**

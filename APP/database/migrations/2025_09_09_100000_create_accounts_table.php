@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
             $table->string('account_number')->unique();
+            $table->timestamp('opening_date')->nullable();
             $table->foreignId('member_id')->constrained('users');
             $table->string('accountable_type');
             $table->unsignedBigInteger('accountable_id');
@@ -43,4 +44,3 @@ return new class extends Migration
         Schema::dropIfExists('accounts');
     }
 };
-
