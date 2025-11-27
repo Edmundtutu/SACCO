@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Membership\IndividualProfile;
+use App\Models\SavingsAccount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -95,6 +96,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Transaction::class, 'member_id');
     }
 
+    public function savingsGoals(): HasMany
+    {
+        return $this->hasMany(SavingsGoal::class, 'member_id');
+    }
+
     /**
      * Loan guarantees given by this member
      */
@@ -174,8 +180,11 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getTotalSavingsBalance(): float
     {
-        $saving_accounts = $this->accounts()->accountable_type(SavingsAccount::class)->get();
-        return $saving_accounts->sum('balance');
+        return $this->accounts()
+            ->with('accountable')
+            ->where('accountable_type', SavingsAccount::class)
+            ->get()
+            ->sum(fn ($account) => (float) ($account->accountable->balance ?? 0));
     }
 
     /**

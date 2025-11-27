@@ -37,9 +37,12 @@ class MembersController extends Controller
                     ->orWhereHas('membership', function ($membershipQuery) use ($search) {
                         $membershipQuery->where('id', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('membership.profile', function ($profileQuery) use ($search) {
-                        $profileQuery->where('phone', 'like', "%{$search}%")
-                            ->orWhere('national_id', 'like', "%{$search}%");
+                    ->orWhereHas('membership', function ($membershipQuery) use ($search) {
+                        $membershipQuery->where('profile_type', IndividualProfile::class)
+                            ->whereHasMorph('profile', [IndividualProfile::class], function ($profileQuery) use ($search) {
+                                $profileQuery->where('phone', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
+                            });
                     });
             });
         }
@@ -86,9 +89,12 @@ class MembersController extends Controller
                     ->orWhereHas('membership', function ($membershipQuery) use ($search) {
                         $membershipQuery->where('id', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('membership.profile', function ($profileQuery) use ($search) {
-                        $profileQuery->where('phone', 'like', "%{$search}%")
-                            ->orWhere('national_id', 'like', "%{$search}%");
+                    ->orWhereHas('membership', function ($membershipQuery) use ($search) {
+                        $membershipQuery->where('profile_type', IndividualProfile::class)
+                            ->whereHasMorph('profile', [IndividualProfile::class], function ($profileQuery) use ($search) {
+                                $profileQuery->where('phone', 'like', "%{$search}%")
+                                    ->orWhere('national_id', 'like', "%{$search}%");
+                            });
                     });
             });
         }

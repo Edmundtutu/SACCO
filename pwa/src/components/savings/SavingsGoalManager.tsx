@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
-import { createSavingsGoal, updateSavingsGoal, deleteSavingsGoal, setActiveGoal } from '@/store/savingsGoalsSlice';
+import {
+  createSavingsGoal,
+  updateSavingsGoal,
+  deleteSavingsGoal,
+  setActiveGoal,
+  fetchSavingsGoals,
+} from '@/store/savingsGoalsSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +15,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Target, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Plus, Target, Edit, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import type { SavingsGoal } from '@/types/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface SavingsGoalManagerProps {
   memberId: number;
@@ -17,11 +26,12 @@ interface SavingsGoalManagerProps {
 
 export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const { goals, activeGoal, loading } = useSelector((state: RootState) => state.savingsGoals);
-  
+  const { goals, activeGoal, loading, error } = useSelector((state: RootState) => state.savingsGoals);
+  const { toast } = useToast();
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<any>(null);
+  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -29,6 +39,12 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
     target_amount: '',
     target_date: '',
   });
+
+  useEffect(() => {
+    if (!goals.length) {
+      dispatch(fetchSavingsGoals(undefined));
+    }
+  }, [dispatch, goals.length]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
@@ -38,52 +54,95 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
     }).format(amount);
   };
 
+  const resetForm = () => {
+    setFormData({ title: '', description: '', target_amount: '', target_date: '' });
+  };
+
   const handleCreateGoal = async () => {
     if (!formData.title || !formData.target_amount) return;
-    
-    await dispatch(createSavingsGoal({
-      member_id: memberId,
-      title: formData.title,
-      description: formData.description,
-      target_amount: parseFloat(formData.target_amount),
-      target_date: formData.target_date || undefined,
-      status: 'active',
-    }));
-    
-    setFormData({ title: '', description: '', target_amount: '', target_date: '' });
-    setIsCreateDialogOpen(false);
+
+    try {
+      await dispatch(
+        createSavingsGoal({
+          title: formData.title,
+          description: formData.description || undefined,
+          target_amount: parseFloat(formData.target_amount),
+          target_date: formData.target_date || undefined,
+        })
+      ).unwrap();
+
+      resetForm();
+      setIsCreateDialogOpen(false);
+      toast({
+        title: 'Savings goal created',
+        description: 'We have added your new savings goal.',
+      });
+    } catch (createError) {
+      toast({
+        title: 'Could not create goal',
+        description: createError instanceof Error ? createError.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleEditGoal = async () => {
     if (!editingGoal || !formData.title || !formData.target_amount) return;
-    
-    await dispatch(updateSavingsGoal({
-      goalId: editingGoal.id,
-      memberId,
-      updates: {
-        title: formData.title,
-        description: formData.description,
-        target_amount: parseFloat(formData.target_amount),
-        target_date: formData.target_date || undefined,
-      },
-    }));
-    
-    setFormData({ title: '', description: '', target_amount: '', target_date: '' });
-    setEditingGoal(null);
-    setIsEditDialogOpen(false);
-  };
 
-  const handleDeleteGoal = async (goalId: number) => {
-    if (confirm('Are you sure you want to delete this savings goal?')) {
-      await dispatch(deleteSavingsGoal({ goalId, memberId }));
+    try {
+      await dispatch(
+        updateSavingsGoal({
+          goalId: editingGoal.id,
+          updates: {
+            title: formData.title,
+            description: formData.description || undefined,
+            target_amount: parseFloat(formData.target_amount),
+            target_date: formData.target_date || undefined,
+          },
+        })
+      ).unwrap();
+
+      resetForm();
+      setEditingGoal(null);
+      setIsEditDialogOpen(false);
+      toast({
+        title: 'Savings goal updated',
+        description: 'Your goal details were saved.',
+      });
+    } catch (updateError) {
+      toast({
+        title: 'Could not update goal',
+        description: updateError instanceof Error ? updateError.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleSetActiveGoal = (goal: any) => {
+  const handleDeleteGoal = async (goalId: number) => {
+    if (!confirm('Are you sure you want to delete this savings goal?')) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteSavingsGoal(goalId)).unwrap();
+      toast({
+        title: 'Savings goal removed',
+        description: 'We have deleted the savings goal.',
+      });
+    } catch (deleteError) {
+      toast({
+        title: 'Could not delete goal',
+        description: deleteError instanceof Error ? deleteError.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSetActiveGoal = (goal: SavingsGoal) => {
     dispatch(setActiveGoal(goal));
   };
 
-  const openEditDialog = (goal: any) => {
+  const openEditDialog = (goal: SavingsGoal) => {
     setEditingGoal(goal);
     setFormData({
       title: goal.title,
@@ -102,10 +161,22 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20';
       case 'paused':
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20';
       default:
         return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20';
     }
   };
+
+  const orderedGoals = useMemo(
+    () =>
+      [...goals].sort((a, b) => {
+        const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bDate - aDate;
+      }),
+    [goals]
+  );
 
   return (
     <div className="space-y-6">
@@ -165,7 +236,8 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleCreateGoal} className="flex-1">
+                <Button onClick={handleCreateGoal} className="flex-1" disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
                   Create Goal
                 </Button>
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
@@ -177,9 +249,17 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
         </Dialog>
       </div>
 
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Unable to load savings goals</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Goals List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((goal) => (
+        {orderedGoals.map((goal) => (
           <Card key={goal.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -200,7 +280,7 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
               {goal.description && (
                 <p className="text-sm text-muted-foreground">{goal.description}</p>
               )}
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Target:</span>
@@ -213,13 +293,11 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                 <div className="w-full bg-accent rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` 
-                    }}
+                    style={{ width: `${Math.min((goal.progress?.percentage ?? (goal.current_amount / goal.target_amount) * 100), 100)}%` }}
                   />
                 </div>
                 <div className="text-center text-xs text-muted-foreground">
-                  {Math.round((goal.current_amount / goal.target_amount) * 100)}% achieved
+                  {Math.min(100, Math.round(goal.progress?.percentage ?? (goal.current_amount / goal.target_amount) * 100))}% achieved
                 </div>
               </div>
 
@@ -227,6 +305,14 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                 <div className="text-xs text-muted-foreground">
                   Target date: {new Date(goal.target_date).toLocaleDateString()}
                 </div>
+              )}
+
+              {goal.nudge?.should_display && (
+                <Alert className="border-amber-300 bg-amber-50 text-amber-900">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Keep going</AlertTitle>
+                  <AlertDescription>{goal.nudge.message}</AlertDescription>
+                </Alert>
               )}
 
               <div className="flex gap-2">
@@ -241,11 +327,7 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                     Set Active
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openEditDialog(goal)}
-                >
+                <Button size="sm" variant="outline" onClick={() => openEditDialog(goal)}>
                   <Edit className="w-3 h-3" />
                 </Button>
                 <Button
@@ -262,7 +344,7 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
         ))}
       </div>
 
-      {goals.length === 0 && (
+      {orderedGoals.length === 0 && !loading && (
         <Card>
           <CardContent className="text-center py-12">
             <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -325,7 +407,8 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleEditGoal} className="flex-1">
+              <Button onClick={handleEditGoal} className="flex-1" disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Update Goal
               </Button>
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>

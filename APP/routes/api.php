@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccountsController;
 use App\Http\Controllers\Api\SavingsController;
+use App\Http\Controllers\Api\SavingsGoalController;
 use App\Http\Controllers\Api\LoansController;
 use App\Http\Controllers\Api\SharesController;
 use App\Http\Controllers\Api\ReportsController;
@@ -56,6 +57,7 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('accounts', [SavingsController::class, 'getAccounts']);
         Route::get('products', [SavingsController::class, 'getSavingsProducts']);
         Route::get('accounts/{accountId}/transactions', [SavingsController::class, 'getTransactions']);
+        Route::apiResource('goals', SavingsGoalController::class)->except(['create', 'edit']);
     });
 
     // Loans

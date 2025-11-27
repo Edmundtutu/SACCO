@@ -211,6 +211,74 @@ export interface SavingsProduct {
   is_active: boolean;
 }
 
+export interface SavingsGoalProgress {
+  percentage: number;
+  amount_remaining: number;
+  expected_percentage?: number | null;
+  days_elapsed?: number | null;
+  days_total?: number | null;
+  is_on_track: boolean;
+}
+
+export interface SavingsGoalNudge {
+  should_display: boolean;
+  message: string;
+  channels: string[];
+  email_sent: boolean;
+  last_sent_at?: string | null;
+}
+
+export interface SavingsGoal {
+  id: number;
+  member_id: number;
+  savings_account_id?: number | null;
+  title: string;
+  description?: string | null;
+  target_amount: number;
+  current_amount: number;
+  target_date?: string | null;
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
+  auto_nudge: boolean;
+  nudge_frequency: 'daily' | 'weekly' | 'monthly';
+  last_nudged_at?: string | null;
+  achieved_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at?: string;
+  updated_at?: string;
+  progress?: SavingsGoalProgress | null;
+  nudge?: SavingsGoalNudge | null;
+}
+
+export interface CreateSavingsGoalPayload {
+  title: string;
+  description?: string;
+  target_amount: number;
+  current_amount?: number;
+  target_date?: string;
+  savings_account_id?: number;
+  status?: SavingsGoal['status'];
+  auto_nudge?: boolean;
+  nudge_frequency?: SavingsGoal['nudge_frequency'];
+  metadata?: Record<string, unknown>;
+}
+
+export type UpdateSavingsGoalPayload = Partial<CreateSavingsGoalPayload>;
+
+export interface PaginatedResponse<T> {
+  success?: boolean;
+  data: T[];
+  links?: Record<string, unknown>;
+  meta?: {
+    current_page: number;
+    from?: number;
+    last_page: number;
+    path?: string;
+    per_page: number;
+    to?: number;
+    total: number;
+  };
+}
+
 export interface Transaction {
   id: number;
   transaction_number: string;

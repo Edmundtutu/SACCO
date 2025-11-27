@@ -6,10 +6,12 @@ namespace App\Providers;
 use App\Models\Account;
 use App\Models\Loan;
 use App\Models\Transaction;
+use App\Models\SavingsGoal;
 use App\Policies\AccountPolicy;
 use App\Policies\LoanPolicy;
 use App\Policies\MembershipPolicy;
 use App\Policies\TransactionPolicy;
+use App\Policies\SavingsGoalPolicy;
 use App\Models\Membership\Membership;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -25,6 +27,7 @@ class AuthServiceProvider extends ServiceProvider
         Account::class => AccountPolicy::class,
         Loan::class => LoanPolicy::class,
         Transaction::class => TransactionPolicy::class,
+        SavingsGoal::class => SavingsGoalPolicy::class,
     ];
 
     /**
