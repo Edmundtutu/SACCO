@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Account;
+use App\Models\SavingsAccount;
 use App\Models\SavingsGoal;
 use App\Models\User;
 use App\Notifications\SavingsGoalLaggingNotification;
@@ -8,12 +10,38 @@ use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
+function createSavingsGoalTestAccount(User $member, float $balance = 0): Account
+{
+    $ledger = SavingsAccount::factory()->create([
+        'balance' => $balance,
+        'available_balance' => $balance,
+    ]);
+
+    $account = Account::factory()
+        ->withSavingsAccount($ledger)
+        ->active()
+        ->create([
+            'member_id' => $member->id,
+        ]);
+
+    $account->setRelation('accountable', $ledger);
+    $ledger->setRelation('account', $account);
+
+    return $account;
+}
+
+function createSavingsAccountForMember(User $member, float $balance = 0): Account
+{
+    return createSavingsGoalTestAccount($member, $balance);
+}
+
 beforeEach(function () {
     $this->artisan('migrate:fresh');
     $this->artisan('db:seed', ['--class' => 'SaccoDataSeeder']);
 
     $this->member = User::where('email', 'jane@example.com')->first();
     $this->memberToken = auth('api')->login($this->member);
+    $this->memberSavingsAccount = createSavingsAccountForMember($this->member, 0);
 });
 
 test('member can create a savings goal', function () {
@@ -22,6 +50,7 @@ test('member can create a savings goal', function () {
         'description' => 'Set aside funds for emergencies.',
         'target_amount' => 500000,
         'target_date' => now()->addMonths(6)->format('Y-m-d'),
+        'savings_account_id' => $this->memberSavingsAccount->id,
     ];
 
     $response = $this->withHeaders([
@@ -38,6 +67,22 @@ test('member can create a savings goal', function () {
     ]);
 });
 
+test('member cannot create a savings goal without a linked savings account', function () {
+    $payload = [
+        'title' => 'Emergency Fund',
+        'description' => 'Set aside funds for emergencies.',
+        'target_amount' => 500000,
+        'target_date' => now()->addMonths(6)->format('Y-m-d'),
+    ];
+
+    $response = $this->withHeaders([
+        'Authorization' => 'Bearer ' . $this->memberToken,
+    ])->postJson('/api/savings/goals', $payload);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['savings_account_id']);
+});
+
 test('member can list their savings goals with progress information', function () {
     SavingsGoal::factory()->for($this->member, 'member')->create([
         'title' => 'Holiday Savings',
@@ -45,6 +90,7 @@ test('member can list their savings goals with progress information', function (
         'current_amount' => 250000,
         'target_date' => now()->addMonths(4),
         'status' => SavingsGoal::STATUS_ACTIVE,
+        'savings_account_id' => $this->memberSavingsAccount->id,
     ]);
 
     $response = $this->withHeaders([
@@ -69,17 +115,24 @@ test('member can list their savings goals with progress information', function (
 });
 
 test('member can update savings goal progress and mark as completed automatically', function () {
+    $ledger = $this->memberSavingsAccount->accountable;
     $goal = SavingsGoal::factory()->for($this->member, 'member')->create([
         'title' => 'Laptop Purchase',
         'target_amount' => 2000000,
         'current_amount' => 500000,
         'status' => SavingsGoal::STATUS_ACTIVE,
         'target_date' => now()->addMonths(3),
+        'savings_account_id' => $this->memberSavingsAccount->id,
     ]);
 
     $payload = [
         'current_amount' => 2000000,
     ];
+
+    $ledger->update([
+        'balance' => 2000000,
+        'available_balance' => 2000000,
+    ]);
 
     $response = $this->withHeaders([
         'Authorization' => 'Bearer ' . $this->memberToken,
@@ -91,11 +144,13 @@ test('member can update savings goal progress and mark as completed automaticall
 
     $goal->refresh();
     expect($goal->status)->toBe(SavingsGoal::STATUS_COMPLETED);
-    expect((float) $goal->current_amount)->toBe(2000000.0);
+    $this->assertEquals(2000000.0, (float) $goal->current_amount);
 });
 
 test('lagging goal triggers nudge notification and response payload', function () {
     Notification::fake();
+
+    $laggingAccount = createSavingsAccountForMember($this->member, 50000);
 
     $goal = SavingsGoal::factory()->for($this->member, 'member')->create([
         'title' => 'Home Renovation',
@@ -106,6 +161,7 @@ test('lagging goal triggers nudge notification and response payload', function (
         'nudge_frequency' => SavingsGoal::NUDGE_WEEKLY,
         'last_nudged_at' => now()->subWeeks(2),
         'created_at' => now()->subMonths(3),
+        'savings_account_id' => $laggingAccount->id,
     ]);
 
     $response = $this->withHeaders([
@@ -124,9 +180,12 @@ test('lagging goal triggers nudge notification and response payload', function (
 
 test('member cannot access another members goal', function () {
     $otherMember = User::where('email', 'robert@example.com')->first();
+    $otherAccount = createSavingsAccountForMember($otherMember, 0);
+
     $goal = SavingsGoal::factory()->for($otherMember, 'member')->create([
         'title' => 'Not yours',
         'target_amount' => 100000,
+        'savings_account_id' => $otherAccount->id,
     ]);
 
     $response = $this->withHeaders([

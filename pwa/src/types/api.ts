@@ -255,7 +255,7 @@ export interface CreateSavingsGoalPayload {
   target_amount: number;
   current_amount?: number;
   target_date?: string;
-  savings_account_id?: number;
+  savings_account_id: number;
   status?: SavingsGoal['status'];
   auto_nudge?: boolean;
   nudge_frequency?: SavingsGoal['nudge_frequency'];

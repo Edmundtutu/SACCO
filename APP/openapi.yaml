@@ -676,7 +676,6 @@ components:
           type: integer
         savings_account_id:
           type: integer
-          nullable: true
         title:
           type: string
         description:
@@ -770,6 +769,7 @@ components:
       required:
         - title
         - target_amount
+        - savings_account_id
       properties:
         title:
           type: string

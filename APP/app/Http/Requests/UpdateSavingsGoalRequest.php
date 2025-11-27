@@ -22,7 +22,7 @@ class UpdateSavingsGoalRequest extends FormRequest
             'target_amount' => ['sometimes', 'numeric', 'min:1000'],
             'current_amount' => ['sometimes', 'numeric', 'min:0'],
             'target_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:today'],
-            'savings_account_id' => ['sometimes', 'nullable', 'integer', 'exists:accounts,id'],
+            'savings_account_id' => ['sometimes', 'integer', 'exists:accounts,id'],
             'status' => ['sometimes', Rule::in(SavingsGoal::STATUSES)],
             'auto_nudge' => ['sometimes', 'boolean'],
             'nudge_frequency' => ['sometimes', Rule::in(SavingsGoal::NUDGE_FREQUENCIES)],
@@ -45,9 +45,6 @@ class UpdateSavingsGoalRequest extends FormRequest
         }
 
         $accountId = $this->input('savings_account_id');
-        if ($accountId === null) {
-            return;
-        }
 
         $account = Account::find($accountId);
         if (!$account) {
@@ -56,6 +53,16 @@ class UpdateSavingsGoalRequest extends FormRequest
 
         if ((int) $account->member_id !== (int) auth()->id()) {
             $validator->errors()->add('savings_account_id', 'Selected savings account does not belong to the authenticated member.');
+            return;
+        }
+
+        if (!$account->isSavingsAccount()) {
+            $validator->errors()->add('savings_account_id', 'The selected account must be a savings account.');
+            return;
+        }
+
+        if ($account->status !== 'active') {
+            $validator->errors()->add('savings_account_id', 'The selected savings account must be active.');
         }
     }
 

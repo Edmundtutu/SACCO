@@ -22,7 +22,7 @@ class StoreSavingsGoalRequest extends FormRequest
             'target_amount' => ['required', 'numeric', 'min:1000'],
             'current_amount' => ['nullable', 'numeric', 'min:0'],
             'target_date' => ['nullable', 'date', 'after_or_equal:today'],
-            'savings_account_id' => ['nullable', 'integer', 'exists:accounts,id'],
+            'savings_account_id' => ['required', 'integer', 'exists:accounts,id'],
             'status' => ['nullable', Rule::in(SavingsGoal::STATUSES)],
             'auto_nudge' => ['sometimes', 'boolean'],
             'nudge_frequency' => ['sometimes', Rule::in(SavingsGoal::NUDGE_FREQUENCIES)],
@@ -51,6 +51,16 @@ class StoreSavingsGoalRequest extends FormRequest
 
         if ((int) $account->member_id !== (int) auth()->id()) {
             $validator->errors()->add('savings_account_id', 'Selected savings account does not belong to the authenticated member.');
+            return;
+        }
+
+        if (!$account->isSavingsAccount()) {
+            $validator->errors()->add('savings_account_id', 'The selected account must be a savings account.');
+            return;
+        }
+
+        if ($account->status !== 'active') {
+            $validator->errors()->add('savings_account_id', 'The selected savings account must be active.');
         }
     }
 

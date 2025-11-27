@@ -17,8 +17,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Plus, Target, Edit, Trash2, Loader2, AlertTriangle } from 'lucide-react';
-import type { SavingsGoal } from '@/types/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Account, SavingsGoal } from '@/types/api';
 import { useToast } from '@/hooks/use-toast';
+import { accountsAPI } from '@/api/accounts';
 
 interface SavingsGoalManagerProps {
   memberId: number;
@@ -32,12 +34,16 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
+  const [savingsAccounts, setSavingsAccounts] = useState<Account[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     target_amount: '',
     target_date: '',
+    savings_account_id: '',
   });
 
   useEffect(() => {
@@ -45,6 +51,59 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
       dispatch(fetchSavingsGoals(undefined));
     }
   }, [dispatch, goals.length]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSavingsAccounts = async () => {
+      setAccountsLoading(true);
+      setAccountsError(null);
+
+      try {
+        const response = await accountsAPI.getSavingsAccounts();
+        const accounts = response.data ?? [];
+
+        if (response.success === false && !accounts.length) {
+          if (!isMounted) {
+            return;
+          }
+          setAccountsError(response.message ?? 'Unable to load savings accounts.');
+          setSavingsAccounts([]);
+          return;
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSavingsAccounts(accounts);
+        setFormData((prev) => (
+          prev.savings_account_id
+            ? prev
+            : {
+                ...prev,
+                savings_account_id: accounts[0]?.id ? accounts[0].id.toString() : '',
+              }
+        ));
+      } catch (loadError) {
+        if (!isMounted) {
+          return;
+        }
+        setAccountsError('Failed to load savings accounts.');
+        setSavingsAccounts([]);
+      } finally {
+        if (isMounted) {
+          setAccountsLoading(false);
+        }
+      }
+    };
+
+    loadSavingsAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
@@ -55,11 +114,34 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', target_amount: '', target_date: '' });
+    setFormData({
+      title: '',
+      description: '',
+      target_amount: '',
+      target_date: '',
+      savings_account_id: savingsAccounts[0]?.id.toString() ?? '',
+    });
   };
 
   const handleCreateGoal = async () => {
-    if (!formData.title || !formData.target_amount) return;
+    if (!formData.title || !formData.target_amount || !formData.savings_account_id) {
+      toast({
+        title: 'Missing details',
+        description: 'Please fill in all required fields and select a savings account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedAccountId = Number(formData.savings_account_id);
+    if (!Number.isFinite(selectedAccountId)) {
+      toast({
+        title: 'Invalid account',
+        description: 'Choose a valid savings account before creating a goal.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       await dispatch(
@@ -68,6 +150,7 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
           description: formData.description || undefined,
           target_amount: parseFloat(formData.target_amount),
           target_date: formData.target_date || undefined,
+          savings_account_id: selectedAccountId,
         })
       ).unwrap();
 
@@ -149,6 +232,7 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
       description: goal.description || '',
       target_amount: goal.target_amount.toString(),
       target_date: goal.target_date || '',
+      savings_account_id: goal.savings_account_id ? goal.savings_account_id.toString() : '',
     });
     setIsEditDialogOpen(true);
   };
@@ -177,6 +261,28 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
       }),
     [goals]
   );
+
+  const formatAccountLabel = (account: Account): string => {
+    const productName = account.accountable?.savings_product?.name;
+    return productName ? `${account.account_number} · ${productName}` : account.account_number;
+  };
+
+  const resolveAccountLabel = (accountId?: number | null): string => {
+    if (!accountId) {
+      return 'No linked account';
+    }
+
+    const account = savingsAccounts.find((item) => item.id === accountId);
+    if (!account) {
+      return `Account #${accountId}`;
+    }
+
+    return formatAccountLabel(account);
+  };
+
+  const noSavingsAccounts = !accountsLoading && savingsAccounts.length === 0;
+  const createButtonDisabled =
+    loading || accountsLoading || noSavingsAccounts || !formData.savings_account_id;
 
   return (
     <div className="space-y-6">
@@ -235,9 +341,40 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                   onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
                 />
               </div>
+              <div>
+                <Label htmlFor="savings_account_id">Savings Account</Label>
+                <Select
+                  value={formData.savings_account_id}
+                  onValueChange={(value) => setFormData({ ...formData, savings_account_id: value })}
+                  disabled={accountsLoading || noSavingsAccounts}
+                >
+                  <SelectTrigger id="savings_account_id">
+                    <SelectValue placeholder={accountsLoading ? 'Loading accounts…' : 'Select a savings account'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {savingsAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id.toString()}>
+                        {formatAccountLabel(account)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {accountsError && (
+                  <p className="text-sm text-destructive mt-1">{accountsError}</p>
+                )}
+                {noSavingsAccounts && !accountsError && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    You need an active savings account before creating a goal.
+                  </p>
+                )}
+              </div>
               <div className="flex gap-2">
-                <Button onClick={handleCreateGoal} className="flex-1" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                <Button onClick={handleCreateGoal} className="flex-1" disabled={createButtonDisabled}>
+                  {createButtonDisabled && (loading || accountsLoading) ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
                   Create Goal
                 </Button>
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
@@ -280,6 +417,10 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
               {goal.description && (
                 <p className="text-sm text-muted-foreground">{goal.description}</p>
               )}
+
+              <div className="text-xs text-muted-foreground">
+                Linked account: {resolveAccountLabel(goal.savings_account_id)}
+              </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
@@ -405,6 +546,10 @@ export function SavingsGoalManager({ memberId }: SavingsGoalManagerProps) {
                 value={formData.target_date}
                 onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
               />
+            </div>
+            <div>
+              <Label>Linked Savings Account</Label>
+              <Input value={resolveAccountLabel(editingGoal?.savings_account_id)} disabled />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleEditGoal} className="flex-1" disabled={loading}>
