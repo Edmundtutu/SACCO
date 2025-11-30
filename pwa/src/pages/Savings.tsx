@@ -18,7 +18,7 @@ import { AccountsList } from '@/components/savings/AccountsList';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
 import { SavingsProgress } from '@/components/savings/SavingsProgress';
 import { SavingsGoalManager } from '@/components/savings/SavingsGoalManager';
-import { MobileToolbar } from '@/components/layout/MobileToolbar';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 import { 
   Plus, 
   Minus, 
@@ -55,197 +55,231 @@ export default function Savings() {
     dispatch(fetchSavingsAccounts());
   }, [dispatch]);
 
-  return (
+  const toolbarActions = (
     <>
-      {/* Mobile Toolbar */}
-      <MobileToolbar 
-        title="Savings" 
-        user={user}
-        showNotifications={true}
-      />
+      <Button 
+        onClick={() => setDepositModalOpen(true)}
+        className="bg-green-600 hover:bg-green-700"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Deposit
+      </Button>
+      <Button 
+        variant="outline"
+        onClick={() => setWithdrawalModalOpen(true)}
+      >
+        <Minus className="w-4 h-4 mr-2" />
+        Withdraw
+      </Button>
+    </>
+  );
 
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-heading text-2xl md:text-3xl font-bold">Savings</h1>
-              <p className="text-muted-foreground">Manage your savings accounts and transactions</p>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setDepositModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Deposit
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setWithdrawalModalOpen(true)}
-              >
-                <Minus className="w-4 h-4 mr-2" />
-                Withdraw
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Action Buttons */}
-        <div className="md:hidden flex gap-2">
-          <Button 
-            onClick={() => setDepositModalOpen(true)}
-            className="flex-1 bg-green-600 hover:bg-green-700"
-            size="lg"
-          >
-            <Plus className="w-4 h-4 mr-2" />
+  const mobileActions = (
+    <>
+      <button
+        onClick={() => setDepositModalOpen(true)}
+        className="group relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-6 
+          bg-gradient-to-br from-emerald-50 to-green-50 border border-white/20 backdrop-blur-sm
+          transform transition-all duration-300 ease-out
+          hover:scale-105 hover:-translate-y-1 hover:shadow-green-500/40
+          active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+          shadow-green-500/25 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+          flex-1"
+      >
+        {/* Background Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-green-600 opacity-0 
+          group-hover:opacity-5 transition-opacity duration-300" />
+        
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center gap-2">
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 transform transition-transform duration-300 
+            group-hover:scale-110 group-active:scale-95" />
+          <span className="font-semibold text-sm sm:text-base text-emerald-600 
+            group-hover:font-bold transition-all duration-200">
             Deposit
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setWithdrawalModalOpen(true)}
-            className="flex-1"
-            size="lg"
-          >
-            <Minus className="w-4 h-4 mr-2" />
-            Withdraw
-          </Button>
+          </span>
         </div>
 
-        {/* Summary Cards - Horizontal Scroll on Mobile */}
-        <div className="w-full">
-          {/* Mobile Summary - Horizontal Scroll */}
-          <div className="md:hidden">
-            <div className="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+        {/* Hover Effect Border */}
+        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl border-2 border-transparent 
+          bg-gradient-to-br from-emerald-400 to-green-600 opacity-0 group-hover:opacity-20 
+          transition-opacity duration-300 -z-10" />
+      </button>
+
+      <button
+        onClick={() => setWithdrawalModalOpen(true)}
+        className="group relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-6 
+          bg-gradient-to-br from-red-50 to-rose-50 border border-white/20 backdrop-blur-sm
+          transform transition-all duration-300 ease-out
+          hover:scale-105 hover:-translate-y-1 hover:shadow-red-500/40
+          active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+          shadow-red-500/25 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+          flex-1"
+      >
+        {/* Background Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 opacity-0 
+          group-hover:opacity-5 transition-opacity duration-300" />
+        
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center gap-2">
+          <Minus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 transform transition-transform duration-300 
+            group-hover:scale-110 group-active:scale-95" />
+          <span className="font-semibold text-sm sm:text-base text-red-600 
+            group-hover:font-bold transition-all duration-200">
+            Withdraw
+          </span>
+        </div>
+
+        {/* Hover Effect Border */}
+        <div className="absolute inset-0 rounded-2xl sm:rounded-3xl border-2 border-transparent 
+          bg-gradient-to-br from-red-400 to-rose-600 opacity-0 group-hover:opacity-20 
+          transition-opacity duration-300 -z-10" />
+      </button>
+    </>
+  );
+
+  return (
+    <DashboardPage 
+      title="Savings" 
+      subtitle="Manage your savings accounts and transactions"
+      toolbarActions={toolbarActions}
+      mobileActions={mobileActions}
+    >
+        {/* Summary Cards - Mobile Horizontal Scroll, Desktop Grid */}
+        
+        {/* Mobile Summary - Horizontal Scroll */}
+        <div className="md:hidden overflow-hidden -mx-4">
+          <div className="px-4">
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
               {/* Total Balance Card */}
-              <div className="flex-none w-64 bg-card rounded-lg p-4 border">
+              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">Total Balance</p>
-                    <p className="text-lg font-bold font-heading">{formatCurrency(totalBalance)}</p>
+                    <p className="text-lg font-bold font-heading truncate">{formatCurrency(totalBalance)}</p>
                     <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">
                       {accounts.length} account{accounts.length !== 1 ? 's' : ''}
                     </Badge>
                   </div>
-                  <div className="h-8 w-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="h-9 w-9 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
                     <PiggyBank className="h-4 w-4 text-green-600" />
                   </div>
                 </div>
               </div>
 
               {/* Available Balance Card */}
-              <div className="flex-none w-64 bg-card rounded-lg p-4 border">
+              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">Available Balance</p>
-                    <p className="text-lg font-bold font-heading">{formatCurrency(totalAvailableBalance)}</p>
-                    <p className="text-xs text-muted-foreground">Ready for withdrawal</p>
+                    <p className="text-lg font-bold font-heading truncate">{formatCurrency(totalAvailableBalance)}</p>
+                    <p className="text-xs text-muted-foreground">Ready to withdraw</p>
                   </div>
-                  <div className="h-8 w-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="h-9 w-9 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
                     <CreditCard className="h-4 w-4 text-blue-600" />
                   </div>
                 </div>
               </div>
 
               {/* Interest Earned Card */}
-              <div className="flex-none w-64 bg-card rounded-lg p-4 border">
+              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground font-medium">Interest Earned</p>
-                    <p className="text-lg font-bold font-heading">
+                    <p className="text-lg font-bold font-heading truncate">
                       {formatCurrency(totalInterestEarned)}
                     </p>
                     <p className="text-xs text-muted-foreground">This year</p>
                   </div>
-                  <div className="h-8 w-8 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="h-9 w-9 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
                     <TrendingUp className="h-4 w-4 text-purple-600" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Desktop Summary - Keep original grid */}
-          <div className="hidden md:grid grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Total Balance</p>
-                    <p className="text-2xl font-bold font-heading">{formatCurrency(totalBalance)}</p>
-                  </div>
-                  <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                    <PiggyBank className="h-6 w-6 text-green-600" />
-                  </div>
+        {/* Desktop Summary - Grid */}
+        <div className="hidden md:grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Total Balance</p>
+                  <p className="text-2xl font-bold font-heading">{formatCurrency(totalBalance)}</p>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/20">
-                    {accounts.length} account{accounts.length !== 1 ? 's' : ''}
-                  </Badge>
+                <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                  <PiggyBank className="h-6 w-6 text-green-600" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/20">
+                  {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Available Balance</p>
-                    <p className="text-2xl font-bold font-heading">{formatCurrency(totalAvailableBalance)}</p>
-                  </div>
-                  <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-blue-600" />
-                  </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Available Balance</p>
+                  <p className="text-2xl font-bold font-heading">{formatCurrency(totalAvailableBalance)}</p>
                 </div>
-                <div className="mt-4">
-                  <p className="text-xs text-muted-foreground">
-                    Ready for withdrawal
+                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">
+                  Ready for withdrawal
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Interest Earned</p>
+                  <p className="text-2xl font-bold font-heading">
+                    {formatCurrency(totalInterestEarned)}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Interest Earned</p>
-                    <p className="text-2xl font-bold font-heading">
-                      {formatCurrency(totalInterestEarned)}
-                    </p>
-                  </div>
-                  <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
+                <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
                 </div>
-                <div className="mt-4">
-                  <p className="text-xs text-muted-foreground">
-                    This year
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">
+                  This year
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="accounts" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Accounts</span>
+          <TabsList className="grid w-full grid-cols-4 h-12 md:h-10">
+            <TabsTrigger value="accounts" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
+              <span>Accounts</span>
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              <span className="hidden sm:inline">Transactions</span>
+            <TabsTrigger value="transactions" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <History className="w-3 h-3 md:w-4 md:h-4" />
+              <span>History</span>
             </TabsTrigger>
-            <TabsTrigger value="progress" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Progress</span>
+            <TabsTrigger value="progress" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Target className="w-3 h-3 md:w-4 md:h-4" />
+              <span>Progress</span>
             </TabsTrigger>
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Products</span>
+            <TabsTrigger value="products" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <TrendingUp className="w-3 h-3 md:w-4 md:h-4" />
+              <span>Products</span>
             </TabsTrigger>
           </TabsList>
 
@@ -267,11 +301,11 @@ export default function Savings() {
 
           <TabsContent value="products" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Available Savings Products</CardTitle>
+              <CardHeader className="px-4 md:px-6 py-4">
+                <CardTitle className="text-lg md:text-xl">Available Savings Products</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <CardContent className="px-3 md:px-6 pb-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
                   {[
                     {
                       name: "Regular Savings",
@@ -296,21 +330,21 @@ export default function Savings() {
                     }
                   ].map((product, index) => (
                     <Card key={index} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">{product.description}</p>
+                      <CardContent className="p-3 md:p-4">
+                        <h3 className="font-semibold text-base md:text-lg mb-2">{product.name}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3">{product.description}</p>
                         <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm">Interest Rate:</span>
+                          <div className="flex justify-between text-xs md:text-sm">
+                            <span>Interest Rate:</span>
                             <span className="font-semibold text-green-600">{product.interestRate} p.a.</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm">Min Deposit:</span>
+                          <div className="flex justify-between text-xs md:text-sm">
+                            <span>Min Deposit:</span>
                             <span className="font-semibold">{formatCurrency(product.minimumDeposit)}</span>
                           </div>
                         </div>
                         <div className="mt-3">
-                          <h4 className="text-sm font-medium mb-2">Features:</h4>
+                          <h4 className="text-xs md:text-sm font-medium mb-2">Features:</h4>
                           <ul className="text-xs text-muted-foreground space-y-1">
                             {product.features.map((feature, idx) => (
                               <li key={idx} className="flex items-center gap-1">
@@ -320,7 +354,7 @@ export default function Savings() {
                             ))}
                           </ul>
                         </div>
-                        <Button className="w-full mt-4" size="sm">
+                        <Button className="w-full mt-3 text-xs md:text-sm" size="sm">
                           Learn More
                         </Button>
                       </CardContent>
@@ -344,7 +378,6 @@ export default function Savings() {
           onClose={() => setWithdrawalModalOpen(false)}
           account={selectedAccount}
         />
-      </div>
-    </>
+    </DashboardPage>
   );
 }

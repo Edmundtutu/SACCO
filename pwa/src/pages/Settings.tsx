@@ -3,18 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Bell, Shield, Palette, Download } from 'lucide-react';
+import { DashboardPage } from '@/components/layout/DashboardPage';
+import { Settings as SettingsIcon, Bell, Shield, Palette, Download } from 'lucide-react';
 
 export default function Settings() {
   return (
-    <div className="p-4 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage your account preferences and settings</p>
-        </div>
-      </div>
-
+    <DashboardPage 
+      title="Settings" 
+      subtitle="Manage your account preferences and settings"
+    >
+      <div className="max-w-4xl mx-auto">
       <div className="grid gap-6">
         {/* Notifications */}
         <Card>
@@ -150,6 +148,7 @@ export default function Settings() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </DashboardPage>
   );
 }

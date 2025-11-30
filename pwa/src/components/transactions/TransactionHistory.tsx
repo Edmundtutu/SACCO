@@ -270,29 +270,31 @@ export function TransactionHistory({ memberId, context = 'all', accountId, loanI
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-            Transaction History
-          </CardTitle>
+        <CardHeader className="px-4 md:px-6 py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <Calendar className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+              <span>Transaction History</span>
+            </CardTitle>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
+                className="flex-1 md:flex-none text-xs md:text-sm"
               >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
+                <Filter className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 flex-shrink-0" />
+                <span>Filters</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={loadTransactions}
                 disabled={loading}
+                className="flex-1 md:flex-none text-xs md:text-sm"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                <RefreshCw className={`w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 flex-shrink-0 ${loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
               </Button>
             </div>
           </div>

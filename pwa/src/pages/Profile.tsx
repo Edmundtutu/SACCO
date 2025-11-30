@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ProfileEdit } from '@/components/profile/ProfileEdit';
 import { PasswordChange } from '@/components/profile/PasswordChange';
 import { KYCInformation } from '@/components/profile/KYCInformation';
-import { MobileToolbar } from '@/components/layout/MobileToolbar';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -42,25 +42,11 @@ export default function Profile() {
   };
 
   return (
-    <>
-      {/* Mobile Toolbar */}
-      <MobileToolbar 
-        title="Profile" 
-        user={user}
-        showNotifications={true}
-      />
-
-      <div className="p-4 space-y-6 max-w-4xl mx-auto">
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-heading font-bold text-foreground">Profile</h1>
-              <p className="text-muted-foreground">Manage your account and preferences</p>
-            </div>
-          </div>
-        </div>
-
+    <DashboardPage 
+      title="Profile" 
+      subtitle="Manage your account and preferences"
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
       {/* Profile Header */}
       <Card>
         <CardContent className="pt-6">
@@ -249,6 +235,6 @@ export default function Profile() {
         </TabsContent>
       </Tabs>
       </div>
-    </>
+    </DashboardPage>
   );
 }

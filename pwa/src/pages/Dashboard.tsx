@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
@@ -15,7 +15,7 @@ import {
 } from '@/utils/accountHelpers';
 import { OverviewChart } from '@/components/dashboard/OverviewChart';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-import { MobileToolbar } from '@/components/layout/MobileToolbar';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,8 +41,11 @@ export function Dashboard() {
 
   // Find wallet account using helper
   const walletAccount = findWalletAccount(accounts);
+  const didFetch = useRef(false);
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
     dispatch(fetchSavingsAccounts());
     dispatch(fetchLoans());
     dispatch(fetchShares());
@@ -105,13 +108,6 @@ export function Dashboard() {
     return formatCurrency(amount);
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
-
   // Transform transactions into recent activities
   const getTransactionIcon = (type: string) => {
     switch (type) {
@@ -143,27 +139,23 @@ export function Dashboard() {
     };
   });
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const greeting = `${getGreeting()}, ${user?.name?.split(' ')[0]}!`;
+
   return (
-    <>
-      {/* Mobile Toolbar */}
-      <MobileToolbar 
-        title="Home" 
-        user={user}
-        showNotifications={true}
-        onNotificationClick={() => {
-          // Handle notification click
-          console.log('Notifications clicked');
-        }}
-      />
-
-      <div className="p-4 md:p-6 space-y-6 animate-fade-in">
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <h1 className="font-heading text-2xl md:text-3xl font-bold">
-            {getGreeting()}, {user?.name?.split(' ')[0]}!
-          </h1>
-        </div>
-
+    <DashboardPage 
+      title={greeting}
+      onNotificationClick={() => {
+        console.log('Notifications clicked');
+      }}
+    >
+      <div className="space-y-6 animate-fade-in">
         {/* Quick Stats - Hidden on mobile */}
         {!isMobile && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -386,6 +378,6 @@ export function Dashboard() {
           </>
         )}
       </div>
-    </>
+    </DashboardPage>
   );
 }

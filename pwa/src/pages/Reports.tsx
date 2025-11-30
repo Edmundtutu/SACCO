@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatementViewer } from '@/components/reports/StatementViewer';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 import { RootState } from '@/store';
 import { fetchSavingsAccounts } from '@/store/savingsSlice';
 import { fetchLoans } from '@/store/loansSlice';
@@ -35,14 +36,10 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-4 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Reports & Statements</h1>
-          <p className="text-muted-foreground">View your financial reports and download statements</p>
-        </div>
-      </div>
-
+    <DashboardPage 
+      title="Reports & Statements" 
+      subtitle="View your financial reports and download statements"
+    >
       {/* Financial Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -193,6 +190,6 @@ export default function Reports() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPage>
   );
 }

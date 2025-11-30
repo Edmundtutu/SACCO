@@ -12,7 +12,7 @@ import { SharesPurchase } from '@/components/shares/SharesPurchase';
 import { SharesCertificate } from '@/components/shares/SharesCertificate';
 import { DividendHistory } from '@/components/shares/DividendHistory';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
-import { MobileToolbar } from '@/components/layout/MobileToolbar';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 import { 
   TrendingUp, 
   PieChart, 
@@ -49,33 +49,22 @@ export default function Shares() {
   const totalValue = sharesAccount?.total_share_value || 0;
   const dividendsEarned = sharesAccount?.dividends_earned || 0;
 
+  const toolbarActions = (
+    <Button 
+      onClick={() => setPurchaseModalOpen(true)}
+      className="bg-primary hover:bg-primary/90"
+    >
+      <TrendingUp className="w-4 h-4 mr-2" />
+      Buy Shares
+    </Button>
+  );
+
   return (
-    <>
-      {/* Mobile Toolbar */}
-      <MobileToolbar 
-        title="Shares" 
-        user={user}
-        showNotifications={true}
-      />
-
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-heading text-2xl md:text-3xl font-bold">Shares</h1>
-              <p className="text-muted-foreground">Manage your share capital and dividends</p>
-            </div>
-            <Button 
-              onClick={() => setPurchaseModalOpen(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Buy Shares
-            </Button>
-          </div>
-        </div>
-
+    <DashboardPage 
+      title="Shares" 
+      subtitle="Manage your share capital and dividends"
+      toolbarActions={toolbarActions}
+    >
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -325,7 +314,6 @@ export default function Shares() {
           </div>
         </div>
       )}
-      </div>
-    </>
+    </DashboardPage>
   );
 }

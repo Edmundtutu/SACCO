@@ -13,10 +13,11 @@ import { getSavingsAccount } from '@/utils/accountHelpers';
 interface AccountsListProps {
   accounts: Account[];
   loading: boolean;
-  onAccountSelect: (accountId: number) => void;
+  onAccountSelect: (account: Account) => void;
 }
 
 export function AccountsList({ accounts, loading, onAccountSelect }: AccountsListProps) {
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [depositForm, setDepositForm] = useState<{ isOpen: boolean; account?: Account }>({
     isOpen: false,
     account: undefined,
@@ -27,11 +28,18 @@ export function AccountsList({ accounts, loading, onAccountSelect }: AccountsLis
   });
 
   const handleDeposit = (account: Account) => {
+    setSelectedAccountId(account.id);
     setDepositForm({ isOpen: true, account });
   };
 
   const handleWithdrawal = (account: Account) => {
+    setSelectedAccountId(account.id);
     setWithdrawalForm({ isOpen: true, account });
+  };
+
+  const handleSelectAccount = (account: Account) => {
+    setSelectedAccountId(account.id);
+    onAccountSelect(account);
   };
 
   if (loading) {
@@ -69,83 +77,111 @@ export function AccountsList({ accounts, loading, onAccountSelect }: AccountsLis
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1">
         {accounts.map((accountWrapper) => {
           const account = getSavingsAccount(accountWrapper);
-          if (!account) return null; // Skip if not a savings account
+          if (!account) return null;
+          
+          const isSelected = selectedAccountId === accountWrapper.id;
 
           return (
-            <Card key={accountWrapper.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{account.savings_product?.name || 'Savings Account'}</CardTitle>
-                    <p className="text-sm text-muted-foreground font-mono">
+            <Card 
+              key={accountWrapper.id} 
+              className={`transition-all duration-300 cursor-pointer ${
+                isSelected 
+                  ? 'border-2 border-primary shadow-lg shadow-primary/20 bg-primary/5' 
+                  : 'hover:shadow-md hover:border-primary/30'
+              }`}
+              onClick={() => handleSelectAccount(accountWrapper)}
+            >
+              <CardHeader className="pb-3 px-4 md:px-6 py-4">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-base md:text-lg truncate">{account.savings_product?.name || 'Savings Account'}</CardTitle>
+                      {isSelected && (
+                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      )}
+                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground font-mono truncate">
                       {accountWrapper.account_number}
                     </p>
                   </div>
                   <Badge 
                     variant={accountWrapper.status === 'active' ? 'default' : 'secondary'}
+                    className="flex-shrink-0 text-xs"
                   >
                     {accountWrapper.status}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 px-4 md:px-6 pb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Current Balance</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-xs md:text-sm text-muted-foreground">Current Balance</p>
+                  <p className="text-xl md:text-2xl font-bold text-primary truncate">
                     UGX {account.balance?.toLocaleString() || '0'}
                   </p>
                   {account.available_balance !== account.balance && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground truncate">
                       Available: UGX {account.available_balance?.toLocaleString() || '0'}
                     </p>
                   )}
                 </div>
 
-                <div className="flex justify-between text-sm">
+                <div className="grid grid-cols-2 gap-3 text-xs md:text-sm">
                   <div>
                     <p className="text-muted-foreground">Interest Rate</p>
                     <p className="font-medium flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3 text-success" />
-                      {account.interest_rate || 0}% p.a.
+                      <TrendingUp className="w-3 h-3 text-success flex-shrink-0" />
+                      <span className="truncate">{account.savings_product?.interest_rate || 0}% p.a.</span>
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-muted-foreground">Opened</p>
-                    <p className="font-medium">
+                    <p className="font-medium truncate">
                       {new Date(account.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => onAccountSelect(accountWrapper.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectAccount(accountWrapper);
+                    }}
+                    className="flex-1 min-w-[100px] text-xs md:text-sm"
                   >
-                    <Eye className="w-4 h-4 mr-1" />
-                    Transactions
+                    <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">Transactions</span>
                   </Button>
                   <Button 
                     size="sm" 
                     variant="default"
-                    onClick={() => handleDeposit(accountWrapper)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeposit(accountWrapper);
+                    }}
                     disabled={accountWrapper.status !== 'active'}
+                    className="flex-1 min-w-[90px] text-xs md:text-sm"
                   >
-                    <ArrowUpRight className="w-4 h-4 mr-1" />
-                    Deposit
+                    <ArrowUpRight className="w-3 h-3 md:w-4 md:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">Deposit</span>
                   </Button>
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => handleWithdrawal(accountWrapper)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWithdrawal(accountWrapper);
+                    }}
                     disabled={accountWrapper.status !== 'active' || (account.available_balance || 0) <= (account.minimum_balance || 0)}
+                    className="flex-1 min-w-[90px] text-xs md:text-sm"
                   >
-                    <ArrowDownRight className="w-4 h-4 mr-1" />
-                    Withdraw
+                    <ArrowDownRight className="w-3 h-3 md:w-4 md:h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">Withdraw</span>
                   </Button>
                 </div>
               </CardContent>

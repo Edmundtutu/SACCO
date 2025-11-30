@@ -14,7 +14,7 @@ import { LoanTracker } from '@/components/loans/LoanTracker';
 import { LoanRepaymentForm } from '@/components/loans/LoanRepaymentForm';
 import { RepaymentSchedule } from '@/components/loans/RepaymentSchedule';
 import { TransactionHistory } from '@/components/transactions/TransactionHistory';
-import { MobileToolbar } from '@/components/layout/MobileToolbar';
+import { DashboardPage } from '@/components/layout/DashboardPage';
 import { WalletLoanPaymentForm } from '@/components/wallet/WalletLoanPaymentForm';
 import {
   Plus,
@@ -104,58 +104,47 @@ export default function Loans() {
   const totalPrincipal = loans.reduce((sum, loan) => sum + loan.principal_amount, 0);
   const totalActivePlusNonActiveLoans = activeLoans.length + nonActiveLoans.length;
 
-  return (
+  const toolbarActions = (
     <>
-      {/* Mobile Toolbar */}
-      <MobileToolbar
-        title="Loans"
-        user={user}
-        showNotifications={true}
-      />
+      <Button
+        onClick={() => setApplicationModalOpen(true)}
+        className="bg-primary hover:bg-primary/90"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Apply for Loan
+      </Button>
+      {activeLoans.length > 0 && (
+        <>
+          <Button
+            variant="outline"
+            onClick={() => setRepaymentModalOpen(true)}
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Make Payment
+          </Button>
+          {walletAccount && (
+            <Button
+              onClick={() => {
+                setSelectedLoan(activeLoans[0]);
+                setWalletPaymentModalOpen(true);
+              }}
+              className="bg-primary/90 hover:bg-primary"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Pay with Wallet
+            </Button>
+          )}
+        </>
+      )}
+    </>
+  );
 
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-heading text-2xl md:text-3xl font-bold">Loans</h1>
-              <p className="text-muted-foreground">Manage your loans and applications</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setApplicationModalOpen(true)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Apply for Loan
-              </Button>
-              {activeLoans.length > 0 && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => setRepaymentModalOpen(true)}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Make Payment
-                  </Button>
-                  {walletAccount && (
-                    <Button
-                      onClick={() => {
-                        setSelectedLoan(activeLoans[0]);
-                        setWalletPaymentModalOpen(true);
-                      }}
-                      className="bg-primary/90 hover:bg-primary"
-                    >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Pay with Wallet
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
+  return (
+    <DashboardPage 
+      title="Loans" 
+      subtitle="Manage your loans and applications"
+      toolbarActions={toolbarActions}
+    >
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -466,7 +455,6 @@ export default function Loans() {
             }}
           />
         )}
-      </div>
-    </>
+    </DashboardPage>
   );
 }

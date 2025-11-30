@@ -390,7 +390,7 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            JWTAuth::logout();
+            JWTAuth::invalidate(JWTAuth::getToken());
 
             return response()->json([
                 'success' => true,

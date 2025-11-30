@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { store } from './store';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -27,48 +27,33 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <DashboardLayout>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/" element={
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Protected Routes with Layout */}
+            <Route
+              element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <DashboardLayout>
+                    <Outlet />
+                  </DashboardLayout>
                 </ProtectedRoute>
-              } />
-              <Route path="/savings" element={
-                <ProtectedRoute>
-                  <Savings />
-                </ProtectedRoute>
-              } />
-              <Route path="/loans" element={
-                <ProtectedRoute>
-                  <Loans />
-                </ProtectedRoute>
-              } />
-              <Route path="/shares" element={
-                <ProtectedRoute>
-                  <Shares />
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </DashboardLayout>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/savings" element={<Savings />} />
+              <Route path="/loans" element={<Loans />} />
+              <Route path="/shares" element={<Shares />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
