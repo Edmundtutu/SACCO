@@ -143,59 +143,120 @@ export default function Savings() {
       title="Savings" 
       subtitle="Manage your savings accounts and transactions"
       toolbarActions={toolbarActions}
-      mobileActions={mobileActions}
     >
-        {/* Summary Cards - Mobile Horizontal Scroll, Desktop Grid */}
-        
-        {/* Mobile Summary - Horizontal Scroll */}
-        <div className="md:hidden overflow-hidden -mx-4">
-          <div className="px-4">
-            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-              {/* Total Balance Card */}
-              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium">Total Balance</p>
-                    <p className="text-lg font-bold font-heading truncate">{formatCurrency(totalBalance)}</p>
-                    <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">
-                      {accounts.length} account{accounts.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                  <div className="h-9 w-9 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                    <PiggyBank className="h-4 w-4 text-green-600" />
-                  </div>
+        {/* Mobile Hero Section with Glass Card */}
+        <div className="md:hidden relative -mx-4 bg-gradient-to-br from-primary via-primary to-secondary px-4 pt-6 pb-8 mb-3">
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-background/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/20 rounded-full blur-2xl"></div>
+          
+          <div className="relative z-10">
+            {/* Main Balance Card - Mobile Optimized */}
+            <div className="bg-background/95 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-border/20">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Balance</p>
+                  <h2 className="text-3xl font-bold text-foreground">
+                    {formatCurrency(totalBalance)}
+                  </h2>
+                </div>
+                <div className="bg-primary p-3 rounded-2xl shadow-lg">
+                  <PiggyBank className="w-6 h-6 text-primary-foreground" />
                 </div>
               </div>
+              
+              {/* Mini Stats Row */}
+              <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border">
+                <div className="bg-muted rounded-2xl p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">Available</span>
+                  </div>
+                  <p className="text-lg font-bold text-foreground truncate">{formatCurrency(totalAvailableBalance)}</p>
+                </div>
+                
+                <div className="bg-muted rounded-2xl p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-xs text-muted-foreground font-medium">Interest</span>
+                  </div>
+                  <p className="text-lg font-bold text-foreground truncate">{formatCurrency(totalInterestEarned)}</p>
+                </div>
+              </div>
+              
+              {/* Accounts Badge */}
+              <div className="mt-3 text-center">
+                <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                  {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+                </Badge>
+              </div>
+            </div>
 
-              {/* Available Balance Card */}
-              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium">Available Balance</p>
-                    <p className="text-lg font-bold font-heading truncate">{formatCurrency(totalAvailableBalance)}</p>
-                    <p className="text-xs text-muted-foreground">Ready to withdraw</p>
-                  </div>
-                  <div className="h-9 w-9 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                    <CreditCard className="h-4 w-4 text-blue-600" />
-                  </div>
+            {/* Mobile Action Buttons */}
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setDepositModalOpen(true)}
+                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-6 
+                  bg-gradient-to-br from-emerald-50 to-green-50 border border-white/20 backdrop-blur-sm
+                  transform transition-all duration-300 ease-out
+                  hover:scale-105 hover:-translate-y-1 hover:shadow-green-500/40
+                  active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+                  shadow-green-500/25 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+                  flex-1"
+              >
+                {/* Background Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-green-600 opacity-0 
+                  group-hover:opacity-5 transition-opacity duration-300" />
+                
+                {/* Content */}
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 transform transition-transform duration-300 
+                    group-hover:scale-110 group-active:scale-95" />
+                  <span className="font-semibold text-sm sm:text-base text-emerald-600 
+                    group-hover:font-bold transition-all duration-200">
+                    Deposit
+                  </span>
                 </div>
-              </div>
 
-              {/* Interest Earned Card */}
-              <div className="flex-none w-[280px] snap-start bg-card rounded-lg p-4 border shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium">Interest Earned</p>
-                    <p className="text-lg font-bold font-heading truncate">
-                      {formatCurrency(totalInterestEarned)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">This year</p>
-                  </div>
-                  <div className="h-9 w-9 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                    <TrendingUp className="h-4 w-4 text-purple-600" />
-                  </div>
+                {/* Hover Effect Border */}
+                <div className="absolute inset-0 rounded-2xl sm:rounded-3xl border-2 border-transparent 
+                  bg-gradient-to-br from-emerald-400 to-green-600 opacity-0 group-hover:opacity-20 
+                  transition-opacity duration-300 -z-10" />
+              </button>
+
+              <button
+                onClick={() => setWithdrawalModalOpen(true)}
+                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-6 
+                  bg-gradient-to-br from-red-50 to-rose-50 border border-white/20 backdrop-blur-sm
+                  transform transition-all duration-300 ease-out
+                  hover:scale-105 hover:-translate-y-1 hover:shadow-red-500/40
+                  active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+                  shadow-red-500/25 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+                  flex-1"
+              >
+                {/* Background Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 opacity-0 
+                  group-hover:opacity-5 transition-opacity duration-300" />
+                
+                {/* Content */}
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                  <Minus className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 transform transition-transform duration-300 
+                    group-hover:scale-110 group-active:scale-95" />
+                  <span className="font-semibold text-sm sm:text-base text-red-600 
+                    group-hover:font-bold transition-all duration-200">
+                    Withdraw
+                  </span>
                 </div>
-              </div>
+
+                {/* Hover Effect Border */}
+                <div className="absolute inset-0 rounded-2xl sm:rounded-3xl border-2 border-transparent 
+                  bg-gradient-to-br from-red-400 to-rose-600 opacity-0 group-hover:opacity-20 
+                  transition-opacity duration-300 -z-10" />
+              </button>
             </div>
           </div>
         </div>
@@ -312,6 +373,7 @@ export default function Savings() {
                       description: "Standard savings account with competitive interest rates",
                       interestRate: "8%",
                       minimumDeposit: 10000,
+                      idealFor: "Everyday saving",
                       features: ["Monthly interest", "Easy withdrawals", "No fees"]
                     },
                     {
@@ -319,6 +381,7 @@ export default function Savings() {
                       description: "Higher interest rates for fixed-term deposits",
                       interestRate: "12%",
                       minimumDeposit: 100000,
+                      idealFor: "Planned goals",
                       features: ["Higher interest", "Fixed term", "Guaranteed returns"]
                     },
                     {
@@ -326,25 +389,45 @@ export default function Savings() {
                       description: "Special account for members under 25 years",
                       interestRate: "10%",
                       minimumDeposit: 5000,
+                      idealFor: "Students & youth",
                       features: ["Higher interest", "Lower minimum", "Youth benefits"]
                     }
                   ].map((product, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-3 md:p-4">
-                        <h3 className="font-semibold text-base md:text-lg mb-2">{product.name}</h3>
-                        <p className="text-xs md:text-sm text-muted-foreground mb-3">{product.description}</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs md:text-sm">
-                            <span>Interest Rate:</span>
-                            <span className="font-semibold text-green-600">{product.interestRate} p.a.</span>
+                    <Card 
+                      key={index} 
+                      className="rounded-3xl border-border overflow-hidden hover:shadow-md transition-all"
+                    >
+                      {/* Product Header */}
+                      <div className="bg-primary p-4">
+                        <h3 className="text-xl font-bold text-primary-foreground mb-1">{product.name}</h3>
+                        <p className="text-primary-foreground/90 text-sm">{product.description}</p>
+                      </div>
+
+                      {/* Product Details */}
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between py-2 border-b border-border">
+                          <span className="text-sm text-muted-foreground">Interest Rate</span>
+                          <span className="text-lg font-bold text-green-600 dark:text-green-400">{product.interestRate} p.a.</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-muted rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Min Deposit</p>
+                            <p className="text-sm font-bold text-foreground truncate">{formatCurrency(product.minimumDeposit)}</p>
                           </div>
-                          <div className="flex justify-between text-xs md:text-sm">
-                            <span>Min Deposit:</span>
-                            <span className="font-semibold">{formatCurrency(product.minimumDeposit)}</span>
+                          <div className="bg-muted rounded-xl p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Benefits</p>
+                            <p className="text-sm font-bold text-foreground">{product.features.length}+ perks</p>
                           </div>
                         </div>
-                        <div className="mt-3">
-                          <h4 className="text-xs md:text-sm font-medium mb-2">Features:</h4>
+
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Ideal For</span>
+                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{product.idealFor}</span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-xs md:text-sm font-medium mb-2">Key Features</h4>
                           <ul className="text-xs text-muted-foreground space-y-1">
                             {product.features.map((feature, idx) => (
                               <li key={idx} className="flex items-center gap-1">
@@ -354,7 +437,11 @@ export default function Savings() {
                             ))}
                           </ul>
                         </div>
-                        <Button className="w-full mt-3 text-xs md:text-sm" size="sm">
+
+                        <Button 
+                          className="w-full mt-2 rounded-2xl" 
+                          size="sm"
+                        >
                           Learn More
                         </Button>
                       </CardContent>
