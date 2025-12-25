@@ -32,7 +32,7 @@ export function DashboardPage({
         onNotificationClick={onNotificationClick}
       />
 
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
+      <div className="px-4 pt-0 pb-4 md:px-6 md:pt-6 md:pb-6 space-y-4 md:space-y-6 overflow-x-hidden">
         {/* Desktop Header */}
         <div className="hidden md:block">
           <div className="flex items-center justify-between">
