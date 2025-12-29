@@ -1,19 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\AccountsController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\LoansController;
+use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\SavingsController;
+use App\Http\Controllers\Api\SavingsGoalController;
+use App\Http\Controllers\Api\SharesController;
 use App\Http\Controllers\Api\Transactions\LoanTransactionController;
 use App\Http\Controllers\Api\Transactions\SavingsTransactionController;
 use App\Http\Controllers\Api\Transactions\ShareTransactionController;
 use App\Http\Controllers\Api\Transactions\TransactionController;
 use App\Http\Controllers\Api\Transactions\WalletTransactionController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AccountsController;
-use App\Http\Controllers\Api\SavingsController;
-use App\Http\Controllers\Api\SavingsGoalController;
-use App\Http\Controllers\Api\LoansController;
-use App\Http\Controllers\Api\SharesController;
-use App\Http\Controllers\Api\ReportsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,10 +63,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::group(['prefix' => 'loans'], function () {
         Route::get('/', [LoansController::class, 'index']);
         Route::post('apply', [LoansController::class, 'apply']);
-    
+
         // Put static routes BEFORE dynamic {loanId}
         Route::get('products', [LoansController::class, 'getLoanProducts']);
-    
+
         Route::get('{loanId}', [LoansController::class, 'show']);
         // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/repay', [LoansController::class, 'repay']);
@@ -79,11 +78,10 @@ Route::group(['middleware' => 'auth:api'], function () {
         // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/disburse', [LoansController::class, 'disburse']);
         Route::post('{loanId}/restructure', [LoansController::class, 'restructure']);
-    
+
         Route::post('{loanId}/guarantee', [LoansController::class, 'addGuarantor']);
         Route::post('guarantors/{guarantorId}/respond', [LoansController::class, 'respondToGuarantee']);
     });
-    
 
     // Shares
     Route::group(['prefix' => 'shares'], function () {
@@ -158,10 +156,3 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('summary/{member}', [TransactionController::class, 'memberSummary'])->name('transactions.summary');
     });
 });
-
-// Legacy routes (for backward compatibility) - Commented out due to missing controllers
-// Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers\Api\V1'], function () {
-//     Route::apiResource('accounts', AccountController::class);
-//     Route::apiResource('loans', LoanController::class);
-//     Route::apiResource('transactions', TransactionController::class);
-// });

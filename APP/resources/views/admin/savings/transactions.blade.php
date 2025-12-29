@@ -5,7 +5,7 @@
 @push('styles')
 <style>
     .transactions-header {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, #2980b9 0%, #1a3a6e 100%);
         border-radius: 15px;
         padding: 2rem;
         color: white;
