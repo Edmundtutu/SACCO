@@ -29,8 +29,12 @@ class AccountsController extends Controller
             $status = $request->query('status'); // active, dormant, closed, suspended
 
             $query = Account::where('member_id', $user->id)->with([
-                'accountable',
-                'accountable.savingsProduct' // Eager load savings product for wallet detection
+                'accountable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        SavingsAccount::class => ['savingsProduct'],
+                        // LoanAccount and ShareAccount don't need savingsProduct
+                    ]);
+                }
             ]);
 
             // Filter by accountable type
@@ -80,8 +84,12 @@ class AccountsController extends Controller
             $user = auth()->user();
             
             $account = Account::with([
-                'accountable',
-                'accountable.savingsProduct' // Eager load savings product for wallet detection
+                'accountable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        SavingsAccount::class => ['savingsProduct'],
+                        // LoanAccount and ShareAccount don't need savingsProduct
+                    ]);
+                }
             ])
                 ->where('member_id', $user->id)
                 ->findOrFail($accountId);
@@ -110,8 +118,11 @@ class AccountsController extends Controller
             
             // Get all accounts with their accountable relationships
             $savingsAccounts = Account::with([
-                'accountable',
-                'accountable.savingsProduct' // Eager load savings product for wallet detection
+                'accountable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        SavingsAccount::class => ['savingsProduct'],
+                    ]);
+                }
             ])
                 ->where('member_id', $user->id)
                 ->where('accountable_type', SavingsAccount::class)

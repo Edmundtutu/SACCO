@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { store } from '@/store';
+import { logoutUser } from '@/store/authSlice';
 import type { RootState } from '@/store';
 
 // Create axios instance
@@ -34,10 +35,10 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      store.dispatch({ type: 'auth/logout' });
+      // Token expired or invalid, logout and redirect
+      await store.dispatch(logoutUser());
       window.location.href = '/login';
     }
     

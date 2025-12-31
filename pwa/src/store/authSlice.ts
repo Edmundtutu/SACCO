@@ -12,7 +12,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: null,
   isAuthenticated: false,
   loading: false,
   error: null,
@@ -23,7 +23,6 @@ export const loginUser = createAsyncThunk(
   async ({ email, password }: { email: string; password: string }) => {
     const response = await authAPI.login(email, password);
     if (response.success && response.data) {
-      localStorage.setItem('token', response.data.token);
       return response.data;
     }
     throw new Error(response.message || 'Login failed');
@@ -75,10 +74,8 @@ export const logoutUser = createAsyncThunk('auth/logout', async () => {
   try {
     await authAPI.logout();
   } catch (error) {
-    // Even if logout fails on server, we should clear local storage
     console.warn('Logout API call failed, but continuing with local cleanup');
   }
-  localStorage.removeItem('token');
 });
 
 const authSlice = createSlice({

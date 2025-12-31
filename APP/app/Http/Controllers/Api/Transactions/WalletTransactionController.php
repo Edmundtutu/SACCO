@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Api\Transactions;
 
-use App\Http\Controllers\Controller;
-use App\Services\TransactionService;
-use App\Services\BalanceService;
-use App\DTOs\TransactionDTO;
 use App\Models\Account;
 use App\Models\Transaction;
-use Illuminate\Http\JsonResponse;
+use App\DTOs\TransactionDTO;
 use Illuminate\Http\Request;
+use App\Models\SavingsAccount;
+use App\Services\BalanceService;
+use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\Controller;
+use App\Services\TransactionService;
 use Illuminate\Support\Facades\Gate;
 
 class WalletTransactionController extends Controller
@@ -217,7 +218,13 @@ class WalletTransactionController extends Controller
     public function balance(Request $request, int $accountId): JsonResponse
     {
         try {
-            $account = Account::with('accountable.savingsProduct')->findOrFail($accountId);
+            $account = Account::with([
+                'accountable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        SavingsAccount::class => ['savingsProduct'],
+                    ]);
+                }
+            ])->findOrFail($accountId);
 
             // Verify it's a wallet account
             if (!$account->isWalletAccount()) {
@@ -263,7 +270,13 @@ class WalletTransactionController extends Controller
     public function history(Request $request, int $accountId): JsonResponse
     {
         try {
-            $account = Account::with('accountable.savingsProduct')->findOrFail($accountId);
+            $account = Account::with([
+                'accountable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        SavingsAccount::class => ['savingsProduct'],
+                    ]);
+                }
+            ])->findOrFail($accountId);
 
             // Verify it's a wallet account
             if (!$account->isWalletAccount()) {
