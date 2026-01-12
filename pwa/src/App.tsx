@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { LandingGuard } from './components/LandingGuard';
 import { Dashboard } from './pages/Dashboard';
 import Savings from './pages/Savings';
 import Loans from './pages/Loans';
@@ -14,6 +15,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Landing from './pages/Landing';
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,9 +27,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Landing Page - Shows once before any portal access */}
+          <Route path="/welcome" element={<Landing />} />
+          
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* Root redirect - check if landing should be shown */}
+          <Route path="/" element={<LandingGuard />} />
           
           {/* Protected Routes with Layout */}
           <Route
@@ -39,7 +47,7 @@ const App = () => (
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/savings" element={<Savings />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/shares" element={<Shares />} />

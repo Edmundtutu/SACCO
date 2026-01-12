@@ -3,7 +3,7 @@ import { Home, PiggyBank, CreditCard, TrendingUp, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
-  { icon: Home, label: 'Home', path: '/' },
+  { icon: Home, label: 'Home', path: '/dashboard' },
   { icon: PiggyBank, label: 'Savings', path: '/savings' },
   { icon: CreditCard, label: 'Loans', path: '/loans' },
   { icon: TrendingUp, label: 'Shares', path: '/shares' },

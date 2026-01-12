@@ -41,7 +41,7 @@ export function LoginForm() {
           title: "Welcome back!",
           description: "Login successful",
         });
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       // Error is handled by the slice

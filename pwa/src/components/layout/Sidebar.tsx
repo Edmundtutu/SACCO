@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import logo from '/public/logo.png';
 
 const navigationItems = [
-  { icon: Home, label: 'Dashboard', path: '/' },
+  { icon: Home, label: 'Dashboard', path: '/dashboard' },
   { icon: PiggyBank, label: 'Savings', path: '/savings' },
   { icon: CreditCard, label: 'Loans', path: '/loans' },
   { icon: TrendingUp, label: 'Shares', path: '/shares' },
