@@ -90,7 +90,7 @@ class TenantDataMigrationSeeder extends Seeder
             'transactions',
             'savings_goals',
             'general_ledger',
-            'chart_of_accounts',
+            // NOTE: chart_of_accounts is GLOBAL (no tenant_id) - all SACCOs use same COA
             'dividends',
             'dividend_payments',
         ];

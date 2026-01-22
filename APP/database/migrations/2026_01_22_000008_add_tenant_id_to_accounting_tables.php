@@ -20,18 +20,9 @@ return new class extends Migration
             $table->index('tenant_id');
         });
 
-        // Add tenant_id to chart_of_accounts table
-        Schema::table('chart_of_accounts', function (Blueprint $table) {
-            $table->unsignedBigInteger('tenant_id')->nullable()->after('id');
-            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-            $table->index('tenant_id');
-        });
-
-        // Update account_code unique constraint to be composite with tenant_id
-        Schema::table('chart_of_accounts', function (Blueprint $table) {
-            $table->dropUnique(['account_code']);
-            $table->unique(['tenant_id', 'account_code']);
-        });
+        // NOTE: chart_of_accounts remains GLOBAL (no tenant_id)
+        // All SACCOs use the same standardized Chart of Accounts structure
+        // This avoids breaking transaction handlers that hardcode account codes
 
         // Add tenant_id to dividends table
         Schema::table('dividends', function (Blueprint $table) {
@@ -69,17 +60,7 @@ return new class extends Migration
             $table->dropColumn('tenant_id');
         });
 
-        // Reverse chart_of_accounts changes
-        Schema::table('chart_of_accounts', function (Blueprint $table) {
-            $table->dropUnique(['tenant_id', 'account_code']);
-            $table->unique(['account_code']);
-        });
-
-        Schema::table('chart_of_accounts', function (Blueprint $table) {
-            $table->dropForeign(['tenant_id']);
-            $table->dropIndex(['tenant_id']);
-            $table->dropColumn('tenant_id');
-        });
+        // NOTE: chart_of_accounts has no tenant_id to remove (remains global)
 
         // Reverse general_ledger changes
         Schema::table('general_ledger', function (Blueprint $table) {
