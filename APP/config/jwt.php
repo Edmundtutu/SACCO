@@ -167,8 +167,8 @@ return [
     */
 
     'persistent_claims' => [
-        // 'foo',
-        // 'bar',
+        'tenant_id',
+        'role',
     ],
 
     /*
