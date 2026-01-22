@@ -3,13 +3,14 @@
 namespace App\Models\Membership;
 
 use App\Models\User;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Membership extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
     public $incrementing = false; // non-numeric PK
     protected $keyType = 'string';
     protected $fillable = [

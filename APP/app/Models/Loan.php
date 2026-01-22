@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Loan extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $fillable = [
         'loan_number',
@@ -41,6 +42,13 @@ class Loan extends Model
         'approved_by',
         'disbursed_by',
         'disbursement_account_id',
+    ];
+
+    /**
+     * Attributes that should never be mass-assigned
+     */
+    protected $guarded = [
+        'tenant_id',
     ];
 
     protected $casts = [
