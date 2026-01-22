@@ -190,6 +190,16 @@
                 </li>
             </ul>
         </li>
+
+        <!-- Tenant Management (Super Admin Only) -->
+        @if(auth()->check() && auth()->user()->role === 'super_admin')
+        <li class="{{request()->routeIs('admin.tenants.*') ? 'active' : ''}}">
+            <a href="{{route('admin.tenants.index')}}" data-tooltip="SACCO Management">
+                <i class="fas fa-building"></i> 
+                <span>SACCO Management</span>
+            </a>
+        </li>
+        @endif
     </ul>
 </nav>
 <script>

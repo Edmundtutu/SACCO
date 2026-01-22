@@ -130,5 +130,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('trial-balance', [AdminReportsController::class, 'trialBalance'])->name('trial-balance');
             Route::get('balance-sheet', [AdminReportsController::class, 'balanceSheet'])->name('balance-sheet');
         });
+
+        // Tenant Management (Super Admin Only)
+        Route::group(['prefix' => 'tenants', 'as' => 'tenants.', 'middleware' => 'super_admin'], function () {
+            Route::get('/', [\App\Http\Controllers\Admin\TenantController::class, 'index'])->name('index');
+            Route::get('create', [\App\Http\Controllers\Admin\TenantController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\TenantController::class, 'store'])->name('store');
+            Route::get('{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'show'])->name('show');
+            Route::get('{tenant}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'edit'])->name('edit');
+            Route::put('{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'update'])->name('update');
+            Route::post('switch', [\App\Http\Controllers\Admin\TenantController::class, 'switchTenant'])->name('switch');
+        });
     });
 });
