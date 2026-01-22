@@ -23,15 +23,18 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'required|string|max:20',
-            'national_id' => 'required|string|unique:individual_profiles,national_id',
+            'national_id' => 'required|string',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
             'address' => 'required|string',
             'occupation' => 'required|string',
             'monthly_income' => 'required|numeric|min:0',
+
+            // Tenant information (required for registration)
+            'tenant_id' => 'required|exists:tenants,id',
 
             // Member profile data
             'next_of_kin_name' => 'required|string',
@@ -55,9 +58,55 @@ class AuthController extends Controller
         }
 
         try {
+            // Validate tenant
+            $tenant = \App\Models\Tenant::find($request->tenant_id);
+            if (!$tenant || !$tenant->canOperate()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected SACCO is not accepting new members at this time.'
+                ], 400);
+            }
+
+            // Check tenant limits
+            if ($tenant->hasReachedMemberLimit()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This SACCO has reached its maximum member limit.'
+                ], 400);
+            }
+
+            // Check email uniqueness within tenant
+            $existingUser = \App\Models\User::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('email', $request->email)
+                ->first();
+
+            if ($existingUser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered in this SACCO.'
+                ], 422);
+            }
+
+            // Check national_id uniqueness within tenant
+            $existingProfile = \App\Models\Membership\IndividualProfile::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('national_id', $request->national_id)
+                ->first();
+
+            if ($existingProfile) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This national ID is already registered in this SACCO.'
+                ], 422);
+            }
+
             DB::beginTransaction();
 
-            // Create user
+            // Set tenant context for automatic tenant_id assignment
+            setTenant($tenant);
+
+            // Create user (tenant_id will be set automatically by BelongsToTenant trait)
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -104,6 +153,11 @@ class AuthController extends Controller
                 'data' => [
                     'membership_id' => $membership->id,
                     'status' => $user->status,
+                    'tenant' => [
+                        'id' => $tenant->id,
+                        'name' => $tenant->sacco_name,
+                        'code' => $tenant->sacco_code,
+                    ]
                 ]
             ], 201);
 
@@ -138,6 +192,9 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         try {
+            // Note: JWT auth will not use tenant scope during login,
+            // so we need to handle multi-tenant login carefully
+            
             if (!$token = JWTAuth::attempt($credentials)) {
                 return response()->json([
                     'success' => false,
@@ -156,6 +213,36 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            // Validate user has a tenant
+            if (!$user->tenant_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is not associated with any SACCO. Please contact support.'
+                ], 403);
+            }
+
+            // Load and validate tenant
+            $tenant = \App\Models\Tenant::find($user->tenant_id);
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SACCO not found. Please contact support.'
+                ], 404);
+            }
+
+            // Check if tenant can operate
+            if (!$tenant->canOperate()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your SACCO is currently ' . $tenant->status . '. ' .
+                                ($tenant->trialExpired() ? 'Trial period has expired.' : 'Please contact support.'),
+                    'tenant_status' => $tenant->status
+                ], 403);
+            }
+
+            // Set tenant context
+            setTenant($tenant);
+
             // Check if user is active
             if ($user->status !== 'active' && $user->role === 'member') {
                 return response()->json([
@@ -173,9 +260,15 @@ class AuthController extends Controller
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
-                        'member_number' => $user->member_number,
+                        'member_number' => $user->membership ? $user->membership->id : null,
                         'role' => $user->role,
                         'status' => $user->status,
+                    ],
+                    'tenant' => [
+                        'id' => $tenant->id,
+                        'name' => $tenant->sacco_name,
+                        'code' => $tenant->sacco_code,
+                        'status' => $tenant->status,
                     ],
                     'token' => $token,
                     'token_type' => 'bearer',

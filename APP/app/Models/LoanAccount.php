@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class LoanAccount extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $fillable = [
         'total_disbursed_amount',
@@ -25,6 +26,13 @@ class LoanAccount extends Model
         'account_features',
         'audit_trail',
         'remarks',
+    ];
+
+    /**
+     * Attributes that should never be mass-assigned
+     */
+    protected $guarded = [
+        'tenant_id',
     ];
 
     protected $casts = [

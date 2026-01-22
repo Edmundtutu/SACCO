@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Membership\IndividualProfile;
 use App\Models\SavingsAccount;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Gate;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable, Authorizable;
+    use HasApiTokens, HasFactory, Notifiable, Authorizable, BelongsToTenant;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +35,13 @@ class User extends Authenticatable implements JWTSubject
         'status',
         'membership_date',
         'account_verified_at'
+    ];
+
+    /**
+     * Attributes that should never be mass-assigned
+     */
+    protected $guarded = [
+        'tenant_id',
     ];
 
     /**
@@ -213,6 +221,7 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [
+            'tenant_id' => $this->tenant_id,
             'role' => $this->role,
             'member_number' => $this->membership ? $this->membership->id : null,
             'status' => $this->status,
