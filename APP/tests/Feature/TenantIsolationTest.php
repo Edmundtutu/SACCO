@@ -324,4 +324,114 @@ class TenantIsolationTest extends TestCase
 
         $response2->assertStatus(201);
     }
+
+    /** @test */
+    public function test_cross_tenant_transaction_blocked()
+    {
+        // Create accounts for both tenants
+        $account1 = Account::create([
+            'tenant_id' => $this->tenant1->id,
+            'account_number' => 'ACC001',
+            'member_id' => $this->user1->id,
+            'accountable_type' => 'App\Models\SavingsAccount',
+            'accountable_id' => 1,
+            'status' => 'active',
+            'balance' => 10000,
+        ]);
+
+        $account2 = Account::create([
+            'tenant_id' => $this->tenant2->id,
+            'account_number' => 'ACC002',
+            'member_id' => $this->user2->id,
+            'accountable_type' => 'App\Models\SavingsAccount',
+            'accountable_id' => 2,
+            'status' => 'active',
+            'balance' => 5000,
+        ]);
+
+        // Set tenant1 context
+        setTenant($this->tenant1);
+
+        // User from tenant1 tries to create transaction for account in tenant2
+        // The account should not be found due to tenant scope
+        $account = Account::find($account2->id);
+
+        $this->assertNull($account, 'Account from different tenant should not be accessible');
+    }
+
+    /** @test */
+    public function test_general_ledger_tenant_isolation()
+    {
+        // Create general ledger entries for both tenants
+        $ledger1 = \App\Models\GeneralLedger::create([
+            'tenant_id' => $this->tenant1->id,
+            'account_code' => '1001',
+            'transaction_id' => 1,
+            'transaction_type' => 'deposit',
+            'transaction_date' => now(),
+            'debit_amount' => 10000,
+            'credit_amount' => 0,
+            'description' => 'Tenant 1 transaction',
+            'posted_by' => $this->user1->id,
+        ]);
+
+        $ledger2 = \App\Models\GeneralLedger::create([
+            'tenant_id' => $this->tenant2->id,
+            'account_code' => '1001',
+            'transaction_id' => 2,
+            'transaction_type' => 'deposit',
+            'transaction_date' => now(),
+            'debit_amount' => 5000,
+            'credit_amount' => 0,
+            'description' => 'Tenant 2 transaction',
+            'posted_by' => $this->user2->id,
+        ]);
+
+        // Set tenant1 context
+        setTenant($this->tenant1);
+
+        // Query general ledger - should only see tenant1's entries
+        $ledgerEntries = \App\Models\GeneralLedger::all();
+
+        $this->assertCount(1, $ledgerEntries);
+        $this->assertEquals($this->tenant1->id, $ledgerEntries->first()->tenant_id);
+        $this->assertEquals(10000, $ledgerEntries->first()->debit_amount);
+    }
+
+    /** @test */
+    public function test_loan_guarantor_must_be_same_tenant()
+    {
+        // Create loans for both tenants
+        $loan1 = Loan::create([
+            'tenant_id' => $this->tenant1->id,
+            'member_id' => $this->user1->id,
+            'loan_product_id' => 1,
+            'loan_number' => 'LOAN001',
+            'principal_amount' => 100000,
+            'interest_rate' => 10,
+            'loan_term' => 12,
+            'status' => 'active',
+            'disbursement_date' => now(),
+        ]);
+
+        // Set tenant1 context
+        setTenant($this->tenant1);
+
+        // Try to find user from tenant2 to add as guarantor
+        // Should not be able to find them due to tenant scope
+        $guarantor = User::find($this->user2->id);
+
+        $this->assertNull($guarantor, 'User from different tenant should not be accessible as guarantor');
+
+        // Try to create loan guarantor with cross-tenant user (should fail due to foreign key)
+        $this->expectException(\Illuminate\Database\QueryException::class);
+
+        \App\Models\LoanGuarantor::withoutGlobalScope('tenant')->create([
+            'tenant_id' => $this->tenant1->id,
+            'loan_id' => $loan1->id,
+            'guarantor_id' => $this->user2->id, // Cross-tenant user
+            'guaranteed_amount' => 50000,
+            'status' => 'pending',
+        ]);
+    }
 }
