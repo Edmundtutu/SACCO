@@ -23,6 +23,9 @@ return new class extends Migration
         // NOTE: chart_of_accounts remains GLOBAL (no tenant_id)
         // All SACCOs use the same standardized Chart of Accounts structure
         // This avoids breaking transaction handlers that hardcode account codes
+        // SECURITY: Chart of Accounts data will be visible across all tenants,
+        // but this is acceptable as it only contains standardized account structure,
+        // not actual financial data. Financial data (general_ledger) remains tenant-scoped.
 
         // Add tenant_id to dividends table
         Schema::table('dividends', function (Blueprint $table) {

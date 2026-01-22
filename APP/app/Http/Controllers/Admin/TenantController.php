@@ -14,9 +14,8 @@ class TenantController extends Controller
      */
     public function index()
     {
-        // Get tenants with counts
-        $tenants = Tenant::withoutTenantScope()
-            ->withCount(['users', 'loans'])
+        // Get all tenants with counts (no scoping needed as Tenant is the root entity)
+        $tenants = Tenant::withCount(['users', 'loans'])
             ->orderBy('created_at', 'desc')
             ->get();
 
