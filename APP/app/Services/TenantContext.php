@@ -40,9 +40,15 @@ class TenantContext
         if ($tenant instanceof Tenant) {
             $this->tenant = $tenant;
             $this->tenantId = $tenant->id;
-        } elseif (is_int($tenant)) {
+        } elseif (is_int($tenant) && $tenant > 0) {
             $this->tenantId = $tenant;
+            // Load tenant to validate it exists
             $this->tenant = Tenant::find($tenant);
+            
+            // If tenant doesn't exist, clear context
+            if (!$this->tenant) {
+                $this->clearTenant();
+            }
         } elseif (is_null($tenant)) {
             $this->clearTenant();
         }

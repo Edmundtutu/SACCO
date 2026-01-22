@@ -16,8 +16,13 @@ trait BelongsToTenant
     {
         // Automatically set tenant_id when creating a new model
         static::creating(function (Model $model) {
-            if (!$model->tenant_id && tenantId()) {
-                $model->tenant_id = tenantId();
+            $currentTenantId = tenantId();
+            
+            if (!$model->tenant_id && $currentTenantId) {
+                // Validate tenant_id is a valid integer
+                if (is_int($currentTenantId) && $currentTenantId > 0) {
+                    $model->tenant_id = $currentTenantId;
+                }
             }
         });
 

@@ -9,6 +9,10 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
+     * Note: tenant_id is nullable during initial migration to allow for data backfilling.
+     * After running TenantDataMigrationSeeder, all records will have tenant_id populated.
+     * In production, you may want to make this NOT NULL after seeding.
+     *
      * @return void
      */
     public function up()

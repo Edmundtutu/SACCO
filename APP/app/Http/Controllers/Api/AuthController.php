@@ -106,9 +106,8 @@ class AuthController extends Controller
             // Set tenant context for automatic tenant_id assignment
             setTenant($tenant);
 
-            // Create user
+            // Create user (tenant_id will be set automatically by BelongsToTenant trait)
             $user = User::create([
-                'tenant_id' => $tenant->id, // Explicitly set even though trait will handle it
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
@@ -119,7 +118,6 @@ class AuthController extends Controller
 
             // Create individual profile
             $profile = IndividualProfile::create([
-                'tenant_id' => $tenant->id,
                 'phone' => $request->phone,
                 'national_id' => $request->national_id,
                 'date_of_birth' => $request->date_of_birth,
@@ -141,7 +139,6 @@ class AuthController extends Controller
 
             // Create membership record
             $membership = Membership::create([
-                'tenant_id' => $tenant->id,
                 'profile_id' => $profile->id,
                 'profile_type' => IndividualProfile::class,
                 'user_id' => $user->id,

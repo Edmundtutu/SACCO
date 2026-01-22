@@ -45,7 +45,7 @@ class TenantMiddleware
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized tenant header usage'
+                    'message' => 'Access denied'
                 ], 403);
             }
         }
