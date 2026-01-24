@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class ShareAccount extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $fillable = [
         'share_units',
@@ -28,6 +29,13 @@ class ShareAccount extends Model
         'audit_trail',
         'remarks',
         'last_activity_date',
+    ];
+
+    /**
+     * Attributes that should never be mass-assigned
+     */
+    protected $guarded = [
+        'tenant_id',
     ];
 
     protected $casts = [

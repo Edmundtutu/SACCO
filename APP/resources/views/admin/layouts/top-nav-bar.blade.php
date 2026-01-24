@@ -18,6 +18,31 @@
 
         <!-- Right Side Actions -->
         <div class="ms-auto d-flex align-items-center">
+            <!-- Tenant Switcher (Super Admin Only) -->
+            @if(auth()->check() && auth()->user()->role === 'super_admin')
+            <div class="me-3">
+                <select id="tenant-switch" class="form-select form-select-sm" style="min-width: 200px;">
+                    <option value="">-- All Tenants --</option>
+                    @foreach(\App\Models\Tenant::withoutGlobalScope('tenant')->where('status', 'active')->get() as $t)
+                        <option value="{{ $t->id }}" {{ (session('admin_tenant_id') == $t->id) ? 'selected' : '' }}>
+                            {{ $t->sacco_name }} ({{ $t->sacco_code }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
+
+            <!-- Current Tenant Indicator -->
+            @if(tenant())
+            <div class="alert alert-info mb-0 me-3 py-1 px-2 d-flex align-items-center" style="font-size: 0.875rem;">
+                <i class="bi bi-building me-2"></i>
+                <span>{{ tenant()->sacco_name }}</span>
+                <button class="btn btn-sm btn-link text-decoration-none ms-2 p-0" onclick="clearTenant()" title="View All">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+            @endif
+
             <!-- Notifications (Optional) -->
             <div class="dropdown me-3">
                 <button class="btn btn-outline-secondary btn-sm position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown">
@@ -120,3 +145,44 @@
         </div>
     </div>
 </nav>
+
+{{-- Tenant Switcher JavaScript (Super Admin) --}}
+@if(auth()->check() && auth()->user()->role === 'super_admin')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tenantSwitch = document.getElementById('tenant-switch');
+    if (tenantSwitch) {
+        tenantSwitch.addEventListener('change', function() {
+            const tenantId = this.value;
+            fetch('/admin/tenants/switch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ tenant_id: tenantId || null })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
+});
+
+function clearTenant() {
+    fetch('/admin/tenants/switch', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ tenant_id: null })
+    })
+    .then(() => window.location.reload());
+}
+</script>
+@endif
