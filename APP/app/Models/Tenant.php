@@ -62,7 +62,7 @@ class Tenant extends Model
                     STR_PAD_LEFT
                 );
             }
-            
+
             if (empty($tenant->slug)) {
                 $tenant->slug = \Illuminate\Support\Str::slug($tenant->sacco_name);
             }
@@ -122,9 +122,9 @@ class Tenant extends Model
      */
     public function isOnTrial(): bool
     {
-        return $this->status === 'trial' && 
-               $this->trial_ends_at && 
-               $this->trial_ends_at->isFuture();
+        return $this->status === 'trial' &&
+            $this->trial_ends_at &&
+            $this->trial_ends_at->isFuture();
     }
 
     /**
@@ -132,9 +132,9 @@ class Tenant extends Model
      */
     public function trialExpired(): bool
     {
-        return $this->status === 'trial' && 
-               $this->trial_ends_at && 
-               $this->trial_ends_at->isPast();
+        return $this->status === 'trial' &&
+            $this->trial_ends_at &&
+            $this->trial_ends_at->isPast();
     }
 
     /**
@@ -224,10 +224,10 @@ class Tenant extends Model
         return $query->whereIn('status', ['active', 'trial'])
             ->where(function ($q) {
                 $q->where('status', 'active')
-                  ->orWhere(function ($q2) {
-                      $q2->where('status', 'trial')
-                         ->where('trial_ends_at', '>', now());
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->where('status', 'trial')
+                            ->where('trial_ends_at', '>', now());
+                    });
             });
     }
 }

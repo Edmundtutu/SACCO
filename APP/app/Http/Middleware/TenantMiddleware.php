@@ -16,7 +16,7 @@ class TenantMiddleware
      * 2. X-Tenant-ID header (only for super-admin or unauthenticated flows)
      * 3. Request parameter (only for registration/invitation flows)
      *
-     * ❌ NEVER uses domain or subdomain for tenant resolution
+     * NEVER uses domain or subdomain for tenant resolution
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\ResponseRedirect)  $next
@@ -36,7 +36,7 @@ class TenantMiddleware
         // Strategy 2: Resolve from X-Tenant-ID header (for super-admin or specific flows)
         if (!$tenantId && $request->header('X-Tenant-ID')) {
             $headerTenantId = $request->header('X-Tenant-ID');
-            
+
             // Only allow header-based tenant resolution in specific cases:
             // 1. Super-admin users
             // 2. Unauthenticated requests to specific routes (registration, invitations)
@@ -84,7 +84,7 @@ class TenantMiddleware
         if (!$tenant->canOperate()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tenant is ' . $tenant->status . '. ' . 
+                'message' => 'Tenant is ' . $tenant->status . '. ' .
                             ($tenant->trialExpired() ? 'Trial period has expired.' : 'Please contact support.'),
                 'tenant_status' => $tenant->status
             ], 403);
@@ -126,7 +126,7 @@ class TenantMiddleware
         ];
 
         $path = $request->path();
-        
+
         foreach ($allowedRoutes as $allowedRoute) {
             if (str_starts_with($path, $allowedRoute)) {
                 return true;
@@ -147,7 +147,7 @@ class TenantMiddleware
         ];
 
         $path = $request->path();
-        
+
         foreach ($allowedRoutes as $allowedRoute) {
             if (str_starts_with($path, $allowedRoute)) {
                 return true;
@@ -169,7 +169,7 @@ class TenantMiddleware
         ];
 
         $path = $request->path();
-        
+
         foreach ($exemptRoutes as $exemptRoute) {
             if (str_starts_with($path, $exemptRoute)) {
                 return true;

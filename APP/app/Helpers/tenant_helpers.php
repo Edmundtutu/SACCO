@@ -61,14 +61,14 @@ if (!function_exists('isSuperAdmin')) {
     function isSuperAdmin(): bool
     {
         $user = auth()->user();
-        
+
         if (!$user) {
             return false;
         }
 
         // Super admin check: role is 'super_admin' or user has super_admin flag
-        return $user->role === 'super_admin' || 
-               ($user->is_super_admin ?? false);
+        return $user->role === 'super_admin' ||
+            ($user->is_super_admin ?? false);
     }
 }
 

@@ -40,11 +40,14 @@ return new class extends Migration
             $table->index('tenant_id');
         });
 
-        // Update registration_number unique constraint to be composite with tenant_id
-        Schema::table('vsla_profiles', function (Blueprint $table) {
-            $table->dropUnique(['registration_number']);
-            $table->unique(['tenant_id', 'registration_number']);
-        });
+        /** Following migration is commented out until a unique constrait 'registration 
+         * number is attributed to the respective table
+         * */
+        // // Update registration_number unique constraint to be composite with tenant_id
+        // Schema::table('vsla_profiles', function (Blueprint $table) {
+        //     $table->dropUnique(['registration_number']);
+        //     $table->unique(['tenant_id', 'registration_number']);
+        // });
 
         // Add tenant_id to mfi_profiles table
         Schema::table('mfi_profiles', function (Blueprint $table) {
@@ -53,11 +56,14 @@ return new class extends Migration
             $table->index('tenant_id');
         });
 
-        // Update license_number unique constraint to be composite with tenant_id
-        Schema::table('mfi_profiles', function (Blueprint $table) {
-            $table->dropUnique(['license_number']);
-            $table->unique(['tenant_id', 'license_number']);
-        });
+        /**
+         * See reason for commenting out Vsla registration_number uniquie index
+         */
+        // // Update license_number unique constraint to be composite with tenant_id
+        // Schema::table('mfi_profiles', function (Blueprint $table) {
+        //     $table->dropUnique(['license_number']);
+        //     $table->unique(['tenant_id', 'license_number']);
+        // });
     }
 
     /**
@@ -68,10 +74,10 @@ return new class extends Migration
     public function down()
     {
         // Reverse mfi_profiles changes
-        Schema::table('mfi_profiles', function (Blueprint $table) {
-            $table->dropUnique(['tenant_id', 'license_number']);
-            $table->unique(['license_number']);
-        });
+        // Schema::table('mfi_profiles', function (Blueprint $table) {
+        //     $table->dropUnique(['tenant_id', 'license_number']);
+        //     $table->unique(['license_number']);
+        // });
 
         Schema::table('mfi_profiles', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
@@ -79,11 +85,11 @@ return new class extends Migration
             $table->dropColumn('tenant_id');
         });
 
-        // Reverse vsla_profiles changes
-        Schema::table('vsla_profiles', function (Blueprint $table) {
-            $table->dropUnique(['tenant_id', 'registration_number']);
-            $table->unique(['registration_number']);
-        });
+        // // Reverse vsla_profiles changes
+        // Schema::table('vsla_profiles', function (Blueprint $table) {
+        //     $table->dropUnique(['tenant_id', 'registration_number']);
+        //     $table->unique(['registration_number']);
+        // });
 
         Schema::table('vsla_profiles', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
