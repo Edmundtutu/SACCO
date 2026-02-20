@@ -22,6 +22,37 @@
     <link href="{{ asset('css/side_bar_styles.css') }}" rel="stylesheet">
     <link href="{{ asset('css/admin-transactions.css') }}" rel="stylesheet">
 
+    <!-- Tenant brand CSS custom properties -->
+    @php
+        $tenantPrimary   = tenant()?->getSetting('primary_color',   '#3399CC');
+        $tenantSecondary = tenant()?->getSetting('secondary_color',  '#2980b9');
+        $tenantName      = tenant()?->sacco_name ?? 'SACCO Admin';
+    @endphp
+    <style>
+        :root {
+            --tenant-primary:   {{ $tenantPrimary }};
+            --tenant-secondary: {{ $tenantSecondary }};
+            --tenant-primary-rgb: {{ implode(',', sscanf($tenantPrimary, '#%02x%02x%02x') ?: [51, 153, 204]) }};
+        }
+        /* Sidebar */
+        .sidebar { background: linear-gradient(180deg, var(--tenant-primary) 0%, var(--tenant-secondary) 100%) !important; }
+        .sidebar .sidebar-header { background: rgba(0,0,0,.15) !important; }
+        /* Buttons */
+        .btn-primary { background-color: var(--tenant-primary) !important; border-color: var(--tenant-primary) !important; }
+        .btn-primary:hover, .btn-primary:focus { background-color: var(--tenant-secondary) !important; border-color: var(--tenant-secondary) !important; }
+        .btn-outline-primary { color: var(--tenant-primary) !important; border-color: var(--tenant-primary) !important; }
+        .btn-outline-primary:hover { background-color: var(--tenant-primary) !important; color: #fff !important; }
+        /* Text & borders */
+        .text-primary { color: var(--tenant-primary) !important; }
+        .border-left-primary { border-left: 4px solid var(--tenant-primary) !important; }
+        /* Badges */
+        .badge.bg-primary, .badge-icon.bg-primary { background-color: var(--tenant-primary) !important; }
+        /* Nav active state */
+        .sidebar ul li.active > a, .sidebar ul li > a:hover { background: rgba(255,255,255,.18) !important; }
+        /* Top-nav tenant chip */
+        .tenant-chip { background-color: rgba(var(--tenant-primary-rgb), .08) !important; border: 1px solid var(--tenant-primary) !important; color: var(--tenant-primary) !important; }
+    </style>
+
     @stack('styles')
 </head>
 <body>

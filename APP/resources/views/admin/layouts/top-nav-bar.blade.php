@@ -1,45 +1,88 @@
 <!-- Top Navigation -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
     <div class="container-fluid">
-        <!-- Sidebar Toggle Button -->
+        <!-- Sidebar Toggle Button (mobile) -->
         <button type="button" id="sidebarToggle" class="btn btn-outline-primary d-lg-none me-3">
             <i class="fas fa-bars"></i>
         </button>
-        
+
         <!-- Desktop Sidebar Toggle -->
         <button type="button" id="sidebarCollapse" class="btn btn-outline-primary d-none d-lg-inline-block me-3">
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Page Title (Optional) -->
+        <!-- Page Title -->
         <div class="navbar-brand mb-0 h1 d-none d-md-block">
             <span class="text-muted">@yield('title', 'Admin Panel')</span>
         </div>
 
         <!-- Right Side Actions -->
-        <div class="ms-auto d-flex align-items-center">
-            <!-- Tenant Switcher (Super Admin Only) -->
-            @if(auth()->check() && auth()->user()->role === 'super_admin')
-            <div class="me-3">
-                <select id="tenant-switch" class="form-select form-select-sm" style="min-width: 200px;">
-                    <option value="">-- All Tenants --</option>
-                    @foreach(\App\Models\Tenant::withoutGlobalScope('tenant')->where('status', 'active')->get() as $t)
-                        <option value="{{ $t->id }}" {{ (session('admin_tenant_id') == $t->id) ? 'selected' : '' }}>
-                            {{ $t->sacco_name }} ({{ $t->sacco_code }})
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @endif
+        <div class="ms-auto d-flex align-items-center gap-2">
 
-            <!-- Current Tenant Indicator -->
-            @if(tenant())
-            <div class="alert alert-info mb-0 me-3 py-1 px-2 d-flex align-items-center" style="font-size: 0.875rem;">
-                <i class="bi bi-building me-2"></i>
-                <span>{{ tenant()->sacco_name }}</span>
-                <button class="btn btn-sm btn-link text-decoration-none ms-2 p-0" onclick="clearTenant()" title="View All">
-                    <i class="bi bi-x-circle"></i>
+            {{-- ─── Tenant Switcher — super admin only ─── --}}
+            @if(auth()->check() && auth()->user()->isSuperAdmin())
+            @php
+                $activeTenantNav = tenant();
+                $allTenants = \App\Models\Tenant::orderBy('sacco_name')->get();
+            @endphp
+            <div class="dropdown" id="tenantSwitcherDropdown">
+                <button class="btn btn-sm d-flex align-items-center gap-2 {{ $activeTenantNav ? 'tenant-chip' : 'btn-outline-secondary' }}"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="max-width:260px;">
+                    @if($activeTenantNav)
+                        @php $logo = $activeTenantNav->getSetting('logo_url'); @endphp
+                        @if($logo)
+                            <img src="{{ $logo }}" alt="" style="height:22px;width:22px;object-fit:contain;border-radius:3px;background:#fff;">
+                        @else
+                            <i class="fas fa-building"></i>
+                        @endif
+                        <span class="text-truncate" style="max-width:160px;">{{ $activeTenantNav->sacco_name }}</span>
+                        <span class="badge bg-success rounded-pill" style="font-size:.6rem;">{{ strtoupper($activeTenantNav->status) }}</span>
+                    @else
+                        <i class="fas fa-building"></i>
+                        <span>Select SACCO</span>
+                    @endif
+                    <i class="fas fa-chevron-down ms-1" style="font-size:.65rem;opacity:.6;"></i>
                 </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width:280px;max-height:400px;overflow-y:auto;">
+                    <li class="px-3 py-2">
+                        <input type="text" class="form-control form-control-sm" id="saccoSearchInput"
+                               placeholder="Search SACCOs..." oninput="filterSaccoList(this.value)">
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 {{ !$activeTenantNav ? 'active' : '' }}"
+                                onclick="switchTenant(null)">
+                            <i class="fas fa-th-large text-muted"></i>
+                            <span>Platform Overview</span>
+                            <small class="ms-auto text-muted">all SACCOs</small>
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <div id="saccoListItems">
+                        @foreach($allTenants as $t)
+                        @php $tLogo = $t->getSetting('logo_url'); $tActive = ($activeTenantNav && $activeTenantNav->id == $t->id); @endphp
+                        <li data-sacco-name="{{ strtolower($t->sacco_name) }}">
+                            <button class="dropdown-item d-flex align-items-center gap-2 {{ $tActive ? 'active' : '' }}"
+                                    onclick="switchTenant({{ $t->id }})">
+                                @if($tLogo)
+                                    <img src="{{ $tLogo }}" alt="" style="height:20px;width:20px;object-fit:contain;border-radius:3px;background:#f0f4f8;">
+                                @else
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:3px;background:rgba(51,153,204,.15);">
+                                        <i class="fas fa-building" style="font-size:.6rem;color:#3399CC;"></i>
+                                    </span>
+                                @endif
+                                <span class="text-truncate" style="max-width:160px;">{{ $t->sacco_name }}</span>
+                                @php $badgeColor = match($t->status) { 'active'=>'success','trial'=>'info','suspended'=>'danger', default=>'secondary' }; @endphp
+                                <span class="badge bg-{{ $badgeColor }} ms-auto" style="font-size:.6rem;">{{ $t->status }}</span>
+                            </button>
+                        </li>
+                        @endforeach
+                    </div>
+                    @if($allTenants->isEmpty())
+                    <li><span class="dropdown-item text-muted">No SACCOs registered yet.</span></li>
+                    @endif
+                </ul>
             </div>
             @endif
 
@@ -146,43 +189,32 @@
     </div>
 </nav>
 
-{{-- Tenant Switcher JavaScript (Super Admin) --}}
-@if(auth()->check() && auth()->user()->role === 'super_admin')
+{{-- Tenant Switcher JavaScript --}}
+@if(auth()->check() && auth()->user()->isSuperAdmin())
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tenantSwitch = document.getElementById('tenant-switch');
-    if (tenantSwitch) {
-        tenantSwitch.addEventListener('change', function() {
-            const tenantId = this.value;
-            fetch('/admin/tenants/switch', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ tenant_id: tenantId || null })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-    }
-});
-
-function clearTenant() {
+function switchTenant(tenantId) {
     fetch('/admin/tenants/switch', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
-        body: JSON.stringify({ tenant_id: null })
+        body: JSON.stringify({ tenant_id: tenantId })
     })
-    .then(() => window.location.reload());
+    .then(r => r.json())
+    .then(data => { if (data.success) window.location.reload(); })
+    .catch(err => console.error('Tenant switch error:', err));
+}
+
+function clearTenant() {
+    switchTenant(null);
+}
+
+function filterSaccoList(query) {
+    const q = query.toLowerCase().trim();
+    document.querySelectorAll('#saccoListItems li[data-sacco-name]').forEach(function(li) {
+        li.style.display = (!q || li.dataset.saccoName.includes(q)) ? '' : 'none';
+    });
 }
 </script>
 @endif

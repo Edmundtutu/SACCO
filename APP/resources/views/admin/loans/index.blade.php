@@ -3,6 +3,12 @@
 @section('title', 'Loans Management')
 
 @section('content')
+@php
+    $loanLimits = $limits ?? null;
+    $loanLimitReached = $loanLimits['loan_limit_reached'] ?? false;
+    $maxLoans = $loanLimits['max_loans'] ?? null;
+    $maxLoanAmount = $loanLimits['max_loan_amount'] ?? null;
+@endphp
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,7 +17,7 @@
             <p class="text-muted">Manage loan applications, approvals, and disbursements</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.loans.create') }}" class="btn btn-primary">
+            <a href="{{ $loanLimitReached ? '#' : route('admin.loans.create') }}" class="btn btn-primary {{ $loanLimitReached ? 'disabled' : '' }}" @if($loanLimitReached) aria-disabled="true" title="Loan limit reached for this SACCO" onclick="return false;" @endif>
                 <i class="fas fa-plus"></i> Create Loan
             </a>
             <a href="{{ route('admin.loans.applications') }}" class="btn btn-outline-secondary">
@@ -19,6 +25,28 @@
             </a>
         </div>
     </div>
+
+    @if(!$activeTenant && auth()->check() && auth()->user()->role === 'super_admin')
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-building me-2"></i>
+        <span>Viewing loans across all SACCOs. Select a tenant to enforce per-tenant limits.</span>
+    </div>
+    @endif
+
+    @if($loanLimits)
+    <div class="alert {{ $loanLimitReached ? 'alert-warning' : 'alert-secondary' }} d-flex align-items-center" role="alert">
+        <i class="bi bi-cash-coin me-2"></i>
+        <span>
+            Active loan slots: {{ number_format($stats['active_loans']) }}@if($maxLoans) / {{ number_format($maxLoans) }}@endif.
+            @if($maxLoanAmount)
+                Maximum principal per loan: UGX {{ number_format($maxLoanAmount) }}.
+            @endif
+            @if($loanLimitReached)
+                Loan creation is disabled until existing loans are closed or the plan is upgraded.
+            @endif
+        </span>
+    </div>
+    @endif
 
     <!-- Statistics Cards -->
     <div class="row mb-4">

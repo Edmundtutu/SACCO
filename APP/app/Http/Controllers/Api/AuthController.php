@@ -240,9 +240,6 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Set tenant context
-            setTenant($tenant);
-
             // Check if user is active
             if ($user->status !== 'active' && $user->role === 'member') {
                 return response()->json([

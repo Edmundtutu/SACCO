@@ -15,6 +15,7 @@ class LoansController extends Controller
 {
     public function index(Request $request)
     {
+        $activeTenant = tenant();
         $query = Loan::with(['member', 'loanProduct']);
 
         // Search functionality
@@ -40,16 +41,23 @@ class LoansController extends Controller
             'total_disbursed' => Loan::where('status', '!=', 'pending')->sum('principal_amount'),
         ];
 
+        $limits = $activeTenant ? [
+            'max_loans' => $activeTenant->max_loans,
+            'max_loan_amount' => $activeTenant->max_loan_amount,
+            'loan_limit_reached' => $activeTenant->hasReachedLoanLimit(),
+        ] : null;
+
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Loans', 'url' => route('admin.loans.index')]
         ];
 
-        return view('admin.loans.index', compact('loans', 'stats', 'breadcrumbs'));
+        return view('admin.loans.index', compact('loans', 'stats', 'breadcrumbs', 'activeTenant', 'limits'));
     }
 
     public function show($id)
     {
+        $activeTenant = tenant();
         $loan = Loan::with(['member', 'loanProduct', 'repayments', 'guarantors.guarantor'])
             ->findOrFail($id);
 
@@ -59,7 +67,7 @@ class LoansController extends Controller
             ['text' => $loan->loan_number, 'url' => '']
         ];
 
-        return view('admin.loans.show', compact('loan', 'breadcrumbs'));
+        return view('admin.loans.show', compact('loan', 'breadcrumbs', 'activeTenant'));
     }
 
     public function approve(Request $request, $id)
@@ -171,6 +179,7 @@ class LoansController extends Controller
 
     public function applications()
     {
+        $activeTenant = tenant();
         $applications = Loan::where('status', 'pending')
             ->with(['member', 'loanProduct'])
             ->orderBy('created_at', 'desc')
@@ -182,11 +191,12 @@ class LoansController extends Controller
             ['text' => 'Applications', 'url' => '']
         ];
 
-        return view('admin.loans.applications', compact('applications', 'breadcrumbs'));
+        return view('admin.loans.applications', compact('applications', 'breadcrumbs', 'activeTenant'));
     }
 
     public function products()
     {
+        $activeTenant = tenant();
         $products = LoanProduct::orderBy('name')->get();
 
         $breadcrumbs = [
@@ -195,13 +205,23 @@ class LoansController extends Controller
             ['text' => 'Products', 'url' => '']
         ];
 
-        return view('admin.loans.products', compact('products', 'breadcrumbs'));
+        return view('admin.loans.products', compact('products', 'breadcrumbs', 'activeTenant'));
     }
 
     public function create()
     {
+        $activeTenant = tenant();
+
+        if ($activeTenant && $activeTenant->hasReachedLoanLimit()) {
+            return redirect()->route('admin.loans.index')
+                ->with('error', 'This SACCO has reached the maximum number of active loans allowed by the subscription plan.');
+        }
+
         $members = \App\Models\User::where('role', 'member')->where('status', 'active')->get();
         $products = LoanProduct::where('is_active', true)->get();
+        $limits = $activeTenant ? [
+            'max_loan_amount' => $activeTenant->max_loan_amount,
+        ] : null;
 
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
@@ -209,7 +229,7 @@ class LoansController extends Controller
             ['text' => 'Create Loan', 'url' => '']
         ];
 
-        return view('admin.loans.create', compact('members', 'products', 'breadcrumbs'));
+        return view('admin.loans.create', compact('members', 'products', 'breadcrumbs', 'activeTenant', 'limits'));
     }
 
     public function store(Request $request)
@@ -223,6 +243,20 @@ class LoansController extends Controller
             'guarantors' => 'required|array|min:1',
             'guarantors.*' => 'exists:users,id'
         ]);
+
+        $activeTenant = tenant();
+        if ($activeTenant) {
+            if ($activeTenant->hasReachedLoanLimit()) {
+                return redirect()->route('admin.loans.index')
+                    ->with('error', 'This SACCO has reached the maximum number of active loans allowed by the subscription plan.');
+            }
+
+            if ($activeTenant->max_loan_amount && $request->principal_amount > $activeTenant->max_loan_amount) {
+                return redirect()->back()
+                    ->with('error', 'Requested principal exceeds the SACCO loan cap of ' . number_format((float) $activeTenant->max_loan_amount, 2))
+                    ->withInput();
+            }
+        }
 
         // ✅ VERIFY: Member must have LoanAccount
         $loanAccountRecord = Account::where('member_id', $request->member_id)
@@ -280,6 +314,7 @@ class LoansController extends Controller
 
     public function repayments($id)
     {
+        $activeTenant = tenant();
         $loan = Loan::with(['member', 'loanProduct', 'repayments'])->findOrFail($id);
         
         $breadcrumbs = [
@@ -289,7 +324,7 @@ class LoansController extends Controller
             ['text' => 'Repayments', 'url' => '']
         ];
 
-        return view('admin.loans.repayments', compact('loan', 'breadcrumbs'));
+        return view('admin.loans.repayments', compact('loan', 'breadcrumbs', 'activeTenant'));
     }
 
     public function addRepayment(Request $request, $id)

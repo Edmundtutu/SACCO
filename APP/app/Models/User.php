@@ -34,7 +34,8 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'status',
         'membership_date',
-        'account_verified_at'
+        'account_verified_at',
+        'is_super_admin',
     ];
 
     /**
@@ -62,6 +63,7 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'membership_date' => 'date',
         'account_verified_at' => 'date',
+        'is_super_admin' => 'boolean',
     ];
 
     /**
@@ -165,6 +167,15 @@ class User extends Authenticatable implements JWTSubject
     public function isStaff(): bool
     {
         return in_array($this->role, ['admin', 'staff_level_1', 'staff_level_2', 'staff_level_3']);
+    }
+    /**
+     * Check if user is super admin
+     *
+     * @return boolean
+     */ 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin' || ($this->is_super_admin ?? false);
     }
 
     /**

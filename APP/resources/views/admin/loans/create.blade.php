@@ -3,6 +3,9 @@
 @section('title', 'Create Loan')
 
 @section('content')
+@php
+    $maxLoanAmount = $limits['max_loan_amount'] ?? null;
+@endphp
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,6 +19,13 @@
             </a>
         </div>
     </div>
+
+    @if($maxLoanAmount)
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <span>Maximum principal per loan for this SACCO: UGX {{ number_format($maxLoanAmount) }}.</span>
+    </div>
+    @endif
 
     <div class="row">
         <div class="col-lg-8">
@@ -102,8 +112,13 @@
                                     <div class="mb-3">
                                         <label for="principal_amount" class="form-label">Principal Amount (UGX) *</label>
                                         <input type="number" class="form-control" id="principal_amount" name="principal_amount" 
-                                               min="1000" step="1000" required>
-                                        <div class="form-text">Minimum: UGX 1,000</div>
+                                               min="1000" step="1000" @if($maxLoanAmount) max="{{ $maxLoanAmount }}" @endif required>
+                                        <div class="form-text">
+                                            Minimum: UGX 1,000
+                                            @if($maxLoanAmount)
+                                                • Maximum: UGX {{ number_format($maxLoanAmount) }}
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">

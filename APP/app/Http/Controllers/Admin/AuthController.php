@@ -77,6 +77,6 @@ class AuthController extends Controller
      */
     private function isAdminUser($user)
     {
-        return $user->isStaff();
+        return $user->isStaff() || $user->isSuperAdmin();
     }
 }

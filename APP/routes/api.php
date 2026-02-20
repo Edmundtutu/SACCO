@@ -41,7 +41,7 @@ Route::group(['prefix' => 'auth'], function () {
 });
 
 // Protected routes (require authentication)
-Route::group(['middleware' => 'auth:api'], function () {
+Route::group(['middleware' => ['auth:api', 'tenant']], function () {
 
     // Polymorphic Accounts (supports ?type=savings|loan|share)
     Route::group(['prefix' => 'accounts'], function () {

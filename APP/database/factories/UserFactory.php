@@ -26,6 +26,7 @@ class UserFactory extends Factory
             'status' => fake()->randomElement(['active', 'inactive', 'suspended', 'pending_approval']),
             'membership_date' => fake()->optional()->date(),
             'account_verified_at' => fake()->optional()->dateTime(),
+            'is_super_admin' => false,
         ];
     }
 

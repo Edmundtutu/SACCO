@@ -3,6 +3,171 @@
 @section('title', 'Admin Dashboard')
 
 @section('content')
+@if($isSuperAdminNeutral)
+{{-- ═══════════════ SUPER ADMIN NEUTRAL — PLATFORM OVERVIEW ═══════════════ --}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Platform Overview</h1>
+            <p class="text-muted">Aggregate statistics across all registered SACCOs</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.tenants.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Add New SACCO
+            </a>
+            <button class="btn btn-outline-secondary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <span>No SACCO selected. Use the switcher in the top bar to view tenant-specific data. Showing platform-wide figures below.</span>
+    </div>
+
+    {{-- Platform stat cards --}}
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total SACCOs</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($platformStats['total_saccos']) }}</div>
+                            <small class="text-muted">{{ $platformStats['active_saccos'] }} active &middot; {{ $platformStats['trial_saccos'] }} trial &middot; {{ $platformStats['suspended_saccos'] }} suspended</small>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-building fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Platform Members</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($platformStats['total_members']) }}</div>
+                            <small class="text-muted">{{ number_format($platformStats['total_staff']) }} staff accounts</small>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Loans</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($platformStats['total_loans']) }}</div>
+                            <small class="text-muted">{{ number_format($platformStats['active_loans']) }} active</small>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Today's Transactions</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($platformStats['today_transactions']) }}</div>
+                            <small class="text-muted">across all SACCOs</small>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-exchange-alt fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Recent SACCOs table --}}
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-building me-2"></i>Recently Registered SACCOs</h6>
+                    <a href="{{ route('admin.tenants.index') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>SACCO</th>
+                                    <th class="text-center">Members</th>
+                                    <th class="text-center">Loans</th>
+                                    <th>Status</th>
+                                    <th>Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($platformStats['recent_saccos'] as $sacco)
+                                <tr style="cursor:pointer" onclick="window.location.href='{{ route('admin.tenants.show', $sacco->id) }}'">
+                                    <td>
+                                        <div class="fw-semibold">{{ $sacco->sacco_name }}</div>
+                                        <small class="text-muted">{{ $sacco->sacco_code }}</small>
+                                    </td>
+                                    <td class="text-center">{{ number_format($sacco->users_count) }}</td>
+                                    <td class="text-center">{{ number_format($sacco->loans_count) }}</td>
+                                    <td>
+                                        @php
+                                            $sc = match($sacco->status) { 'active' => 'success', 'trial' => 'info', 'suspended' => 'danger', default => 'secondary' };
+                                        @endphp
+                                        <span class="badge bg-{{ $sc }}">{{ ucfirst($sacco->status) }}</span>
+                                    </td>
+                                    <td><span class="text-nowrap">{{ $sacco->created_at->format('M d, Y') }}</span></td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="5" class="text-center text-muted py-4">No SACCOs registered yet.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.tenants.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i> Add New SACCO
+                        </a>
+                        <a href="{{ route('admin.tenants.index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-building me-1"></i> Manage SACCOs
+                        </a>
+                    </div>
+                    <hr>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Active SACCOs</span>
+                            <span class="badge bg-success">{{ $platformStats['active_saccos'] }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">On Trial</span>
+                            <span class="badge bg-info">{{ $platformStats['trial_saccos'] }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Suspended</span>
+                            <span class="badge bg-danger">{{ $platformStats['suspended_saccos'] }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@else
+{{-- ═══════════════ TENANT-BOUND DASHBOARD ═══════════════ --}}
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -17,6 +182,26 @@
         </div>
     </div>
 
+    @if($activeTenant && $limits)
+    <div class="alert alert-secondary" role="alert">
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <span class="fw-semibold"><i class="bi bi-speedometer2 me-1"></i>{{ $activeTenant->sacco_name }} usage snapshot</span>
+            @if(isset($limits['max_members']))
+                <span class="badge bg-primary-subtle text-primary">Members {{ number_format($stats['total_members']) }} / {{ number_format($limits['max_members']) }}</span>
+            @endif
+            @if(isset($limits['max_staff']))
+                <span class="badge bg-primary-subtle text-primary">Staff {{ number_format($stats['active_staff']) }} / {{ number_format($limits['max_staff']) }}</span>
+            @endif
+            @if(isset($limits['max_loans']))
+                <span class="badge bg-primary-subtle text-primary">Active Loans {{ number_format($stats['active_loans']) }} / {{ number_format($limits['max_loans']) }}</span>
+            @endif
+            @if(isset($limits['max_loan_amount']) && $limits['max_loan_amount'])
+                <span class="badge bg-primary-subtle text-primary">Loan Cap UGX {{ number_format($limits['max_loan_amount']) }}</span>
+            @endif
+        </div>
+    </div>
+    @endif
+
     <!-- Key Metrics -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -28,7 +213,7 @@
                                 Total Members
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\User::where('role', 'member')->count() }}
+                                {{ number_format($stats['total_members']) }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -48,7 +233,7 @@
                                 Total Savings
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                UGX {{ number_format(\App\Models\SavingsAccount::sum('balance')) }}
+                                UGX {{ number_format($stats['total_savings']) }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -68,7 +253,7 @@
                                 Active Loans
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Loan::where('status', 'active')->count() }}
+                                {{ number_format($stats['active_loans']) }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -88,7 +273,7 @@
                                 Pending Transactions
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Transaction::where('status', 'pending')->count() }}
+                                {{ number_format($stats['pending_transactions']) }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -102,9 +287,9 @@
 
     <!-- Pending Approvals Alert -->
     @php
-        $pendingTransactions = \App\Models\Transaction::where('status', 'pending')->count();
-        $pendingLoans = \App\Models\Loan::where('status', 'pending')->count();
-        $pendingMembers = \App\Models\User::where('role', 'member')->where('status', 'pending')->count();
+        $pendingTransactions = $stats['pending_transactions'];
+        $pendingLoans = $stats['pending_loans'];
+        $pendingMembers = $stats['pending_members'];
     @endphp
 
     @if($pendingTransactions > 0 || $pendingLoans > 0 || $pendingMembers > 0)
@@ -388,9 +573,11 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')
+@if(!$isSuperAdminNeutral)
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 function refreshDashboard() {
@@ -628,4 +815,5 @@ const memberChart = new Chart(memberCtx, {
     }
 });
 </script>
+@endif
 @endpush

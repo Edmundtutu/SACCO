@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
          $this->call([
+             SuperAdminSeeder::class,
              SaccoDataSeeder::class,
              WalletProductSeeder::class,
              MemberOnlySeeder::class,

@@ -29,7 +29,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
 
     // Protected Admin Routes
-    Route::group(['middleware' => ['auth', 'admin']], function () {
+    Route::group(['middleware' => ['auth', 'admin', 'admin.tenant']], function () {
 
         // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');

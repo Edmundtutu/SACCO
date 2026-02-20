@@ -26,6 +26,7 @@ class MembersController extends Controller
 {
     public function index(Request $request)
     {
+        $activeTenant = tenant();
         $query = User::where('role', 'member')->with(['accounts', 'loans', 'membership.profile']);
 
         // Search functionality
@@ -60,13 +61,17 @@ class MembersController extends Controller
         }
 
         $members = $query->orderBy('created_at', 'desc')->paginate(60);
+        $limits = $activeTenant ? [
+            'max_members' => $activeTenant->max_members,
+            'member_limit_reached' => $activeTenant->hasReachedMemberLimit(),
+        ] : null;
 
         $breadcrumbs = [
             ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
             ['text' => 'Members', 'url' => route('admin.members.index')]
         ];
 
-        return view('admin.members.index', compact('members', 'breadcrumbs'));
+        return view('admin.members.index', compact('members', 'breadcrumbs', 'activeTenant', 'limits'));
     }
 
     /**
@@ -74,6 +79,7 @@ class MembersController extends Controller
      */
     public function requests(Request $request)
     {
+        $activeTenant = tenant();
         $query = User::where('role', 'member')
             ->with(['accounts', 'loans', 'membership.profile'])
             ->whereHas('membership', function ($membershipQuery) {
@@ -153,11 +159,12 @@ class MembersController extends Controller
             ['text' => 'Membership Requests', 'url' => route('admin.members.requests')]
         ];
 
-        return view('admin.members.index-requests', compact('members', 'breadcrumbs'));
+        return view('admin.members.index-requests', compact('members', 'breadcrumbs', 'activeTenant'));
     }
 
     public function show($id)
     {
+        $activeTenant = tenant();
         $member = User::where('role', 'member')
             ->with(['accounts.transactions', 'loans.repayments', 'shares', 'membership.profile'])
             ->findOrFail($id);
@@ -168,11 +175,12 @@ class MembersController extends Controller
             ['text' => $member->name, 'url' => '']
         ];
 
-        return view('admin.members.show', compact('member', 'breadcrumbs'));
+        return view('admin.members.show', compact('member', 'breadcrumbs', 'activeTenant'));
     }
 
     public function edit($id)
     {
+        $activeTenant = tenant();
         $member = User::where('role', 'member')
             ->with(['membership.profile'])
             ->findOrFail($id);
@@ -184,7 +192,7 @@ class MembersController extends Controller
             ['text' => 'Edit', 'url' => '']
         ];
 
-        return view('admin.members.edit', compact('member', 'breadcrumbs'));
+        return view('admin.members.edit', compact('member', 'breadcrumbs', 'activeTenant'));
     }
 
     /**
@@ -192,11 +200,12 @@ class MembersController extends Controller
      */
     public function requestModal($id)
     {
+        $activeTenant = tenant();
         $member = User::where('role', 'member')
             ->with(['membership.profile', 'accounts', 'loans'])
             ->findOrFail($id);
 
-        return view('admin.members.partials.approval-modal', compact('member'));
+        return view('admin.members.partials.approval-modal', compact('member', 'activeTenant'));
     }
 
     /**
@@ -210,6 +219,12 @@ class MembersController extends Controller
         if (!in_array($memberType, ['individual', 'vsla', 'mfi'])) {
             return redirect()->route('admin.members.index')
                 ->with('error', 'Invalid member type specified.');
+        }
+
+        $activeTenant = tenant();
+        if ($activeTenant && $activeTenant->hasReachedMemberLimit()) {
+            return redirect()->route('admin.members.index')
+                ->with('error', 'This SACCO has reached the maximum number of members allowed by the subscription plan.');
         }
 
         $breadcrumbs = [
@@ -227,7 +242,7 @@ class MembersController extends Controller
                 ->get(['id', 'name', 'email']);
         }
 
-        return view('admin.members.create', compact('memberType', 'breadcrumbs', 'potentialReferees'));
+        return view('admin.members.create', compact('memberType', 'breadcrumbs', 'potentialReferees', 'activeTenant'));
     }
 
     /**
@@ -242,6 +257,12 @@ class MembersController extends Controller
             return redirect()->back()
                 ->with('error', 'Invalid member type specified.')
                 ->withInput();
+        }
+
+        $activeTenant = tenant();
+        if ($activeTenant && $activeTenant->hasReachedMemberLimit()) {
+            return redirect()->route('admin.members.index')
+                ->with('error', 'This SACCO has reached the maximum number of members allowed by the subscription plan.');
         }
 
         try {

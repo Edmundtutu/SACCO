@@ -3,6 +3,10 @@
 @section('title', 'Members Management')
 
 @section('content')
+    @php
+        $memberLimitReached = $limits['member_limit_reached'] ?? false;
+        $maxMembers = $limits['max_members'] ?? null;
+    @endphp
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,11 +15,12 @@
                     <p class="text-muted">Manage member registrations, profiles, and account status</p>
                 </div>
                 <div class="position-relative">
-                    <button id="addMemberBtn" class="btn btn-primary btn-lg">
+                    <button id="addMemberBtn" class="btn btn-primary btn-lg" @if($memberLimitReached) disabled @endif>
                         <i class="bi bi-person-plus me-2"></i>Add Member
                     </button>
 
                     <!-- Enhanced Overlay Card -->
+                    @unless($memberLimitReached)
                     <div id="memberOptionsOverlay" class="member-overlay-card position-absolute bg-white shadow-lg rounded-3 border d-none">
                         <div class="p-3 border-bottom bg-light rounded-top">
                             <h6 class="mb-0 text-center fw-bold text-dark">
@@ -58,10 +63,30 @@
                             </a>
                         </div>
                     </div>
+                    @endunless
                 </div>
             </div>
         </div>
     </div>
+
+    @if(!$activeTenant && auth()->check() && auth()->user()->role === 'super_admin')
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="bi bi-building me-2"></i>
+            <span>Viewing members across all SACCOs. Select a tenant to isolate records.</span>
+        </div>
+    @endif
+
+    @if($maxMembers)
+        <div class="alert {{ $memberLimitReached ? 'alert-warning' : 'alert-secondary' }} d-flex align-items-center" role="alert">
+            <i class="bi bi-people me-2"></i>
+            <span>
+                Member capacity: {{ number_format($members->total()) }} of {{ number_format($maxMembers) }} used.
+                @if($memberLimitReached)
+                    Upgrade the subscription or deactivate members before adding new ones.
+                @endif
+            </span>
+        </div>
+    @endif
 
     <!-- Search and Filters -->
     <div class="row mb-4">

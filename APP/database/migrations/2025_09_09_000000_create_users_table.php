@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->enum('role', ['member', 'admin', 'staff_level_1', 'staff_level_2', 'staff_level_3'])->default('member');
+            $table->enum('role', ['member', 'admin', 'staff_level_1', 'staff_level_2', 'staff_level_3', 'super_admin'])->default('member');
             $table->enum('status', ['active', 'inactive', 'suspended', 'pending_approval'])->default('pending_approval');
             $table->date('membership_date')->nullable();
             $table->timestamp('account_verified_at')->nullable();

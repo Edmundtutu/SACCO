@@ -44,25 +44,45 @@ class TenantController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sacco_name' => 'required|string|max:255',
-            'sacco_code' => 'required|string|max:50|unique:tenants,sacco_code',
-            'slug' => 'required|string|max:255|unique:tenants,slug',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'address' => 'nullable|string',
-            'country' => 'required|string|max:100',
-            'currency' => 'required|string|max:10',
+            'sacco_name'        => 'required|string|max:255',
+            'sacco_code'        => 'nullable|string|max:50|unique:tenants,sacco_code',
+            'slug'              => 'nullable|string|max:255|unique:tenants,slug',
+            'email'             => 'required|email|max:255',
+            'phone'             => 'required|string|max:50',
+            'address'           => 'nullable|string',
+            'country'           => 'required|string|max:100',
+            'currency'          => 'required|string|max:10',
             'subscription_plan' => 'required|in:basic,standard,premium,enterprise',
-            'status' => 'required|in:trial,active,suspended,inactive',
-            'max_members' => 'required|integer|min:1',
-            'max_staff' => 'required|integer|min:1',
-            'max_loans' => 'required|integer|min:1',
+            'status'            => 'required|in:trial,active,suspended,inactive',
+            'trial_ends_at'     => 'nullable|date',
+            'max_members'       => 'required|integer|min:1',
+            'max_staff'         => 'required|integer|min:1',
+            'max_loans'         => 'required|integer|min:1',
+            'max_loan_amount'   => 'nullable|numeric|min:0',
+            'owner_name'        => 'nullable|string|max:255',
+            'owner_email'       => 'nullable|email|max:255',
+            'owner_phone'       => 'nullable|string|max:50',
+            'notes'             => 'nullable|string',
+            'logo_url'          => 'nullable|url|max:500',
+            'primary_color'     => ['nullable', 'regex:/^#([0-9a-fA-F]{3,6})$/'],
+            'secondary_color'   => ['nullable', 'regex:/^#([0-9a-fA-F]{3,6})$/'],
         ]);
 
-        $tenant = Tenant::create($validated);
+        // Branding fields live in the settings JSON bag, not in table columns.
+        $brandingKeys = ['logo_url', 'primary_color', 'secondary_color'];
+        $coreFields   = collect($validated)->except($brandingKeys)->toArray();
 
-        return redirect()->route('admin.tenants.index')
-            ->with('success', 'SACCO created successfully');
+        $tenant = Tenant::create($coreFields);
+
+        foreach ($brandingKeys as $key) {
+            $value = $request->input($key);
+            if ($value !== null && $value !== '') {
+                $tenant->setSetting($key, $value);
+            }
+        }
+
+        return redirect()->route('admin.tenants.show', $tenant)
+            ->with('success', '"' . $tenant->sacco_name . '" has been created successfully.');
     }
 
     /**
@@ -89,21 +109,41 @@ class TenantController extends Controller
     public function update(Request $request, Tenant $tenant)
     {
         $validated = $request->validate([
-            'sacco_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'address' => 'nullable|string',
+            'sacco_name'        => 'required|string|max:255',
+            'email'             => 'required|email|max:255',
+            'phone'             => 'required|string|max:50',
+            'address'           => 'nullable|string',
+            'country'           => 'nullable|string|max:100',
+            'currency'          => 'nullable|string|max:10',
             'subscription_plan' => 'required|in:basic,standard,premium,enterprise',
-            'status' => 'required|in:trial,active,suspended,inactive',
-            'max_members' => 'required|integer|min:1',
-            'max_staff' => 'required|integer|min:1',
-            'max_loans' => 'required|integer|min:1',
+            'status'            => 'required|in:trial,active,suspended,inactive',
+            'trial_ends_at'     => 'nullable|date',
+            'max_members'       => 'required|integer|min:1',
+            'max_staff'         => 'required|integer|min:1',
+            'max_loans'         => 'required|integer|min:1',
+            'max_loan_amount'   => 'nullable|numeric|min:0',
+            'owner_name'        => 'nullable|string|max:255',
+            'owner_email'       => 'nullable|email|max:255',
+            'owner_phone'       => 'nullable|string|max:50',
+            'notes'             => 'nullable|string',
+            'logo_url'          => 'nullable|url|max:500',
+            'primary_color'     => ['nullable', 'regex:/^#([0-9a-fA-F]{3,6})$/'],
+            'secondary_color'   => ['nullable', 'regex:/^#([0-9a-fA-F]{3,6})$/'],
         ]);
 
-        $tenant->update($validated);
+        $brandingKeys = ['logo_url', 'primary_color', 'secondary_color'];
+        $coreFields   = collect($validated)->except($brandingKeys)->toArray();
+        $tenant->update($coreFields);
 
-        return redirect()->route('admin.tenants.index')
-            ->with('success', 'SACCO updated successfully');
+        foreach ($brandingKeys as $key) {
+            $value = $request->input($key);
+            if ($value !== null && $value !== '') {
+                $tenant->setSetting($key, $value);
+            }
+        }
+
+        return redirect()->route('admin.tenants.show', $tenant)
+            ->with('success', '"' . $tenant->sacco_name . '" has been updated successfully.');
     }
 
     /**
