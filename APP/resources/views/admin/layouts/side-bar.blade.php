@@ -220,6 +220,21 @@
         </li>
         @endif
 
+        {{-- ─── Staff Management ─── --}}
+        @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->isSuperAdmin()))
+        @if($lockNav)
+        <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
+            <span class="nav-disabled-link"><i class="bi bi-people"></i> <span>Staff</span></span>
+        </li>
+        @else
+        <li class="{{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.staff.index') }}" data-tooltip="Staff Management">
+                <i class="bi bi-people"></i> <span>Staff Management</span>
+            </a>
+        </li>
+        @endif
+        @endif
+
     </ul>
 </nav>
 

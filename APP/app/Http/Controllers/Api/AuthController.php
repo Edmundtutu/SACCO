@@ -172,38 +172,84 @@ class AuthController extends Controller
     }
 
     /**
-     * Login user
+     * Login user — supports multi-tenant disambiguation.
+     *
+     * Flow:
+     *  1. Find all user rows matching the email (cross-tenant, no global scope).
+     *  2. Filter by password hash.
+     *  3. If 0 matches → 401.
+     *  4. If 2+ matches and no tenant_id supplied → return requires_sacco_selection with
+     *     the list of SACCOs so the client can show a picker and retry with tenant_id.
+     *  5. If 1 match (or tenant_id supplied) → issue JWT and proceed with existing checks.
      */
     public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string',
+            'email'     => 'required|email',
+            'password'  => 'required|string',
+            'tenant_id' => 'nullable|integer|exists:tenants,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        $credentials = $request->only('email', 'password');
-
         try {
-            // Note: JWT auth will not use tenant scope during login,
-            // so we need to handle multi-tenant login carefully
-            
-            if (!$token = JWTAuth::attempt($credentials)) {
+            // ── Step 1: find all rows with this email across all tenants ──────────
+            $candidates = User::withoutGlobalScopes()
+                ->where('email', $request->email)
+                ->with('tenant')
+                ->get()
+                ->filter(fn(User $u) => Hash::check($request->password, $u->password));
+
+            if ($candidates->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid credentials'
                 ], 401);
             }
 
-            /** @var User|null $user */
-            $user = auth()->user();
+            // ── Step 2: resolve the target user row ───────────────────────────────
+            if ($candidates->count() > 1 && !$request->filled('tenant_id')) {
+                // Multiple SACCOs — ask the client to select one.
+                $tenants = $candidates->map(function (User $u) {
+                    $t = $u->tenant;
+                    return $t ? [
+                        'tenant_id'  => $t->id,
+                        'sacco_name' => $t->sacco_name,
+                        'sacco_code' => $t->sacco_code,
+                        'status'     => $t->status,
+                        'logo_url'   => $t->getSetting('logo_url'),
+                    ] : null;
+                })->filter()->values();
+
+                return response()->json([
+                    'success'                 => true,
+                    'requires_sacco_selection' => true,
+                    'message'                 => 'Multiple SACCOs found for this account. Please select one to continue.',
+                    'data'                    => ['tenants' => $tenants],
+                ]);
+            }
+
+            // Pin to the requested tenant when supplied, or use the sole match.
+            if ($request->filled('tenant_id')) {
+                $user = $candidates->firstWhere(fn(User $u) => $u->tenant_id == $request->tenant_id);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your account is not associated with the selected SACCO.'
+                    ], 422);
+                }
+            } else {
+                $user = $candidates->first();
+            }
+
+            // ── Step 3: issue JWT for the resolved user row ───────────────────────
+            $token = JWTAuth::fromUser($user);
 
             // Guard: ensure user is present and a concrete User model (static analysis + runtime safety)
             if (!$user instanceof User) {
@@ -254,20 +300,22 @@ class AuthController extends Controller
                 'message' => 'Login successful',
                 'data' => [
                     'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
+                        'id'            => $user->id,
+                        'name'          => $user->name,
+                        'email'         => $user->email,
+                        'tenant_id'     => $user->tenant_id,
                         'member_number' => $user->membership ? $user->membership->id : null,
-                        'role' => $user->role,
-                        'status' => $user->status,
+                        'role'          => $user->role,
+                        'status'        => $user->status,
                     ],
                     'tenant' => [
-                        'id' => $tenant->id,
-                        'name' => $tenant->sacco_name,
-                        'code' => $tenant->sacco_code,
-                        'status' => $tenant->status,
+                        'id'         => $tenant->id,
+                        'sacco_name' => $tenant->sacco_name,
+                        'sacco_code' => $tenant->sacco_code,
+                        'status'     => $tenant->status,
+                        'logo_url'   => $tenant->getSetting('logo_url'),
                     ],
-                    'token' => $token,
+                    'token'      => $token,
                     'token_type' => 'bearer',
                     'expires_in' => config('jwt.ttl') * 60
                 ]

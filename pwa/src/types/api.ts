@@ -6,13 +6,23 @@ export interface ApiResponse<T = any> {
   errors?: Record<string, string[]>;
 }
 
+// Tenant / SACCO types
+export interface TenantInfo {
+  id: number;
+  name: string;
+  code: string;
+  logo_url?: string;
+  status: string;
+}
+
 // User & Auth Types
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'member' | 'admin' | 'staff_level_1' | 'staff_level_2' | 'staff_level_3';
+  role: 'member' | 'admin' | 'staff_level_1' | 'staff_level_2' | 'staff_level_3' | 'super_admin';
   status: 'active' | 'pending_approval' | 'suspended' | 'inactive';
+  tenant_id?: number;
   membership_date?: string;
   account_verified_at?: string;
   created_at: string;
@@ -111,6 +121,13 @@ export interface LoginResponse {
   token_type: string;
   expires_in: number;
   user: User;
+  tenant?: TenantInfo;
+}
+
+/** Returned when a user belongs to multiple SACCOs and must choose one. */
+export interface SaccoSelectionResponse {
+  requires_sacco_selection: true;
+  tenants: TenantInfo[];
 }
 
 export interface RegisterData {

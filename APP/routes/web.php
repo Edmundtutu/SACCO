@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\LoansController as AdminLoansController;
 use App\Http\Controllers\Admin\LoanProductController as AdminLoanProductController;
 use App\Http\Controllers\Admin\SharesController as AdminSharesController;
 use App\Http\Controllers\Admin\ReportsController as AdminReportsController;
+use App\Http\Controllers\Admin\StaffController;
 
 
 
@@ -27,6 +28,10 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AdminAuthController::class, 'login'])->name('login.submit');
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+    // SACCO selection step (shown only when one email maps to multiple admin accounts)
+    Route::get('select-sacco', [AdminAuthController::class, 'showSaccoSelect'])->name('select-sacco');
+    Route::post('select-sacco', [AdminAuthController::class, 'completeSaccoSelect'])->name('select-sacco.submit');
 
     // Protected Admin Routes
     Route::group(['middleware' => ['auth', 'admin', 'admin.tenant']], function () {
@@ -140,6 +145,17 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('{tenant}/edit', [\App\Http\Controllers\Admin\TenantController::class, 'edit'])->name('edit');
             Route::put('{tenant}', [\App\Http\Controllers\Admin\TenantController::class, 'update'])->name('update');
             Route::post('switch', [\App\Http\Controllers\Admin\TenantController::class, 'switchTenant'])->name('switch');
+        });
+
+        // Staff & Role Management (SACCO admin + super admin only)
+        Route::group(['prefix' => 'staff', 'as' => 'staff.'], function () {
+            Route::get('/', [StaffController::class, 'index'])->name('index');
+            Route::get('create', [StaffController::class, 'create'])->name('create');
+            Route::post('/', [StaffController::class, 'store'])->name('store');
+            Route::get('{user}/edit', [StaffController::class, 'edit'])->name('edit');
+            Route::put('{user}', [StaffController::class, 'update'])->name('update');
+            Route::patch('{user}/promote', [StaffController::class, 'promote'])->name('promote');
+            Route::patch('{user}/demote', [StaffController::class, 'demote'])->name('demote');
         });
     });
 });

@@ -1,6 +1,7 @@
 import apiClient from './client';
 import type { 
   LoginResponse, 
+  SaccoSelectionResponse,
   RegisterData, 
   User, 
   ProfileUpdateData, 
@@ -8,8 +9,14 @@ import type {
 } from '@/types/api';
 
 export const authAPI = {
-  async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
-    const response = await apiClient.post('/auth/login', { email, password });
+  async login(
+    email: string,
+    password: string,
+    tenantId?: number,
+  ): Promise<ApiResponse<LoginResponse | SaccoSelectionResponse>> {
+    const body: Record<string, unknown> = { email, password };
+    if (tenantId !== undefined) body.tenant_id = tenantId;
+    const response = await apiClient.post('/auth/login', body);
     return response.data;
   },
 
