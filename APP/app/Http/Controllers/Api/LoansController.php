@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\TransactionDTO;
+use App\Exceptions\TransactionProcessingException;
 use App\Models\Loan;
 use App\Models\LoanAccount;
+use App\Models\LoanRepayment;
 use App\Models\Account;
 use App\Models\User;
 use App\Models\LoanProduct;
+use App\Services\LoanCalculationService;
+use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -16,9 +21,19 @@ use App\Http\Resources\V1\LoanResource;
  * This controller handles all endpoint requests related to loans.
  * It does not handle the creation of transactions, which is managed
  * by a dedicated controller in the /Transactions folder.
+ *
+ * Phase 0: The repay() method now delegates to TransactionService so that
+ * all financial writes flow through the unified pipeline.  A feature flag
+ * (features.use_transaction_service_for_legacy_repay) provides rollback
+ * safety; disabling it activates a direct-write fallback path.
  */
 class LoansController extends Controller
 {
+    public function __construct(
+        protected TransactionService $transactionService,
+        protected LoanCalculationService $loanCalculationService,
+    ) {}
+
     /*
      * Function to fetch loans of a specific member
      *
@@ -161,8 +176,17 @@ class LoansController extends Controller
     /*
      * Function to repay a loan
      *
-     * */
-    public function repay(Request $request, $loanId){
+     * Preserves the original request/response contract:
+     *   Request:  amount (required), payment_method (required), reference (optional)
+     *   Response: { success, message, data: { repayment, loan_id,
+     *               outstanding_balance, next_payment_date } }
+     *
+     * When features.use_transaction_service_for_legacy_repay is true (default)
+     * the write is routed through TransactionService for unified GL accounting.
+     * Disabling the flag activates a direct DB write fallback path.
+     */
+    public function repay(Request $request, $loanId): JsonResponse
+    {
         // Validate the request
         $request->validate([
             'amount' => 'required|numeric|min:0',
@@ -187,29 +211,130 @@ class LoansController extends Controller
             ], 400);
         }
 
-        // Apply the payment
-        $allocation = $loan->applyPayment($request->amount);
+        if (config('features.use_transaction_service_for_legacy_repay', true)) {
+            return $this->repayViaTransactionService($request, $loan);
+        }
 
-        // Create a repayment record
-        $repayment = $loan->repayments()->create([
-            'amount' => $request->amount,
-            'principal_amount' => $allocation['principal'],
-            'interest_amount' => $allocation['interest'],
-            'penalty_amount' => $allocation['penalty'],
-            'payment_date' => now(),
-            'payment_method' => $request->payment_method,
-            'reference' => $request->reference ?? null
+        return $this->repayLegacy($request, $loan);
+    }
+
+    /**
+     * New path: delegate to TransactionService (feature-flagged, default ON).
+     */
+    private function repayViaTransactionService(Request $request, Loan $loan): JsonResponse
+    {
+        try {
+            $paymentAllocation = $this->loanCalculationService->calculatePaymentAllocation(
+                $loan,
+                $request->amount
+            );
+
+            // Resolve account ID – null-safe for loans without a linked account.
+            $accountId = $loan->loanAccount?->account?->id;
+
+            $transactionDTO = new TransactionDTO(
+                memberId: $loan->member_id,
+                type: 'loan_repayment',
+                amount: $request->amount,
+                accountId: $accountId,
+                relatedLoanId: $loan->id,
+                description: "Loan repayment - loan #{$loan->id}",
+                processedBy: auth()->id(),
+                metadata: [
+                    'payment_method'    => $request->payment_method,
+                    'payment_reference' => $request->reference ?? null,
+                    'principal_amount'  => $paymentAllocation['principal'],
+                    'interest_amount'   => $paymentAllocation['interest'],
+                    'penalty_amount'    => $paymentAllocation['penalty'] ?? 0,
+                ]
+            );
+
+            $transaction = $this->transactionService->processTransaction($transactionDTO);
+
+            $loan->refresh();
+            $metadata  = json_decode($transaction->metadata, true);
+            $repayment = isset($metadata['repayment_id'])
+                ? LoanRepayment::find($metadata['repayment_id'])
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment applied successfully',
+                'data' => [
+                    'repayment'           => $repayment,
+                    'loan_id'             => $loan->id,
+                    'outstanding_balance' => $loan->outstanding_balance,
+                    'next_payment_date'   => $loan->first_payment_date
+                        ? $loan->first_payment_date->addMonths($loan->repayments()->count())->format('Y-m-d')
+                        : null,
+                ]
+            ]);
+
+        } catch (TransactionProcessingException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data'    => null,
+            ], 422);
+        }
+    }
+
+    /**
+     * Fallback path: direct DB write (feature flag OFF).
+     *
+     * Uses correct column names (total_amount, payment_reference) and
+     * provides all required fields that the original broken implementation
+     * was missing.  No GL entries are created on this path.
+     */
+    private function repayLegacy(Request $request, Loan $loan): JsonResponse
+    {
+        $allocation = $this->loanCalculationService->calculatePaymentAllocation(
+            $loan,
+            $request->amount
+        );
+
+        $installmentNumber = LoanRepayment::where('loan_id', $loan->id)->count() + 1;
+        $dueDate = $loan->first_payment_date
+            ? $loan->first_payment_date->copy()->addMonths($installmentNumber - 1)
+            : now();
+
+        $repayment = LoanRepayment::create([
+            'loan_id'              => $loan->id,
+            'installment_number'   => $installmentNumber,
+            'due_date'             => $dueDate->toDateString(),
+            'scheduled_amount'     => $request->amount,
+            'total_amount'         => $request->amount,
+            'principal_amount'     => $allocation['principal'],
+            'interest_amount'      => $allocation['interest'],
+            'penalty_amount'       => $allocation['penalty'] ?? 0,
+            'payment_date'         => now(),
+            'payment_method'       => $request->payment_method,
+            'payment_reference'    => $request->reference ?? null,
+            'status'               => 'paid',
+            'balance_after_payment'=> max(0, $loan->outstanding_balance - $allocation['principal']),
+            'collected_by'         => auth()->id(),
         ]);
 
-        // Return the repayment data
+        $newOutstandingBalance = $loan->outstanding_balance - $allocation['principal'];
+        $loan->update([
+            'outstanding_balance' => $newOutstandingBalance,
+            'principal_balance'   => $loan->principal_balance - $allocation['principal'],
+            'interest_balance'    => $loan->interest_balance - $allocation['interest'],
+            'penalty_balance'     => $loan->penalty_balance - ($allocation['penalty'] ?? 0),
+            'total_paid'          => $loan->total_paid + $request->amount,
+            'status'              => $newOutstandingBalance <= 0 ? 'completed' : 'active',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Payment applied successfully',
             'data' => [
-                'repayment' => $repayment,
-                'loan_id' => $loan->id,
+                'repayment'           => $repayment,
+                'loan_id'             => $loan->id,
                 'outstanding_balance' => $loan->outstanding_balance,
-                'next_payment_date' => $loan->first_payment_date ? $loan->first_payment_date->addMonths($loan->repayments()->count())->format('Y-m-d') : null
+                'next_payment_date'   => $loan->first_payment_date
+                    ? $loan->first_payment_date->addMonths($loan->repayments()->count())->format('Y-m-d')
+                    : null,
             ]
         ]);
     }

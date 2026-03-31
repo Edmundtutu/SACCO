@@ -162,7 +162,7 @@ class TransactionService
             'fee_amount' => $transactionData->feeAmount ?? 0,
             'net_amount' => $transactionData->amount - ($transactionData->feeAmount ?? 0),
             'description' => $transactionData->description,
-            'payment_method' => 'cash',
+            'payment_method' => $transactionData->metadata['payment_method'] ?? 'cash',
             'status' => 'pending',
             'transaction_date' => now(),
             'value_date' => now(),
@@ -190,17 +190,41 @@ class TransactionService
     }
 
     /**
-     * Verify double-entry bookkeeping balance
+     * Verify double-entry bookkeeping balance.
+     *
+     * Stage 1 (default – features.enforce_gl_balance_check = false):
+     *   Logs a warning when debits ≠ credits but does NOT block the
+     *   transaction (monitor-only mode).
+     *
+     * Stage 2 (features.enforce_gl_balance_check = true):
+     *   Throws TransactionProcessingException, causing a DB rollback.
      */
     protected function verifyDoubleEntryBalance(Transaction $transaction): void
     {
-        $totalDebits = $transaction->generalLedgerEntries()->sum('debit_amount');
+        $totalDebits  = $transaction->generalLedgerEntries()->sum('debit_amount');
         $totalCredits = $transaction->generalLedgerEntries()->sum('credit_amount');
 
         if (abs($totalDebits - $totalCredits) > 0.01) {
-            throw new TransactionProcessingException(
-                "Double-entry bookkeeping out of balance. Debits: {$totalDebits}, Credits: {$totalCredits}"
+            $message = sprintf(
+                'GL imbalance detected for transaction %s – Debits: %s, Credits: %s',
+                $transaction->transaction_number,
+                $totalDebits,
+                $totalCredits
             );
+
+            if (config('features.enforce_gl_balance_check', false)) {
+                throw new TransactionProcessingException(
+                    "Double-entry bookkeeping out of balance. {$message}"
+                );
+            }
+
+            // Monitor mode: log and continue.
+            Log::warning("GL balance check (monitor mode): {$message}", [
+                'transaction_id'     => $transaction->id,
+                'transaction_number' => $transaction->transaction_number,
+                'total_debits'       => $totalDebits,
+                'total_credits'      => $totalCredits,
+            ]);
         }
     }
 

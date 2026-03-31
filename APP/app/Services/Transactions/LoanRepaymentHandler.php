@@ -9,6 +9,7 @@ use App\Models\Loan;
 use App\Models\LoanRepayment;
 use App\Models\Transaction;
 use App\Services\LoanCalculationService;
+use App\Services\PaymentMethodAccountResolver;
 
 class LoanRepaymentHandler implements TransactionHandlerInterface
 {
@@ -70,7 +71,7 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
             'penalty_amount' => $paymentAllocation['penalty'] ?? 0,
             'total_amount' => $transactionData->amount,
             'payment_date' => now(),
-            'payment_method' => 'cash',
+            'payment_method' => $transactionData->metadata['payment_method'] ?? 'cash',
             // Align with migration enum: pending, paid, partial, overdue, waived
             'status' => 'paid',
             'balance_after_payment' => max(0, ($loan->outstanding_balance - $paymentAllocation['principal'])),
@@ -94,14 +95,19 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
             $loan->loanAccount->recordRepayment($transactionData->amount);
         }
 
-        // Store payment allocation in transaction metadata
+        // Store payment allocation in transaction metadata, preserving any
+        // original metadata values (e.g. payment_method, payment_reference).
+        $originalMetadata = is_array($transaction->metadata)
+            ? $transaction->metadata
+            : json_decode($transaction->metadata ?? '[]', true);
+
         $transaction->update([
-            'metadata' => json_encode([
+            'metadata' => json_encode(array_merge($originalMetadata ?? [], [
                 'principal_amount' => $paymentAllocation['principal'],
-                'interest_amount' => $paymentAllocation['interest'],
-                'penalty_amount' => $paymentAllocation['penalty'] ?? 0,
-                'repayment_id' => $repayment->id
-            ])
+                'interest_amount'  => $paymentAllocation['interest'],
+                'penalty_amount'   => $paymentAllocation['penalty'] ?? 0,
+                'repayment_id'     => $repayment->id,
+            ]))
         ]);
     }
 
@@ -112,11 +118,15 @@ class LoanRepaymentHandler implements TransactionHandlerInterface
         $interestAmount = $metadata['interest_amount'];
         $penaltyAmount = $metadata['penalty_amount'] ?? 0;
 
+        // Resolve the correct GL asset account for the payment method.
+        $paymentMethod = $metadata['payment_method'] ?? ($transactionData->metadata['payment_method'] ?? 'cash');
+        $cashAccount   = PaymentMethodAccountResolver::resolve($paymentMethod);
+
         $entries = [
             new LedgerEntryDTO(
-                accountCode: '1001',
-                accountName: 'Cash in Hand',
-                accountType: 'asset',
+                accountCode: $cashAccount['account_code'],
+                accountName: $cashAccount['account_name'],
+                accountType: $cashAccount['account_type'],
                 debitAmount: $transactionData->amount,
                 creditAmount: 0,
                 description: "Loan repayment from member #{$transaction->member_id}"
