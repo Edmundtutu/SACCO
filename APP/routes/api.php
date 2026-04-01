@@ -68,9 +68,7 @@ Route::group(['middleware' => ['auth:api', 'tenant']], function () {
         Route::get('products', [LoansController::class, 'getLoanProducts']);
 
         Route::get('{loanId}', [LoansController::class, 'show']);
-        // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::post('{loanId}/repay', [LoansController::class, 'repay']);
-        // This method action has been revised in a dedicated LoansTransactionController: Should be replaced with the corresponding route below
         Route::get('{loanId}/schedule', [LoansController::class, 'getRepaymentSchedule']);
 
         // Admin/Staff only

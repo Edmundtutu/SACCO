@@ -192,12 +192,8 @@ class TransactionService
     /**
      * Verify double-entry bookkeeping balance.
      *
-     * Stage 1 (default – features.enforce_gl_balance_check = false):
-     *   Logs a warning when debits ≠ credits but does NOT block the
-     *   transaction (monitor-only mode).
-     *
-     * Stage 2 (features.enforce_gl_balance_check = true):
-     *   Throws TransactionProcessingException, causing a DB rollback.
+     * Throws TransactionProcessingException when debits ≠ credits (> 0.01),
+     * causing the surrounding DB transaction to be rolled back.
      */
     protected function verifyDoubleEntryBalance(Transaction $transaction): void
     {
@@ -205,26 +201,14 @@ class TransactionService
         $totalCredits = $transaction->generalLedgerEntries()->sum('credit_amount');
 
         if (abs($totalDebits - $totalCredits) > 0.01) {
-            $message = sprintf(
-                'GL imbalance detected for transaction %s – Debits: %s, Credits: %s',
-                $transaction->transaction_number,
-                $totalDebits,
-                $totalCredits
+            throw new TransactionProcessingException(
+                sprintf(
+                    'Double-entry bookkeeping out of balance for transaction %s – Debits: %s, Credits: %s',
+                    $transaction->transaction_number,
+                    $totalDebits,
+                    $totalCredits
+                )
             );
-
-            if (config('features.enforce_gl_balance_check', false)) {
-                throw new TransactionProcessingException(
-                    "Double-entry bookkeeping out of balance. {$message}"
-                );
-            }
-
-            // Monitor mode: log and continue.
-            Log::warning("GL balance check (monitor mode): {$message}", [
-                'transaction_id'     => $transaction->id,
-                'transaction_number' => $transaction->transaction_number,
-                'total_debits'       => $totalDebits,
-                'total_credits'      => $totalCredits,
-            ]);
         }
     }
 
