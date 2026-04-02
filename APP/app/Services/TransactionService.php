@@ -162,7 +162,7 @@ class TransactionService
             'fee_amount' => $transactionData->feeAmount ?? 0,
             'net_amount' => $transactionData->amount - ($transactionData->feeAmount ?? 0),
             'description' => $transactionData->description,
-            'payment_method' => 'cash',
+            'payment_method' => $transactionData->metadata['payment_method'] ?? 'cash',
             'status' => 'pending',
             'transaction_date' => now(),
             'value_date' => now(),
@@ -190,16 +190,24 @@ class TransactionService
     }
 
     /**
-     * Verify double-entry bookkeeping balance
+     * Verify double-entry bookkeeping balance.
+     *
+     * Throws TransactionProcessingException when debits ≠ credits (> 0.01),
+     * causing the surrounding DB transaction to be rolled back.
      */
     protected function verifyDoubleEntryBalance(Transaction $transaction): void
     {
-        $totalDebits = $transaction->generalLedgerEntries()->sum('debit_amount');
+        $totalDebits  = $transaction->generalLedgerEntries()->sum('debit_amount');
         $totalCredits = $transaction->generalLedgerEntries()->sum('credit_amount');
 
         if (abs($totalDebits - $totalCredits) > 0.01) {
             throw new TransactionProcessingException(
-                "Double-entry bookkeeping out of balance. Debits: {$totalDebits}, Credits: {$totalCredits}"
+                sprintf(
+                    'Double-entry bookkeeping out of balance for transaction %s – Debits: %s, Credits: %s',
+                    $transaction->transaction_number,
+                    $totalDebits,
+                    $totalCredits
+                )
             );
         }
     }

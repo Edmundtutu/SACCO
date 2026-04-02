@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\TransactionDTO;
+use App\Exceptions\TransactionProcessingException;
 use App\Models\Loan;
 use App\Models\LoanAccount;
+use App\Models\LoanRepayment;
 use App\Models\Account;
-use App\Models\User;
 use App\Models\LoanProduct;
+use App\Services\LoanCalculationService;
+use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -19,6 +23,11 @@ use App\Http\Resources\V1\LoanResource;
  */
 class LoansController extends Controller
 {
+    public function __construct(
+        protected TransactionService $transactionService,
+        protected LoanCalculationService $loanCalculationService,
+    ) {}
+
     /*
      * Function to fetch loans of a specific member
      *
@@ -161,8 +170,12 @@ class LoansController extends Controller
     /*
      * Function to repay a loan
      *
-     * */
-    public function repay(Request $request, $loanId){
+     * Request:  amount (required), payment_method (required), reference (optional)
+     * Response: { success, message, data: { repayment, loan_id,
+     *             outstanding_balance, next_payment_date } }
+     */
+    public function repay(Request $request, $loanId): JsonResponse
+    {
         // Validate the request
         $request->validate([
             'amount' => 'required|numeric|min:0',
@@ -187,31 +200,60 @@ class LoansController extends Controller
             ], 400);
         }
 
-        // Apply the payment
-        $allocation = $loan->applyPayment($request->amount);
+        try {
+            $paymentAllocation = $this->loanCalculationService->calculatePaymentAllocation(
+                $loan,
+                $request->amount
+            );
 
-        // Create a repayment record
-        $repayment = $loan->repayments()->create([
-            'amount' => $request->amount,
-            'principal_amount' => $allocation['principal'],
-            'interest_amount' => $allocation['interest'],
-            'penalty_amount' => $allocation['penalty'],
-            'payment_date' => now(),
-            'payment_method' => $request->payment_method,
-            'reference' => $request->reference ?? null
-        ]);
+            // Resolve account ID – null-safe for loans without a linked account.
+            $accountId = $loan->loanAccount?->account?->id;
 
-        // Return the repayment data
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment applied successfully',
-            'data' => [
-                'repayment' => $repayment,
-                'loan_id' => $loan->id,
-                'outstanding_balance' => $loan->outstanding_balance,
-                'next_payment_date' => $loan->first_payment_date ? $loan->first_payment_date->addMonths($loan->repayments()->count())->format('Y-m-d') : null
-            ]
-        ]);
+            $transactionDTO = new TransactionDTO(
+                memberId: $loan->member_id,
+                type: 'loan_repayment',
+                amount: $request->amount,
+                accountId: $accountId,
+                relatedLoanId: $loan->id,
+                description: "Loan repayment - loan #{$loan->id}",
+                processedBy: auth()->id(),
+                metadata: [
+                    'payment_method'    => $request->payment_method,
+                    'payment_reference' => $request->reference ?? null,
+                    'principal_amount'  => $paymentAllocation['principal'],
+                    'interest_amount'   => $paymentAllocation['interest'],
+                    'penalty_amount'    => $paymentAllocation['penalty'] ?? 0,
+                ]
+            );
+
+            $transaction = $this->transactionService->processTransaction($transactionDTO);
+
+            $loan->refresh();
+            $metadata  = json_decode($transaction->metadata, true);
+            $repayment = isset($metadata['repayment_id'])
+                ? LoanRepayment::find($metadata['repayment_id'])
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment applied successfully',
+                'data' => [
+                    'repayment'           => $repayment,
+                    'loan_id'             => $loan->id,
+                    'outstanding_balance' => $loan->outstanding_balance,
+                    'next_payment_date'   => $loan->first_payment_date
+                        ? $loan->first_payment_date->addMonths($loan->repayments()->count())->format('Y-m-d')
+                        : null,
+                ]
+            ]);
+
+        } catch (TransactionProcessingException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data'    => null,
+            ], 422);
+        }
     }
 
     /*

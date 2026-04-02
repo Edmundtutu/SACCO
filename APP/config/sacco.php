@@ -65,6 +65,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Payment Method → General Ledger Account Mapping
+    |--------------------------------------------------------------------------
+    |
+    | Maps each accepted payment_method to its GL asset account code.
+    | Override individual entries via environment variables.
+    |
+    */
+    'payment_method_gl_accounts' => [
+        'cash'          => env('GL_ACCOUNT_CASH', '1001'),
+        'bank_transfer' => env('GL_ACCOUNT_BANK_TRANSFER', '1002'),
+        'mobile_money'  => env('GL_ACCOUNT_MOBILE_MONEY', '1003'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Wallet Configuration
     |--------------------------------------------------------------------------
     */

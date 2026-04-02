@@ -31,6 +31,11 @@ class LoanRepayment extends Model
         'collected_by',
         'approved_by',
         'processed_by',
+        // Compatibility aliases – routed through accessors/mutators below.
+        // These virtual names allow legacy code that passes 'amount' or
+        // 'reference' to work seamlessly; they are NOT real DB columns.
+        'amount',
+        'reference',
     ];
 
     protected $casts = [
@@ -80,10 +85,14 @@ class LoanRepayment extends Model
 
     /**
      * Get completed repayments
+     *
+     * Note: 'completed' is not a valid enum value in the loan_repayments table.
+     * The correct value is 'paid'.  This scope is kept for backward
+     * compatibility but now filters on 'paid'.
      */
     public function scopeCompleted($query)
     {
-        return $query->where('status', 'completed');
+        return $query->where('status', 'paid');
     }
 
     /**
@@ -104,11 +113,51 @@ class LoanRepayment extends Model
     }
 
     /**
-     * Mark repayment as completed
+     * Mark repayment as paid (was incorrectly using 'completed').
      */
     public function markAsCompleted(): void
     {
-        $this->update(['status' => 'completed']);
+        $this->update(['status' => 'paid']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Compatibility accessors / mutators
+    // -------------------------------------------------------------------------
+    // The legacy Api\LoansController::repay() created repayment records using
+    // the field names 'amount' and 'reference', but the actual DB columns are
+    // 'total_amount' and 'payment_reference'.  These accessors/mutators provide
+    // a transparent mapping so both field names work at the model layer.
+
+    /**
+     * Read 'amount' as an alias for 'total_amount'.
+     */
+    public function getAmountAttribute(): float
+    {
+        return (float) ($this->attributes['total_amount'] ?? 0);
+    }
+
+    /**
+     * Write 'amount' as an alias for 'total_amount'.
+     */
+    public function setAmountAttribute($value): void
+    {
+        $this->attributes['total_amount'] = $value;
+    }
+
+    /**
+     * Read 'reference' as an alias for 'payment_reference'.
+     */
+    public function getReferenceAttribute(): ?string
+    {
+        return $this->attributes['payment_reference'] ?? null;
+    }
+
+    /**
+     * Write 'reference' as an alias for 'payment_reference'.
+     */
+    public function setReferenceAttribute(?string $value): void
+    {
+        $this->attributes['payment_reference'] = $value;
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Exceptions\InvalidTransactionException;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Services\PaymentMethodAccountResolver;
 
 class WithdrawalHandler implements TransactionHandlerInterface
 {
@@ -67,6 +68,10 @@ class WithdrawalHandler implements TransactionHandlerInterface
 
     public function getAccountingEntries(Transaction $transaction, TransactionDTO $transactionData): array
     {
+        // Resolve the correct GL asset account for the payment method.
+        $paymentMethod = $transactionData->metadata['payment_method'] ?? null;
+        $cashAccount   = PaymentMethodAccountResolver::resolve($paymentMethod);
+
         $entries = [
             new LedgerEntryDTO(
                 accountCode: '2001',
@@ -77,9 +82,9 @@ class WithdrawalHandler implements TransactionHandlerInterface
                 description: "Cash withdrawal by member #{$transaction->member_id}"
             ),
             new LedgerEntryDTO(
-                accountCode: '1001',
-                accountName: 'Cash in Hand',
-                accountType: 'asset',
+                accountCode: $cashAccount['account_code'],
+                accountName: $cashAccount['account_name'],
+                accountType: $cashAccount['account_type'],
                 debitAmount: 0,
                 creditAmount: $transaction->net_amount,
                 description: "Cash paid to member #{$transaction->member_id}"
