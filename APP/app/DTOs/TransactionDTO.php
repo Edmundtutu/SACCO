@@ -48,8 +48,8 @@ class TransactionDTO
 
         // Accept payment_method / payment_reference from top-level request
         // fields OR from inside metadata (legacy callers).
-        $paymentMethod    = $request->string('payment_method')    ?: ($metadata['payment_method']    ?? null) ?: null;
-        $paymentReference = $request->string('payment_reference') ?: ($metadata['payment_reference'] ?? null) ?: null;
+        $paymentMethod    = $request->string('payment_method')    ?: $metadata['payment_method']    ?? null;
+        $paymentReference = $request->string('payment_reference') ?: $metadata['payment_reference'] ?? null;
 
         return new self(
             memberId: $request->integer('member_id'),
@@ -75,8 +75,8 @@ class TransactionDTO
 
         // Accept payment_method / payment_reference from top-level array keys
         // OR from inside metadata (legacy callers).
-        $paymentMethod    = $data['payment_method']    ?? ($metadata['payment_method']    ?? null) ?? null;
-        $paymentReference = $data['payment_reference'] ?? ($metadata['payment_reference'] ?? null) ?? null;
+        $paymentMethod    = $data['payment_method']    ?? $metadata['payment_method']    ?? null;
+        $paymentReference = $data['payment_reference'] ?? $metadata['payment_reference'] ?? null;
 
         // Accept 'loan_id' as a legacy alias for 'related_loan_id' (mirrors
         // the same logic in fromRequest).

@@ -127,12 +127,10 @@ class TransactionNormalizer
         $metadata = $payload['metadata'] ?? null;
 
         // payment_method: top-level takes priority, then metadata.
-        $paymentMethod = $payload['payment_method']
-            ?? ($metadata['payment_method'] ?? null);
+        $paymentMethod = $payload['payment_method'] ?? $metadata['payment_method'] ?? null;
 
         // payment_reference: top-level takes priority, then metadata.
-        $paymentReference = $payload['payment_reference']
-            ?? ($metadata['payment_reference'] ?? null);
+        $paymentReference = $payload['payment_reference'] ?? $metadata['payment_reference'] ?? null;
 
         // related_loan_id: accept 'loan_id' as a legacy alias.
         $relatedLoanId = $payload['related_loan_id']
