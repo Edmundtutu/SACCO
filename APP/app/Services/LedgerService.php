@@ -38,7 +38,9 @@ class LedgerService
     ): void
     {
         GeneralLedger::create([
-            'transaction_id' => 'GL-' . $transaction->id . '-' . $entryIndex,
+            'transaction_id'        => 'GL-' . $transaction->id . '-' . $entryIndex,
+            // Phase 1 dual-write: new relational FK alongside legacy string id.
+            'transaction_record_id' => $transaction->id,
             'transaction_date' => $transaction->transaction_date->toDateString(),
             'account_code' => $entry->accountCode,
             'account_name' => $entry->accountName,
@@ -67,7 +69,9 @@ class LedgerService
 
         foreach ($originalEntries as $originalEntry) {
             GeneralLedger::create([
-                'transaction_id' => 'GL-' . $reversalTransaction->id . '-' . $entryIndex,
+                'transaction_id'        => 'GL-' . $reversalTransaction->id . '-' . $entryIndex,
+                // Phase 1 dual-write: FK points to the reversal transaction.
+                'transaction_record_id' => $reversalTransaction->id,
                 'transaction_date' => $reversalTransaction->transaction_date->toDateString(),
                 'account_code' => $originalEntry->account_code,
                 'account_name' => $originalEntry->account_name,
@@ -109,7 +113,7 @@ class LedgerService
         $asOfDate = $asOfDate ?? now();
 
         $query = GeneralLedger::where('status', 'posted')
-            ->where('transaction_date', '<=', $asOfDate->format('Y-m-d'));
+            ->whereDate('transaction_date', '<=', $asOfDate->format('Y-m-d'));
 
         $entries = $query->selectRaw('
             account_code,

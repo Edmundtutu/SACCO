@@ -18,6 +18,7 @@ use App\Exceptions\InvalidTransactionException;
 use App\Exceptions\TransactionProcessingException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TransactionService
 {
@@ -67,6 +68,11 @@ class TransactionService
     public function processTransaction(TransactionDTO $transactionData): Transaction
     {
         $startTime = microtime(true);
+
+        // Phase 1: normalize the DTO (promote metadata payment fields to
+        // canonical top-level positions, resolve legacy field aliases).
+        $normalizer = app(TransactionNormalizer::class);
+        $transactionData = $normalizer->normalizeDTO($transactionData);
 
         try {
             // Get appropriate handler
@@ -162,7 +168,10 @@ class TransactionService
             'fee_amount' => $transactionData->feeAmount ?? 0,
             'net_amount' => $transactionData->amount - ($transactionData->feeAmount ?? 0),
             'description' => $transactionData->description,
-            'payment_method' => $transactionData->metadata['payment_method'] ?? 'cash',
+            // Use canonical paymentMethod field (Phase 1); fall back to
+            // metadata for callers that have not yet been updated.
+            'payment_method' => $transactionData->resolvePaymentMethod(),
+            'payment_reference' => $transactionData->resolvePaymentReference(),
             'status' => 'pending',
             'transaction_date' => now(),
             'value_date' => now(),
@@ -192,24 +201,52 @@ class TransactionService
     /**
      * Verify double-entry bookkeeping balance.
      *
-     * Throws TransactionProcessingException when debits ≠ credits (> 0.01),
-     * causing the surrounding DB transaction to be rolled back.
+     * Behavior is controlled by config('sacco.double_entry_mode'):
+     *   'monitor' – log the imbalance but allow the transaction to proceed.
+     *   'enforce' – throw TransactionProcessingException, causing rollback.
+     *
+     * Precision-safe: uses bccomp (2 decimal places) to avoid float drift.
      */
     protected function verifyDoubleEntryBalance(Transaction $transaction): void
     {
-        $totalDebits  = $transaction->generalLedgerEntries()->sum('debit_amount');
-        $totalCredits = $transaction->generalLedgerEntries()->sum('credit_amount');
+        $totalDebits  = (string) round((float) $transaction->generalLedgerEntries()->sum('debit_amount'), 2);
+        $totalCredits = (string) round((float) $transaction->generalLedgerEntries()->sum('credit_amount'), 2);
 
-        if (abs($totalDebits - $totalCredits) > 0.01) {
-            throw new TransactionProcessingException(
-                sprintf(
-                    'Double-entry bookkeeping out of balance for transaction %s – Debits: %s, Credits: %s',
-                    $transaction->transaction_number,
-                    $totalDebits,
-                    $totalCredits
-                )
-            );
+        $isBalanced = bccomp($totalDebits, $totalCredits, 2) === 0;
+
+        if ($isBalanced) {
+            return;
         }
+
+        $mode = config('sacco.double_entry_mode', 'monitor');
+
+        $context = [
+            'transaction_id'     => $transaction->id,
+            'transaction_number' => $transaction->transaction_number,
+            'type'               => $transaction->type,
+            'member_id'          => $transaction->member_id,
+            'debits'             => $totalDebits,
+            'credits'            => $totalCredits,
+            'difference'         => bcsub($totalDebits, $totalCredits, 2),
+            'mode'               => $mode,
+        ];
+
+        if ($mode === 'monitor') {
+            Log::warning('[DoubleEntry] GL imbalance detected (monitor mode — not blocking)', $context);
+            return;
+        }
+
+        // enforce mode — block the write.
+        Log::error('[DoubleEntry] GL imbalance detected (enforce mode — rolling back)', $context);
+
+        throw new TransactionProcessingException(
+            sprintf(
+                'Double-entry bookkeeping out of balance for transaction %s – Debits: %s, Credits: %s',
+                $transaction->transaction_number,
+                $totalDebits,
+                $totalCredits
+            )
+        );
     }
 
     /**

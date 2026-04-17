@@ -15,7 +15,13 @@ class TransactionDTO
         public ?string $description = null,
         public ?int $relatedLoanId = null,
         public ?int $processedBy = null,
-        public ?array $metadata = null
+        public ?array $metadata = null,
+        // Canonical fields (Phase 1) – promoted out of metadata for consistency.
+        // Legacy callers that pass payment_method/payment_reference inside
+        // metadata are still supported; the TransactionNormalizer will extract
+        // and populate these fields automatically.
+        public ?string $paymentMethod = null,
+        public ?string $paymentReference = null,
     ) {}
 
     /**
@@ -38,6 +44,13 @@ class TransactionDTO
             $type = $typeMap[$routeName] ?? 'deposit';
         }
 
+        $metadata = $request->array('metadata') ?: null;
+
+        // Accept payment_method / payment_reference from top-level request
+        // fields OR from inside metadata (legacy callers).
+        $paymentMethod    = $request->string('payment_method')    ?: ($metadata['payment_method']    ?? null) ?: null;
+        $paymentReference = $request->string('payment_reference') ?: ($metadata['payment_reference'] ?? null) ?: null;
+
         return new self(
             memberId: $request->integer('member_id'),
             type: $type,
@@ -47,7 +60,9 @@ class TransactionDTO
             description: $request->string('description') ?: null,
             relatedLoanId: $request->integer('related_loan_id') ?: $request->integer('loan_id') ?: null,
             processedBy: $request->integer('processed_by') ?: auth()->id(),
-            metadata: $request->array('metadata') ?: null
+            metadata: $metadata,
+            paymentMethod: $paymentMethod,
+            paymentReference: $paymentReference,
         );
     }
 
@@ -56,6 +71,17 @@ class TransactionDTO
      */
     public static function fromArray(array $data): self
     {
+        $metadata = $data['metadata'] ?? null;
+
+        // Accept payment_method / payment_reference from top-level array keys
+        // OR from inside metadata (legacy callers).
+        $paymentMethod    = $data['payment_method']    ?? ($metadata['payment_method']    ?? null) ?? null;
+        $paymentReference = $data['payment_reference'] ?? ($metadata['payment_reference'] ?? null) ?? null;
+
+        // Accept 'loan_id' as a legacy alias for 'related_loan_id' (mirrors
+        // the same logic in fromRequest).
+        $relatedLoanId = $data['related_loan_id'] ?? $data['loan_id'] ?? null;
+
         return new self(
             memberId: $data['member_id'],
             type: $data['type'],
@@ -63,9 +89,11 @@ class TransactionDTO
             accountId: $data['account_id'] ?? null,
             feeAmount: $data['fee_amount'] ?? null,
             description: $data['description'] ?? null,
-            relatedLoanId: $data['related_loan_id'] ?? null,
+            relatedLoanId: $relatedLoanId,
             processedBy: $data['processed_by'] ?? null,
-            metadata: $data['metadata'] ?? null
+            metadata: $metadata,
+            paymentMethod: $paymentMethod,
+            paymentReference: $paymentReference,
         );
     }
 
@@ -75,15 +103,17 @@ class TransactionDTO
     public function toArray(): array
     {
         return [
-            'member_id' => $this->memberId,
-            'type' => $this->type,
-            'amount' => $this->amount,
-            'account_id' => $this->accountId,
-            'fee_amount' => $this->feeAmount,
-            'description' => $this->description,
-            'related_loan_id' => $this->relatedLoanId,
-            'processed_by' => $this->processedBy,
-            'metadata' => $this->metadata,
+            'member_id'        => $this->memberId,
+            'type'             => $this->type,
+            'amount'           => $this->amount,
+            'account_id'       => $this->accountId,
+            'fee_amount'       => $this->feeAmount,
+            'description'      => $this->description,
+            'related_loan_id'  => $this->relatedLoanId,
+            'processed_by'     => $this->processedBy,
+            'metadata'         => $this->metadata,
+            'payment_method'   => $this->paymentMethod,
+            'payment_reference'=> $this->paymentReference,
         ];
     }
 
@@ -128,5 +158,31 @@ class TransactionDTO
     public function isValid(): bool
     {
         return empty($this->validate());
+    }
+
+    /**
+     * Resolve the effective payment method with fallback chain:
+     * 1. Top-level $paymentMethod field (canonical)
+     * 2. metadata['payment_method'] (legacy)
+     * 3. default 'cash'
+     */
+    public function resolvePaymentMethod(): string
+    {
+        return $this->paymentMethod
+            ?? $this->metadata['payment_method']
+            ?? 'cash';
+    }
+
+    /**
+     * Resolve the effective payment reference with fallback chain:
+     * 1. Top-level $paymentReference field (canonical)
+     * 2. metadata['payment_reference'] (legacy)
+     * 3. null
+     */
+    public function resolvePaymentReference(): ?string
+    {
+        return $this->paymentReference
+            ?? $this->metadata['payment_reference']
+            ?? null;
     }
 }

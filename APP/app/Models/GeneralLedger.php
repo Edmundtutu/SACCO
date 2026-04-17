@@ -15,6 +15,7 @@ class GeneralLedger extends Model
 
     protected $fillable = [
         'transaction_id',
+        'transaction_record_id',
         'transaction_date',
         'account_code',
         'account_name',
@@ -67,11 +68,20 @@ class GeneralLedger extends Model
     }
 
     /**
-     * Transaction related to this ledger entry
+     * Transaction related to this ledger entry (legacy string reference_id)
      */
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'reference_id');
+    }
+
+    /**
+     * Direct FK relationship to Transaction (Phase 1 dual-write linkage).
+     * More reliable than the legacy reference_id string lookup.
+     */
+    public function transactionRecord(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'transaction_record_id');
     }
 
     /**
