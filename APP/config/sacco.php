@@ -88,4 +88,28 @@ return [
     'wallet_transaction_limit' => env('WALLET_TRANSACTION_LIMIT', 1000000),
     'wallet_minimum_balance' => env('WALLET_MIN_BALANCE', 0),
     'wallet_transfer_fee' => env('WALLET_TRANSFER_FEE', 0),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Phase 1 — Accounting Foundation Feature Flags
+    |--------------------------------------------------------------------------
+    |
+    | These flags control the staged rollout of Phase 1 accounting hardening.
+    |
+    | Transaction Normalization modes:
+    |   'observe' – log inconsistencies, pass payload through unchanged.
+    |   'soft'    – normalize transparently, log when normalization occurs.
+    |   'hard'    – reject payloads that cannot be normalized (not recommended
+    |               until all callers have been updated).
+    |
+    | Double-entry enforcement modes:
+    |   'monitor' – detect and log GL imbalances but do NOT block the write.
+    |   'enforce' – block any posting where debits ≠ credits (strict mode).
+    |
+    | Recommended progression: observe → soft → hard / monitor → enforce
+    |
+    */
+    'accounting_normalization_mode' => env('ACCOUNTING_NORMALIZATION_MODE', 'soft'),
+
+    'double_entry_mode' => env('DOUBLE_ENTRY_MODE', 'monitor'),
 ];
