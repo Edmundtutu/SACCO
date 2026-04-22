@@ -17,10 +17,32 @@ class ValidationService
     {
         $this->validateAmount($transactionData->amount);
         $this->validateTransactionType($transactionData->type);
-        $this->validateMemberStatus($transactionData->memberId);
+
+        // Expense and income transactions are operational and recorded by staff;
+        // the memberId field holds the staff user's ID.  We only need the user
+        // to exist and be active — the full member-approval check is skipped.
+        if (in_array($transactionData->type, ['expense', 'income'], true)) {
+            $this->validateUserExists($transactionData->memberId);
+        } else {
+            $this->validateMemberStatus($transactionData->memberId);
+        }
 
         if ($transactionData->accountId) {
             $this->validateAccountStatus($transactionData->accountId);
+        }
+    }
+
+    /**
+     * Ensure a user exists and is active (lightweight check for staff-recorded transactions).
+     */
+    protected function validateUserExists(int $userId): void
+    {
+        $user = User::find($userId);
+        if (!$user) {
+            throw new InvalidTransactionException("User not found (id: {$userId})");
+        }
+        if ($user->status !== 'active') {
+            throw new InvalidTransactionException("User account is not active");
         }
     }
 
@@ -55,6 +77,9 @@ class ValidationService
             'wallet_withdrawal',
             'wallet_to_savings',
             'wallet_to_loan',
+            // Phase 2 — operational financial transactions
+            'expense',
+            'income',
         ];
 
         if (!in_array($type, $allowedTypes)) {
@@ -105,6 +130,12 @@ class ValidationService
      */
     public function validateDailyLimits(TransactionDTO $transactionData): void
     {
+        // Expense and income transactions have no daily count/amount caps —
+        // they are operational records, not member-facing transactions.
+        if (in_array($transactionData->type, ['expense', 'income'], true)) {
+            return;
+        }
+
         $today = now()->toDateString();
 
         // Get today's transactions for this member

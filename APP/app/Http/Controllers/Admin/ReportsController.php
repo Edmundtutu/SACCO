@@ -8,7 +8,11 @@ use App\Models\Account;
 use App\Models\Loan;
 use App\Models\Share;
 use App\Models\Transaction;
+use App\Models\GeneralLedger;
+use App\Models\ExpenseRecord;
+use App\Models\IncomeRecord;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReportsController extends Controller
@@ -211,4 +215,162 @@ class ReportsController extends Controller
 
         return view('admin.reports.balance-sheet', compact('assets', 'liabilities', 'equity', 'totalAssets', 'totalLiabilities', 'totalEquity', 'breadcrumbs'));
     }
-}
+
+    /**
+     * Phase 2 — Expense report (GL-derived, filterable by category/date).
+     */
+    public function expenseReport(Request $request)
+    {
+        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->toDateString());
+        $dateTo   = $request->input('date_to', Carbon::now()->endOfMonth()->toDateString());
+
+        $query = ExpenseRecord::with(['transaction', 'recordedBy'])
+            ->whereDate('created_at', '>=', $dateFrom)
+            ->whereDate('created_at', '<=', $dateTo)
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        $expenses = $query->get();
+
+        // Category breakdown
+        $byCategory = $expenses->groupBy('category')->map(fn($g) => [
+            'count'  => $g->count(),
+            'total'  => $g->sum('amount'),
+        ]);
+
+        $grandTotal = $expenses->sum('amount');
+        $categories = config('financial.expense_categories', []);
+
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Reports', 'url' => route('admin.reports.index')],
+            ['text' => 'Expense Report', 'url' => ''],
+        ];
+
+        return view('admin.reports.expenses', compact(
+            'expenses', 'byCategory', 'grandTotal', 'categories',
+            'dateFrom', 'dateTo', 'breadcrumbs'
+        ));
+    }
+
+    /**
+     * Phase 2 — Income report (GL-derived, filterable by category/date).
+     */
+    public function incomeReport(Request $request)
+    {
+        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->toDateString());
+        $dateTo   = $request->input('date_to', Carbon::now()->endOfMonth()->toDateString());
+
+        $query = IncomeRecord::with(['transaction', 'payerMember', 'recordedBy'])
+            ->whereDate('created_at', '>=', $dateFrom)
+            ->whereDate('created_at', '<=', $dateTo)
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        $incomes = $query->get();
+
+        $byCategory = $incomes->groupBy('category')->map(fn($g) => [
+            'count' => $g->count(),
+            'total' => $g->sum('amount'),
+        ]);
+
+        $grandTotal = $incomes->sum('amount');
+        $categories = config('financial.income_categories', []);
+
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Reports', 'url' => route('admin.reports.index')],
+            ['text' => 'Income Report', 'url' => ''],
+        ];
+
+        return view('admin.reports.incomes', compact(
+            'incomes', 'byCategory', 'grandTotal', 'categories',
+            'dateFrom', 'dateTo', 'breadcrumbs'
+        ));
+    }
+
+    /**
+     * Phase 2 — Profit & Loss report derived from GL entries.
+     */
+    public function profitLoss(Request $request)
+    {
+        $dateFrom = $request->input('date_from', Carbon::now()->startOfYear()->toDateString());
+        $dateTo   = $request->input('date_to', Carbon::now()->endOfMonth()->toDateString());
+
+        // Income from GL (all income accounts, 4xxx)
+        $loanInterestIncome = GeneralLedger::where('account_code', '4001')
+            ->where('status', 'posted')
+            ->whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->selectRaw('SUM(credit_amount) - SUM(debit_amount) as net')
+            ->value('net') ?? 0;
+
+        $feeIncome = GeneralLedger::where('account_code', '4002')
+            ->where('status', 'posted')
+            ->whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->selectRaw('SUM(credit_amount) - SUM(debit_amount) as net')
+            ->value('net') ?? 0;
+
+        $penaltyIncome = GeneralLedger::where('account_code', '4003')
+            ->where('status', 'posted')
+            ->whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->selectRaw('SUM(credit_amount) - SUM(debit_amount) as net')
+            ->value('net') ?? 0;
+
+        // Non-loan income from income_records (phase 2)
+        $nonLoanIncome = IncomeRecord::whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo])
+            ->sum('amount');
+
+        $totalIncome = $loanInterestIncome + $feeIncome + $penaltyIncome + $nonLoanIncome;
+
+        // Expenses from GL (5xxx accounts)
+        $operatingExpenses = GeneralLedger::whereBetween('account_code', ['5001', '5009'])
+            ->where('status', 'posted')
+            ->whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->selectRaw('SUM(debit_amount) - SUM(credit_amount) as net')
+            ->value('net') ?? 0;
+
+        $interestExpense = GeneralLedger::where('account_code', '5002')
+            ->where('status', 'posted')
+            ->whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->selectRaw('SUM(debit_amount) - SUM(credit_amount) as net')
+            ->value('net') ?? 0;
+
+        $totalExpenses = $operatingExpenses;
+
+        $netProfit = $totalIncome - $totalExpenses;
+
+        // Expense breakdown by category (phase 2)
+        $expenseByCategory = ExpenseRecord::whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo])
+            ->select('category', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('category')
+            ->get();
+
+        // Non-loan income breakdown by category (phase 2)
+        $incomeByCategory = IncomeRecord::whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo])
+            ->select('category', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('category')
+            ->get();
+
+        $expenseCategories = config('financial.expense_categories', []);
+        $incomeCategories  = config('financial.income_categories', []);
+
+        $breadcrumbs = [
+            ['text' => 'Dashboard', 'url' => route('admin.dashboard')],
+            ['text' => 'Reports', 'url' => route('admin.reports.index')],
+            ['text' => 'Profit & Loss', 'url' => ''],
+        ];
+
+        return view('admin.reports.profit-loss', compact(
+            'loanInterestIncome', 'feeIncome', 'penaltyIncome', 'nonLoanIncome',
+            'totalIncome', 'operatingExpenses', 'interestExpense', 'totalExpenses',
+            'netProfit', 'expenseByCategory', 'incomeByCategory',
+            'expenseCategories', 'incomeCategories',
+            'dateFrom', 'dateTo', 'breadcrumbs'
+        ));
+    }}

@@ -149,4 +149,20 @@ class Transaction extends Model
         return $this->hasMany(GeneralLedger::class, 'reference_id')
             ->where('reference_type', 'Transaction');
     }
+
+    /**
+     * Phase 2 — Expense detail record (if this is an expense transaction).
+     */
+    public function expenseRecord(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ExpenseRecord::class);
+    }
+
+    /**
+     * Phase 2 — Income detail record (if this is an income transaction).
+     */
+    public function incomeRecord(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(IncomeRecord::class);
+    }
 }
