@@ -9,6 +9,8 @@ use App\Models\SavingsAccount;
 use App\Models\Loan;
 use App\Models\Transaction;
 use App\Models\Share;
+use App\Models\ExpenseRecord;
+use App\Models\IncomeRecord;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -71,6 +73,29 @@ class DashboardController extends Controller
                 ->get(),
             'today_transactions'  => Transaction::whereDate('created_at', today())->sum('amount'),
         ];
+
+        // Phase 2 — feature-flagged expense / income summary for this calendar month
+        if (config('financial.enable_expense_transactions')) {
+            $stats['monthly_expenses']      = ExpenseRecord::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('amount');
+            $stats['monthly_expense_count'] = ExpenseRecord::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+
+        if (config('financial.enable_income_transactions')) {
+            $stats['monthly_income']        = IncomeRecord::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('amount');
+            $stats['monthly_income_count']  = IncomeRecord::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count();
+        }
+
+        if (config('financial.enable_expense_transactions') || config('financial.enable_income_transactions')) {
+            $stats['monthly_net'] = ($stats['monthly_income'] ?? 0) - ($stats['monthly_expenses'] ?? 0);
+        }
 
         $limits = $activeTenant ? [
             'max_members'    => $activeTenant->max_members,
