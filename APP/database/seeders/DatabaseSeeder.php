@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
              MemberOnlySeeder::class,
              UniversalAccountSeeder::class,
              LoanDistributionSeeder::class,
-             TransactionSeeder::class
+             TransactionSeeder::class,
+             ExpenseIncomeAccountSeeder::class,
          ]);
     }
 }

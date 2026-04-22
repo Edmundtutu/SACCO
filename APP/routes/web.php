@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\LoanProductController as AdminLoanProductControll
 use App\Http\Controllers\Admin\SharesController as AdminSharesController;
 use App\Http\Controllers\Admin\ReportsController as AdminReportsController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\IncomeController;
 
 
 
@@ -134,6 +136,10 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::get('financial', [AdminReportsController::class, 'financialReport'])->name('financial');
             Route::get('trial-balance', [AdminReportsController::class, 'trialBalance'])->name('trial-balance');
             Route::get('balance-sheet', [AdminReportsController::class, 'balanceSheet'])->name('balance-sheet');
+            // Phase 2 — expense, income, and profit & loss reports
+            Route::get('expenses', [AdminReportsController::class, 'expenseReport'])->name('expenses');
+            Route::get('incomes', [AdminReportsController::class, 'incomeReport'])->name('incomes');
+            Route::get('profit-loss', [AdminReportsController::class, 'profitLoss'])->name('profit-loss');
         });
 
         // Tenant Management (Super Admin Only)
@@ -156,6 +162,24 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
             Route::put('{user}', [StaffController::class, 'update'])->name('update');
             Route::patch('{user}/promote', [StaffController::class, 'promote'])->name('promote');
             Route::patch('{user}/demote', [StaffController::class, 'demote'])->name('demote');
+        });
+
+        // Phase 2 — Expenses (feature-flagged: financial.enable_expense_transactions)
+        Route::group(['prefix' => 'expenses', 'as' => 'expenses.'], function () {
+            Route::get('/', [ExpenseController::class, 'index'])->name('index');
+            Route::get('create', [ExpenseController::class, 'create'])->name('create');
+            Route::post('/', [ExpenseController::class, 'store'])->name('store');
+            Route::get('{id}', [ExpenseController::class, 'show'])->name('show');
+            Route::get('{id}/receipt', [ExpenseController::class, 'receipt'])->name('receipt');
+        });
+
+        // Phase 2 — Income (feature-flagged: financial.enable_income_transactions)
+        Route::group(['prefix' => 'incomes', 'as' => 'incomes.'], function () {
+            Route::get('/', [IncomeController::class, 'index'])->name('index');
+            Route::get('create', [IncomeController::class, 'create'])->name('create');
+            Route::post('/', [IncomeController::class, 'store'])->name('store');
+            Route::get('{id}', [IncomeController::class, 'show'])->name('show');
+            Route::get('{id}/receipt', [IncomeController::class, 'receipt'])->name('receipt');
         });
     });
 });
