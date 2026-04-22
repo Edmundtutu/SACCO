@@ -285,6 +285,82 @@
         </div>
     </div>
 
+    {{-- Phase 2 — Expense & Income summary cards (feature-flagged) --}}
+    @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+    <div class="row mb-4">
+        @if(config('financial.enable_expense_transactions'))
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Expenses This Month
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ number_format($stats['monthly_expenses'] ?? 0, 2) }}
+                            </div>
+                            <small class="text-muted">{{ $stats['monthly_expense_count'] ?? 0 }} transactions</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-invoice-dollar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(config('financial.enable_income_transactions'))
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Non-Loan Income This Month
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ number_format($stats['monthly_income'] ?? 0, 2) }}
+                            </div>
+                            <small class="text-muted">{{ $stats['monthly_income_count'] ?? 0 }} transactions</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-{{ ($stats['monthly_net'] ?? 0) >= 0 ? 'success' : 'danger' }} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{{ ($stats['monthly_net'] ?? 0) >= 0 ? 'success' : 'danger' }} text-uppercase mb-1">
+                                Net (Income − Expenses)
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ number_format($stats['monthly_net'] ?? 0, 2) }}
+                            </div>
+                            <small class="text-muted">
+                                <a href="{{ route('admin.reports.profit-loss') }}">View P&amp;L</a>
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
+
     <!-- Pending Approvals Alert -->
     @php
         $pendingTransactions = $stats['pending_transactions'];

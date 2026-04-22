@@ -191,6 +191,58 @@
             </div>
         </div>
     </div>
+
+    {{-- Phase 2 — Expense & Income Reports (feature-flagged) --}}
+    @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-receipt-cutoff"></i> Expense &amp; Income Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Operational expense tracking, non-loan income, and profitability analysis.</p>
+
+                <div class="list-group list-group-flush">
+                    @if(config('financial.enable_expense_transactions'))
+                    <a href="{{ route('admin.reports.expenses') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Expense Report</h6>
+                                <small class="text-muted">Operational expenses by category and date range</small>
+                            </div>
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
+                    @endif
+
+                    @if(config('financial.enable_income_transactions'))
+                    <a href="{{ route('admin.reports.incomes') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Income Report</h6>
+                                <small class="text-muted">Non-loan income by category and date range</small>
+                            </div>
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
+                    @endif
+
+                    @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+                    <a href="{{ route('admin.reports.profit-loss') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Profit &amp; Loss Statement</h6>
+                                <small class="text-muted">Income vs expenses — net profit for the period</small>
+                            </div>
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 <!-- Quick Report Generation -->
@@ -210,6 +262,15 @@
                             <option value="savings">Savings Report</option>
                             <option value="loans">Loan Report</option>
                             <option value="financial">Financial Report</option>
+                            @if(config('financial.enable_expense_transactions'))
+                            <option value="expenses">Expense Report</option>
+                            @endif
+                            @if(config('financial.enable_income_transactions'))
+                            <option value="incomes">Income Report</option>
+                            @endif
+                            @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+                            <option value="profit-loss">Profit &amp; Loss</option>
+                            @endif
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -276,6 +337,15 @@ $(document).ready(function() {
                 break;
             case 'financial':
                 url = '{{ route("admin.reports.financial") }}';
+                break;
+            case 'expenses':
+                url = '{{ route("admin.reports.expenses") }}';
+                break;
+            case 'incomes':
+                url = '{{ route("admin.reports.incomes") }}';
+                break;
+            case 'profit-loss':
+                url = '{{ route("admin.reports.profit-loss") }}';
                 break;
         }
         

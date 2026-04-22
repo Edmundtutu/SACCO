@@ -11,6 +11,8 @@ use App\Services\Transactions\SharePurchaseHandler;
 use App\Services\Transactions\LoanDisbursementHandler;
 use App\Services\Transactions\LoanRepaymentHandler;
 use App\Services\Transactions\WalletTransactionHandler;
+use App\Services\Transactions\ExpenseHandler;
+use App\Services\Transactions\IncomeHandler;
 use App\DTOs\TransactionDTO;
 use App\Events\TransactionProcessed;
 use App\Events\TransactionFailed;
@@ -59,6 +61,10 @@ class TransactionService
             'wallet_withdrawal' => app(WalletTransactionHandler::class),
             'wallet_to_savings' => app(WalletTransactionHandler::class),
             'wallet_to_loan' => app(WalletTransactionHandler::class),
+
+            // Phase 2 — Expense & Income handlers (feature-flagged at controller level)
+            'expense' => app(ExpenseHandler::class),
+            'income'  => app(IncomeHandler::class),
         ];
     }
 
@@ -281,6 +287,8 @@ class TransactionService
             'wallet_withdrawal' => 'savings',
             'wallet_to_savings' => 'savings',
             'wallet_to_loan' => 'loan',
+            'expense' => 'expense',
+            'income'  => 'income',
         ];
 
         return $categoryMap[$type] ?? 'general';

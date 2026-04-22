@@ -216,8 +216,69 @@
                 <li class="{{ request()->routeIs('admin.reports.financial') ? 'active' : '' }}">
                     <a href="{{ route('admin.reports.financial') }}"><i class="fas fa-calculator"></i> Financial Reports</a>
                 </li>
+                @if(config('financial.enable_expense_transactions'))
+                <li class="{{ request()->routeIs('admin.reports.expenses') ? 'active' : '' }}">
+                    <a href="{{ route('admin.reports.expenses') }}"><i class="fas fa-file-invoice-dollar"></i> Expense Reports</a>
+                </li>
+                @endif
+                @if(config('financial.enable_income_transactions'))
+                <li class="{{ request()->routeIs('admin.reports.incomes') ? 'active' : '' }}">
+                    <a href="{{ route('admin.reports.incomes') }}"><i class="fas fa-hand-holding-usd"></i> Income Reports</a>
+                </li>
+                @endif
+                @if(config('financial.enable_expense_transactions') || config('financial.enable_income_transactions'))
+                <li class="{{ request()->routeIs('admin.reports.profit-loss') ? 'active' : '' }}">
+                    <a href="{{ route('admin.reports.profit-loss') }}"><i class="fas fa-balance-scale"></i> Profit & Loss</a>
+                </li>
+                @endif
             </ul>
         </li>
+        @endif
+
+        {{-- ─── Phase 2: Expenses ─── --}}
+        @if(config('financial.enable_expense_transactions'))
+        @if($lockNav)
+        <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
+            <span class="nav-disabled-link"><i class="fas fa-file-invoice-dollar"></i> <span>Expenses</span></span>
+        </li>
+        @else
+        <li class="has-submenu {{ request()->routeIs('admin.expenses.*') ? 'active' : '' }}">
+            <a href="#" class="submenu-toggle" data-tooltip="Expenses">
+                <i class="fas fa-file-invoice-dollar"></i> <span>Expenses</span>
+            </a>
+            <ul class="submenu list-unstyled">
+                <li class="{{ request()->routeIs('admin.expenses.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.expenses.index') }}"><i class="fas fa-list"></i> All Expenses</a>
+                </li>
+                <li class="{{ request()->routeIs('admin.expenses.create') ? 'active' : '' }}">
+                    <a href="{{ route('admin.expenses.create') }}"><i class="fas fa-plus-circle"></i> Record Expense</a>
+                </li>
+            </ul>
+        </li>
+        @endif
+        @endif
+
+        {{-- ─── Phase 2: Income ─── --}}
+        @if(config('financial.enable_income_transactions'))
+        @if($lockNav)
+        <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
+            <span class="nav-disabled-link"><i class="fas fa-hand-holding-usd"></i> <span>Income</span></span>
+        </li>
+        @else
+        <li class="has-submenu {{ request()->routeIs('admin.incomes.*') ? 'active' : '' }}">
+            <a href="#" class="submenu-toggle" data-tooltip="Income">
+                <i class="fas fa-hand-holding-usd"></i> <span>Income</span>
+            </a>
+            <ul class="submenu list-unstyled">
+                <li class="{{ request()->routeIs('admin.incomes.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.incomes.index') }}"><i class="fas fa-list"></i> All Income</a>
+                </li>
+                <li class="{{ request()->routeIs('admin.incomes.create') ? 'active' : '' }}">
+                    <a href="{{ route('admin.incomes.create') }}"><i class="fas fa-plus-circle"></i> Record Income</a>
+                </li>
+            </ul>
+        </li>
+        @endif
         @endif
 
         {{-- ─── Staff Management ─── --}}
