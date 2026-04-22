@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTOs\TransactionDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ProcessTransactionRequest;
 use App\Http\Requests\Admin\ApproveTransactionRequest;
+use App\Http\Requests\Admin\ProcessTransactionRequest;
 use App\Http\Requests\Admin\RejectTransactionRequest;
-use App\Services\TransactionService;
-use App\Services\BalanceService;
-use App\Services\LedgerService;
-use App\Models\Transaction;
 use App\Models\Account;
 use App\Models\Loan;
+use App\Models\LoanAccount;
+use App\Models\SavingsAccount;
+use App\Models\Transaction;
 use App\Models\User;
-use App\DTOs\TransactionDTO;
-use Illuminate\Http\Request;
+use App\Services\BalanceService;
+use App\Services\LedgerService;
+use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class TransactionsController extends Controller
 {
@@ -91,7 +93,13 @@ class TransactionsController extends Controller
     {
         $transaction = Transaction::with([
             'member',
-            'account.accountable.savingsProduct',
+            'account.accountable',
+            // 'account.accountable' => function ($morphTo) {
+            //     $morphTo->morphWith([
+            //         SavingsAccount::class => ['savingsProduct'],
+            //         LoanAccount::class => ['loan.loanProduct'],
+            //     ]);
+            // },
             'relatedLoan.loanProduct',
             'processedBy',
             'reversedBy',
@@ -134,10 +142,9 @@ class TransactionsController extends Controller
                     'status' => $transaction->status,
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction processing failed',
@@ -196,10 +203,9 @@ class TransactionsController extends Controller
                     'transaction_number' => $processedTransaction->transaction_number,
                 ]
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction approval failed',
@@ -234,7 +240,6 @@ class TransactionsController extends Controller
                 'success' => true,
                 'message' => 'Transaction rejected successfully',
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -268,7 +273,6 @@ class TransactionsController extends Controller
                     'reversal_transaction_number' => $reversalTransaction->transaction_number,
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -329,7 +333,7 @@ class TransactionsController extends Controller
     public function trialBalance(Request $request): View
     {
         $date = $request->date ?? now()->toDateString();
-        
+
         $trialBalance = $this->ledgerService->getTrialBalance($date);
 
         return view('admin.transactions.trial-balance', compact('trialBalance', 'date'));
@@ -367,15 +371,15 @@ class TransactionsController extends Controller
 
         // Generate CSV
         $filename = 'transactions_' . now()->format('Y-m-d_H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
                 'Transaction Number',

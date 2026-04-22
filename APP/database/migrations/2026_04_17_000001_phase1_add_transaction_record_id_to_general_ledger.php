@@ -25,14 +25,14 @@ return new class extends Migration
             // corresponding Transaction record (e.g. manual journal entries
             // or rows created before this migration).
             $table->unsignedBigInteger('transaction_record_id')
-                  ->nullable()
-                  ->after('transaction_id')
-                  ->comment('FK to transactions.id (Phase 1 dual-write linkage)');
+                ->nullable()
+                ->after('transaction_id')
+                ->comment('FK to transactions.id (Phase 1 dual-write linkage)');
 
             $table->foreign('transaction_record_id')
-                  ->references('id')
-                  ->on('transactions')
-                  ->nullOnDelete();
+                ->references('id')
+                ->on('transactions')
+                ->nullOnDelete();
 
             $table->index('transaction_record_id', 'gl_transaction_record_id_idx');
         });
