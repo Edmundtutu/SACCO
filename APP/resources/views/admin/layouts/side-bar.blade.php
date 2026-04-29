@@ -42,19 +42,7 @@
     </div>
 
     <ul class="list-unstyled components">
-
-        {{-- ─── 1. SACCO Management — super admin, always first, no precondition ─── --}}
-        @if($isSuperAdmin)
-        <li class="{{ request()->routeIs('admin.tenants.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.tenants.index') }}" data-tooltip="SACCO Management">
-                <i class="fas fa-building"></i>
-                <span>SACCO Management</span>
-            </a>
-        </li>
-        <li class="sidebar-label"><span>{{ $tenantSelected ? strtoupper($sidebarTenant->sacco_name) : 'TENANT CONTEXT' }}</span></li>
-        @endif
-
-        {{-- ─── 2. Dashboard — always accessible ─── --}}
+        {{-- ─── Dashboard ─── --}}
         <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('admin.dashboard') }}" data-tooltip="Dashboard">
                 <i class="fas fa-tachometer-alt"></i>
@@ -62,7 +50,37 @@
             </a>
         </li>
 
-        {{-- ════════════ Tenant-scoped items below ════════════ --}}
+        {{-- ─── Administration ─── --}}
+        <li class="sidebar-label"><span>Administration</span></li>
+        @if($isSuperAdmin)
+        <li class="{{ request()->routeIs('admin.tenants.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.tenants.index') }}" data-tooltip="SACCO Management">
+                <i class="fas fa-building"></i>
+                <span>SACCO Management</span>
+            </a>
+        </li>
+        @endif
+
+        @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->isSuperAdmin()))
+        @if($lockNav)
+        <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
+            <span class="nav-disabled-link"><i class="bi bi-people"></i> <span>Staff Management</span></span>
+        </li>
+        @else
+        <li class="{{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.staff.index') }}" data-tooltip="Staff Management">
+                <i class="bi bi-people"></i> <span>Staff Management</span>
+            </a>
+        </li>
+        @endif
+        @endif
+
+        @if($isSuperAdmin)
+        <li class="sidebar-label"><span>{{ $tenantSelected ? strtoupper($sidebarTenant->sacco_name) : 'Tenant Context Required' }}</span></li>
+        @endif
+
+        {{-- ─── Operations (tenant-scoped) ─── --}}
+        <li class="sidebar-label"><span>Operations</span></li>
 
         {{-- ─── Members ─── --}}
         @if($lockNav)
@@ -166,15 +184,16 @@
         </li>
         @endif
 
-        {{-- ─── Transactions ─── --}}
+        {{-- ─── Accounting ─── --}}
+        <li class="sidebar-label"><span>Accounting</span></li>
         @if($lockNav)
         <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
-            <span class="nav-disabled-link"><i class="fas fa-exchange-alt"></i> <span>Transactions</span></span>
+            <span class="nav-disabled-link"><i class="fas fa-exchange-alt"></i> <span>Accounting Transactions</span></span>
         </li>
         @else
         <li class="has-submenu {{ request()->routeIs('admin.transactions.*') ? 'active' : '' }}">
-            <a href="#" class="submenu-toggle" data-tooltip="Transactions">
-                <i class="fas fa-exchange-alt"></i> <span>Transactions</span>
+            <a href="#" class="submenu-toggle" data-tooltip="Accounting Transactions">
+                <i class="fas fa-exchange-alt"></i> <span>Accounting Transactions</span>
             </a>
             <ul class="submenu list-unstyled">
                 <li class="{{ request()->routeIs('admin.transactions.index') ? 'active' : '' }}">
@@ -191,6 +210,7 @@
         @endif
 
         {{-- ─── Reports ─── --}}
+        <li class="sidebar-label"><span>Reports</span></li>
         @if($lockNav)
         <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
             <span class="nav-disabled-link"><i class="fas fa-chart-bar"></i> <span>Reports</span></span>
@@ -277,21 +297,6 @@
                     <a href="{{ route('admin.incomes.create') }}"><i class="fas fa-plus-circle"></i> Record Income</a>
                 </li>
             </ul>
-        </li>
-        @endif
-        @endif
-
-        {{-- ─── Staff Management ─── --}}
-        @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->isSuperAdmin()))
-        @if($lockNav)
-        <li class="nav-disabled-item" data-bs-toggle="tooltip" data-bs-placement="right" title="Select a SACCO first">
-            <span class="nav-disabled-link"><i class="bi bi-people"></i> <span>Staff</span></span>
-        </li>
-        @else
-        <li class="{{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.staff.index') }}" data-tooltip="Staff Management">
-                <i class="bi bi-people"></i> <span>Staff Management</span>
-            </a>
         </li>
         @endif
         @endif
